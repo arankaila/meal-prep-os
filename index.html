@@ -1395,6 +1395,15 @@ select.route-confirm-input option { background:var(--surface2); }
 .sync-cfg-btn{width:100%;padding:5px 8px;border-radius:5px;border:1px dashed var(--border2);background:transparent;color:var(--text3);font-family:var(--mono);font-size:9px;cursor:pointer;transition:all .15s;text-align:center;margin-bottom:6px;}
 .sync-cfg-btn:hover{border-color:var(--gold);color:var(--gold);}
 
+/* RECIPE INGREDIENT SEARCH AUTOCOMPLETE */
+.rl-ing-input{width:100%;background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;padding:4px 8px;font-family:var(--sans);outline:none;box-sizing:border-box;height:28px;}
+.rl-ing-input:focus{border-color:var(--border2);}
+.rl-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;z-index:9999;max-height:180px;overflow-y:auto;margin-top:2px;box-shadow:0 4px 12px rgba(0,0,0,.3);}
+.rl-drop-item{padding:6px 9px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+.rl-drop-item:last-child{border-bottom:none;}
+.rl-drop-item:hover{background:var(--surface3);}
+.rl-drop-item .rl-cat{font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.3px;margin-left:auto;}
+
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -5014,15 +5023,25 @@ function openRecipeModal(id=null){
 }
 
 function renderRecIngLines(){
-  const opts=DB.ingredients.map(i=>`<option value="${i.id}">${i.name}</option>`).join('');
-  document.getElementById('rec-ing-lines').innerHTML=recLines.map((l,idx)=>`
-    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
-      <select style="flex:2" onchange="updateRL(${idx},'ingId',this.value)"><option value="">Select ingredient...</option>${opts}</select>
+  const sorted=[...DB.ingredients].sort((a,b)=>a.name.localeCompare(b.name));
+  document.getElementById('rec-ing-lines').innerHTML=recLines.map((l,idx)=>{
+    const ing=sorted.find(i=>i.id===l.ingId);
+    const ingName=ing?ing.name.replace(/"/g,'&quot;'):'';
+    return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <div style="flex:2;position:relative" id="rl-wrap-${idx}">
+        <input type="text" class="rl-ing-input" placeholder="Search ingredient..."
+          value="${ingName}"
+          oninput="rlSearch(${idx},this.value)"
+          onfocus="rlSearch(${idx},this.value)"
+          onblur="rlBlur(${idx})"
+          autocomplete="off">
+        <div class="rl-dropdown" id="rl-drop-${idx}" style="display:none"></div>
+      </div>
       <input type="number" style="flex:0 0 70px" placeholder="qty g" value="${l.qty||''}" onchange="updateRL(${idx},'qty',this.value)" min="0" step="0.1">
       <span class="small muted">g raw</span>
       <button class="action-btn r" onclick="removeRL(${idx})">×</button>
-    </div>`).join('');
-  recLines.forEach((l,idx)=>{ const s=document.querySelectorAll('#rec-ing-lines select')[idx]; if(s&&l.ingId) s.value=l.ingId; });
+    </div>`;
+  }).join('');
 }
 
 function togglePhasePanel(phase){
@@ -5088,6 +5107,28 @@ function removeStep(idx){ removePhaseStep('cook',idx); }
 function updateRL(idx,f,v){recLines[idx][f]=f==='qty'?n(v):v;updateRecPreview();}
 function removeRL(idx){recLines.splice(idx,1);renderRecIngLines();updateRecPreview();}
 function addIngLine(){recLines.push({ingId:'',qty:100});renderRecIngLines();}
+
+function rlSearch(idx,q){
+  const drop=document.getElementById('rl-drop-'+idx);
+  if(!drop) return;
+  const sorted=[...DB.ingredients].sort((a,b)=>a.name.localeCompare(b.name));
+  const filtered=q.trim()?sorted.filter(i=>i.name.toLowerCase().includes(q.toLowerCase())):sorted;
+  if(!filtered.length){drop.style.display='none';return;}
+  drop.innerHTML=filtered.map(i=>`<div class="rl-drop-item" onmousedown="event.preventDefault();rlPick(${idx},'${i.id}',${JSON.stringify(i.name)})">${i.name}${i.cat?`<span class="rl-cat">${i.cat}</span>`:''}</div>`).join('');
+  drop.style.display='block';
+}
+function rlPick(idx,ingId,name){
+  recLines[idx].ingId=ingId;
+  const wrap=document.getElementById('rl-wrap-'+idx);
+  if(wrap){const inp=wrap.querySelector('.rl-ing-input');if(inp) inp.value=name;}
+  const drop=document.getElementById('rl-drop-'+idx);
+  if(drop) drop.style.display='none';
+  updateRecPreview();
+}
+function rlBlur(idx){
+  const drop=document.getElementById('rl-drop-'+idx);
+  if(drop) drop.style.display='none';
+}
 
 function updateRecPreview(){
   const preview=document.getElementById('rec-preview');
