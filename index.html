@@ -5114,7 +5114,7 @@ function rlSearch(idx,q){
   const sorted=[...DB.ingredients].sort((a,b)=>a.name.localeCompare(b.name));
   const filtered=q.trim()?sorted.filter(i=>i.name.toLowerCase().includes(q.toLowerCase())):sorted;
   if(!filtered.length){drop.style.display='none';return;}
-  drop.innerHTML=filtered.map(i=>`<div class="rl-drop-item" onmousedown="event.preventDefault();rlPick(${idx},'${i.id}',${JSON.stringify(i.name)})">${i.name}${i.cat?`<span class="rl-cat">${i.cat}</span>`:''}</div>`).join('');
+  drop.innerHTML=filtered.map(i=>`<div class="rl-drop-item" onmousedown="event.preventDefault();rlPick(${idx},'${i.id}',${JSON.stringify(i.name).replace(/"/g,'&quot;')})">${i.name}${i.cat?`<span class="rl-cat">${i.cat}</span>`:''}</div>`).join('');
   drop.style.display='block';
 }
 function rlPick(idx,ingId,name){
