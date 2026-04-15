@@ -6205,6 +6205,11 @@ function renderMenu(){
             <button class="box-type-btn ${!dish.fuelLine||dish.fuelLine==='Fuel Plus'?'active':''}" onclick="ud(${realIdx},'fuelLine','Fuel Plus')">⚡ Fuel Plus</button>
             <button class="box-type-btn ${dish.fuelLine==='Fuel Lite'?'active':''}" onclick="ud(${realIdx},'fuelLine','Fuel Lite')">✦ Fuel Lite</button>
           </div>
+          <div style="margin-bottom:6px">
+            <div style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Serves with</div>
+            <input class="menu-comp-select" style="font-size:11px" type="text" placeholder="e.g. Turmeric Rice, Chow Chow Salad" value="${(dish.serves||'').replace(/"/g,'&quot;')}" onchange="ud(${realIdx},'serves',this.value.trim())" spellcheck="false">
+          </div>
+          <div style="margin-bottom:8px">${renderTagToggles(dish, realIdx)}</div>
           <div class="photo-upload-row">
             ${dish.photoUrl?`<img class="photo-thumb has-photo" src="${(dish.photoUrl||'').replace(/"/g,'&quot;')}" alt="dish photo">`:``}
             <input class="menu-comp-select" style="font-size:10px" type="url" placeholder="📷 Photo URL" id="photo-url-${realIdx}" value="${(dish.photoUrl||'').replace(/"/g,'&quot;')}" onchange="ud(${realIdx},'photoUrl',this.value.trim())" spellcheck="false">
@@ -6317,7 +6322,7 @@ function addDishRow(){
   // isn't being offered for that drop. syncPortionsFromOrders() overwrites these
   // with actual demand once ordering closes.
   var defaultPortions = menuActiveSlot === 'next' ? (DB.defaultPortions || 20) : 0;
-  getSlotDishes().push({id:'DISH'+String(DB.nextDishId++).padStart(3,'0'),name:'New Dish',protein:'',carb:'',veg:'',condiment:'',complete:'',scaleProtein:1,scaleCarb:1,scaleVeg:1,scaleOverall:1,drop1:defaultPortions,drop2:defaultPortions,sellPrice:DB.defaultSellPrice,boxType:'3-compartment',condimentTubs:0,fuelLine:'Fuel Plus',photoUrl:''});
+  getSlotDishes().push({id:'DISH'+String(DB.nextDishId++).padStart(3,'0'),name:'New Dish',serves:'',tags:[],protein:'',carb:'',veg:'',condiment:'',complete:'',scaleProtein:1,scaleCarb:1,scaleVeg:1,scaleOverall:1,drop1:defaultPortions,drop2:defaultPortions,sellPrice:DB.defaultSellPrice,boxType:'3-compartment',condimentTubs:0,fuelLine:'Fuel Plus',photoUrl:''});
   save();renderMenu();
 }
 
@@ -6340,6 +6345,40 @@ function createAthleteVariant(idx) {
   save();
   renderMenu();
   notify('✓ Athlete variant created — edit portions and select athletes');
+}
+
+// Renders toggleable attribute tag buttons for the Portal section
+function renderTagToggles(dish, realIdx) {
+  var allTags = [
+    { key: 'high-protein',  label: 'High Protein' },
+    { key: 'low-fat',       label: '↓ Low Fat' },
+    { key: 'low-carb',      label: '↓ Low Carb' },
+    { key: 'chefs-choice',  label: "Chef's Choice" },
+    { key: 'vegan',         label: 'Vegan' },
+    { key: 'high-fibre',    label: 'High Fibre' },
+    { key: '9-amino',       label: '9 Amino Acids' },
+    { key: 'omega3',        label: 'High Omega-3' }
+  ];
+  var current = Array.isArray(dish.tags) ? dish.tags : [];
+  var header = '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">Tags</div>';
+  var btns = allTags.map(function(t) {
+    var active = current.indexOf(t.key) !== -1;
+    var style = active
+      ? 'background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.4);'
+      : 'background:var(--surface3);color:var(--text3);border:1px solid var(--border);';
+    return '<button style="' + style + 'font-family:var(--mono);font-size:8px;padding:3px 7px;border-radius:4px;cursor:pointer;margin:2px 2px 0 0;letter-spacing:.3px" onclick="toggleTag(' + realIdx + ',\'' + t.key + '\')">' + t.label + '</button>';
+  }).join('');
+  return header + '<div style="display:flex;flex-wrap:wrap">' + btns + '</div>';
+}
+
+function toggleTag(idx, tagKey) {
+  var dish = getSlotDishes()[idx];
+  if (!dish) return;
+  if (!Array.isArray(dish.tags)) dish.tags = [];
+  var pos = dish.tags.indexOf(tagKey);
+  if (pos === -1) { dish.tags.push(tagKey); } else { dish.tags.splice(pos, 1); }
+  save();
+  renderMenu();
 }
 
 function renderAthleteSection(dish, realIdx) {
