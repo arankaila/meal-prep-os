@@ -1595,6 +1595,9 @@ select.route-confirm-input option { background:var(--surface2); }
       <!-- Row 1: 6 KPI heroes -->
       <div class="dash-kpi-row" id="dash-kpi-row"></div>
 
+      <!-- Row 1b: Operational strip — portal, orders, next week readiness -->
+      <div id="dash-ops-strip" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px"></div>
+
       <!-- Row 2: Revenue trend + P&L waterfall -->
       <div class="dash-row cols-6535">
         <div class="dash-card">
@@ -1624,11 +1627,12 @@ select.route-confirm-input option { background:var(--surface2); }
             <span class="dash-card-sub">food cost &middot; sell &middot; margin &middot; revenue share</span>
           </div>
           <div>
-            <div class="dash-dish-row" style="padding:5px 16px;border-bottom:1px solid var(--border)">
+            <div class="dash-dish-row" style="padding:5px 16px;border-bottom:1px solid var(--border);grid-template-columns:1fr auto auto auto auto auto">
               <span style="font-family:var(--mono);font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Dish</span>
               <span style="font-family:var(--mono);font-size:8px;color:var(--text3);text-align:right">Food</span>
               <span style="font-family:var(--mono);font-size:8px;color:var(--text3);text-align:right">Sell</span>
               <span style="font-family:var(--mono);font-size:8px;color:var(--text3);text-align:right">Margin</span>
+              <span style="font-family:var(--mono);font-size:8px;color:var(--text3);text-align:right">Ord/Pl</span>
               <span style="font-family:var(--mono);font-size:8px;color:var(--text3);text-align:right">Rev %</span>
             </div>
             <div id="dash-dish-table"></div>
@@ -1822,6 +1826,7 @@ select.route-confirm-input option { background:var(--surface2); }
           <span id="drop-deadline-wednesday" style="font-size:9px;font-family:var(--mono);color:var(--gold);padding-left:86px"></span>
         </div>
       </div>
+      <div id="menu-slot-banner" style="margin-bottom:10px"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
         <div class="search-bar" style="margin-bottom:0;flex:1"><span>🔍</span><input type="text" placeholder="Search dishes..." oninput="filterMenu(this.value)" id="menu-search"></div>
         <span id="menu-count" style="font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap;">0 dishes</span>
@@ -2609,17 +2614,17 @@ select.route-confirm-input option { background:var(--surface2); }
             </div>
             <div class="gs-callout gold"><b>The golden rule:</b> always build bottom-up. Ingredients must exist before recipes, recipes before the menu, and a populated menu before Production / Purchasing / Packaging will have anything to calculate. Labour and Cost Stack work in parallel with the menu.</div>
 
-            <div class="gs-h2">The Weekly Workflow — Step by Step</div>
+            <div class="gs-h2">The Weekly Workflow — Day by Day</div>
+            <p class="gs-p">Every week follows the same rhythm. Two weeks are always in play at once: one being fulfilled, one being built for the next cycle.</p>
             <div class="gs-steps">
-              <div class="gs-step"><div class="gs-step-num">1</div><div class="gs-step-body"><div class="gs-step-title">Build the weekly menu</div><div class="gs-step-text">Go to <strong>Weekly Menu</strong>. Add each dish, assign recipe components, enter S1 (Sunday) and S2 (Wednesday) portion counts. Assign a <strong>Fuel Line</strong> (Fuel Plus / Fuel Lite) and upload a dish photo for the portal. Set the <strong>Drop Dates</strong> (Sunday and Wednesday delivery dates) in the strip at the top of the page.</div></div></div>
-              <div class="gs-step"><div class="gs-step-num">2</div><div class="gs-step-body"><div class="gs-step-title">Open the Customer Order Portal</div><div class="gs-step-text">Go to <strong>Orders</strong>. Click the portal toggle to open it — set an optional order deadline and publish. The customer-facing page (<code>index-order.html</code>) goes live. Customers browse the menu, choose their session, select dishes, and submit — orders land in Firebase immediately as <strong>Pending</strong> and appear in the Orders page nav badge.</div></div></div>
-              <div class="gs-step"><div class="gs-step-num">3</div><div class="gs-step-body"><div class="gs-step-title">Confirm or cancel incoming orders</div><div class="gs-step-text">Go to <strong>Orders</strong>. Portal orders appear with a PORTAL badge and 🟡 Pending status. Review each one and click <strong>✓ Confirm</strong> (or use Bulk Confirm to accept all). Cancel with a reason if needed. The allocation bar shows orders vs your planned batch per dish. Once confirmed, click <strong>↓ Sync Portions</strong> to update S1/S2 counts on the menu.</div></div></div>
-              <div class="gs-step"><div class="gs-step-num">4</div><div class="gs-step-body"><div class="gs-step-title">Add athlete dish variants manually</div><div class="gs-step-text">Athlete-specific portions are not ordered through the portal. Duplicate a base dish in the Weekly Menu, adjust scales to hit the athlete's macros, rename it (e.g. "Chicken Bowl — Jake"), and manually add the order in <strong>Orders → + Add Order</strong>.</div></div></div>
-              <div class="gs-step"><div class="gs-step-num">5</div><div class="gs-step-body"><div class="gs-step-title">Schedule labour and confirm costs</div><div class="gs-step-text">Go to <strong>Labour</strong> and add shifts. Go to <strong>Cost Stack</strong> to verify margins. Labour per Dish auto-syncs from your shifts. Adjust sell prices on the menu if needed.</div></div></div>
-              <div class="gs-step"><div class="gs-step-num">6</div><div class="gs-step-body"><div class="gs-step-title">Run operations</div><div class="gs-step-text">Use <strong>Purchasing</strong> for the ingredient order list (based on planned portion counts). Use <strong>Production</strong> for batch quantities and station instructions — starting a component auto-advances confirmed orders to In Production. Use <strong>Packaging</strong> as the kitchen pack guide.</div></div></div>
-              <div class="gs-step"><div class="gs-step-num">7</div><div class="gs-step-body"><div class="gs-step-title">Manage deliveries &amp; print labels</div><div class="gs-step-text">Use the <strong>Route Sheet</strong> tab (sorted by postcode) for driver dispatch. Print labels from the <strong>Labels</strong> tab. Fill digital delivery confirmations on the route sheet.</div></div></div>
-              <div class="gs-step"><div class="gs-step-num">8</div><div class="gs-step-body"><div class="gs-step-title">Archive the week</div><div class="gs-step-text">Click <strong>💾 Archive Week</strong> on the Weekly Menu, Labour, or History pages. Archives instantly using the week label — no modal. The snapshot captures every dish, every shift, and the complete P&L.</div></div></div>
+              <div class="gs-step"><div class="gs-step-num">1</div><div class="gs-step-body"><div class="gs-step-title">Thursday — Advance the week &amp; start building next <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;Weekly Menu → 🔜 Building Next</span></div><div class="gs-step-text">After Wednesday's drop is complete, click <strong>⏭ Advance Week</strong>. This archives the old week and promotes next week's menu to Current. Then switch to the <strong>🔜 Building Next</strong> tab and add dishes for the week after: components, portion counts (S1 / S2), Fuel Line, dish photo, "Serves with" description, and attribute tags. Set the week label (e.g. "14 Apr – 20 Apr") and the Sunday/Wednesday drop dates.</div></div></div>
+              <div class="gs-step"><div class="gs-step-num">2</div><div class="gs-step-body"><div class="gs-step-title">Friday — Open ordering &amp; schedule labour <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;Weekly Menu portal strip · Labour</span></div><div class="gs-step-text">Click <strong>Open for Orders</strong> in the portal strip. Set Sunday and Wednesday order deadlines (e.g. Sat 20:00 / Tue 20:00). Go to <strong>Labour</strong> and schedule this week's kitchen shifts. Go to <strong>Cost Stack</strong> to verify margins are healthy — adjust sell prices on the menu if needed.</div></div></div>
+              <div class="gs-step"><div class="gs-step-num">3</div><div class="gs-step-body"><div class="gs-step-title">Saturday — Confirm orders &amp; check batch sizes <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;Orders page</span></div><div class="gs-step-text">Portal orders arrive with a 🟡 Pending badge. Use <strong>Bulk Confirm</strong> to accept all at once (or review individually). Check the allocation bar — if any dish shows more orders than planned portions, increase S1 or S2 on that dish. Once ordering closes, click <strong>↓ Sync Portions</strong> on the menu to lock portion counts to confirmed order demand.</div></div></div>
+              <div class="gs-step"><div class="gs-step-num">4</div><div class="gs-step-body"><div class="gs-step-title">Saturday/Sunday — Purchasing &amp; prep <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;Purchasing</span></div><div class="gs-step-text">Go to <strong>Purchasing</strong> for the ingredient order list — quantities are calculated from your confirmed S1/S2 portion counts. Place your ingredient orders with suppliers. Add any athlete dish variants manually via <strong>Orders → + Add Order</strong>.</div></div></div>
+              <div class="gs-step"><div class="gs-step-num">5</div><div class="gs-step-body"><div class="gs-step-title">Sunday — Cook S1 &amp; deliver <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;Production · Packaging · Delivery</span></div><div class="gs-step-text">Filter <strong>Production</strong> to S1 (Sunday session). Cook batches per the production planner. Pack boxes using the <strong>Packaging</strong> sheet. Dispatch via the <strong>Route Sheet</strong>. Print labels from the Labels tab. Mark deliveries confirmed on the route sheet as you go.</div></div></div>
+              <div class="gs-step"><div class="gs-step-num">6</div><div class="gs-step-body"><div class="gs-step-title">Tuesday/Wednesday — Cook S2 &amp; deliver <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;Production · Packaging · Delivery</span></div><div class="gs-step-text">Repeat the production, packaging, and delivery flow for the S2 (Wednesday) session. Filter all views to S2. Once Wednesday's drop is done, the week is complete — repeat from Step 1.</div></div></div>
             </div>
+            <div class="gs-callout gold"><b>The rhythm in one sentence:</b> Thursday you advance and build. Friday you open ordering and schedule labour. Saturday you confirm orders. Sunday and Wednesday you cook, pack, and deliver.</div>
 
             <div class="gs-h2">First-Time Setup Order</div>
             <div class="gs-steps">
@@ -2826,15 +2831,41 @@ select.route-confirm-input option { background:var(--surface2); }
             </div>
 
             <div class="gs-h2">Two Slots: Current Week and Building Next</div>
-            <p class="gs-p">The Weekly Menu has two independent slots, switched via the tabs at the top of the menu panel:</p>
+            <p class="gs-p">The Weekly Menu has two independent slots, switched via the tabs at the top of the menu panel. You always have two weeks in play simultaneously — one being fulfilled, one being built and opened for ordering:</p>
             <table class="gs-table">
               <thead><tr><th>Slot</th><th>What it is</th><th>Portal behaviour</th></tr></thead>
               <tbody>
-                <tr><td><strong>📦 Current Week</strong></td><td>The week in active production — being cooked, packed, and fulfilled. This is where you manage portions, track orders, and run the kitchen.</td><td>Portal shows this menu if the Building Next slot has no dishes.</td></tr>
-                <tr><td><strong>🔜 Building Next</strong></td><td>The upcoming week's menu — built and published in advance while the current week is still running. Has its own week label, drop dates, deadlines, and portal toggle.</td><td>Portal automatically switches to this menu as soon as it contains dishes. Customers order from next week while you're still fulfilling this week.</td></tr>
+                <tr><td><strong>📦 Current Week</strong></td><td>The week in active production — being cooked, packed, and fulfilled. This is where you manage portions, track orders, and run the kitchen.</td><td>Portal shows this menu only if the Building Next slot has no dishes.</td></tr>
+                <tr><td><strong>🔜 Building Next</strong></td><td>The upcoming week's menu — built and published in advance while the current week is still running. Has its own week label, drop dates, deadlines, and portal toggle.</td><td>Portal automatically switches to this menu as soon as you add the first dish. Customers order from next week while you're still fulfilling this week.</td></tr>
               </tbody>
             </table>
             <div class="gs-callout gold"><b>Key rule:</b> The portal follows the data — if the Building Next slot has dishes, customers see that menu. No manual toggle required. Once you Advance Week, the next slot is cleared and the portal reverts to showing the newly-promoted current week.</div>
+
+            <div class="gs-h2">The Weekly Cycle — Real Example</div>
+            <p class="gs-p">Here's how a typical week looks in practice. Use this as your operational calendar:</p>
+            <table class="gs-table">
+              <thead><tr><th>Day</th><th>What to do</th><th>Which slot</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Thursday</strong><br><span style="font-size:10px;color:var(--text3)">After Wednesday drop</span></td><td>All current-week orders delivered. Click <strong>⏭ Advance Week</strong>. Next week's menu becomes Current. Start building the week after on Building Next.</td><td>Advance → then switch to <strong>🔜 Building Next</strong></td></tr>
+                <tr><td><strong>Thursday – Friday</strong></td><td>On Building Next: add all dishes for next week. Upload the dish photo for each, fill in "Serves with" (e.g. "Jeera Rice, Chow Chow Slaw"), assign Fuel Line, and toggle any attribute tags (High Protein, Vegan, etc.). Set the week label (e.g. "14 Apr – 20 Apr") and the Sunday / Wednesday drop dates.</td><td><strong>🔜 Building Next</strong></td></tr>
+                <tr><td><strong>Friday evening</strong></td><td>Open the portal for orders. Go to the portal strip at the top of the Weekly Menu and click <strong>Open for Orders</strong>. Set a deadline (e.g. Saturday 20:00) so it closes automatically. Customers can now order next week's menu.</td><td><strong>🔜 Building Next</strong></td></tr>
+                <tr><td><strong>Saturday</strong></td><td>Orders come in. Review them on the Orders page. Confirm any you're happy with — or Bulk Confirm all. Check the allocation bar to make sure no dish is over-subscribed vs your planned portions.</td><td><strong>📦 Current Week</strong> (orders tab)</td></tr>
+                <tr><td><strong>Saturday evening</strong></td><td>Portal deadline passes and ordering closes automatically. Check final confirmed order count. Sync portions from orders if needed (Weekly Menu → Sync Portions button).</td><td><strong>📦 Current Week</strong></td></tr>
+                <tr><td><strong>Sunday</strong></td><td>Cook S1 batch. Use Production Planner (filter to S1). Pack boxes using Packaging sheet. Deliver via Route Sheet. Mark deliveries confirmed.</td><td><strong>📦 Current Week</strong></td></tr>
+                <tr><td><strong>Tuesday</strong></td><td>Cook S2 batch. Use Production Planner (filter to S2). Pack and deliver Wednesday drop.</td><td><strong>📦 Current Week</strong></td></tr>
+                <tr><td><strong>Wednesday</strong></td><td>Wednesday drop complete. Week is done. Repeat from Thursday.</td><td>→ Loop back</td></tr>
+              </tbody>
+            </table>
+            <div class="gs-callout green"><b>The key timing:</b> Build next week's menu and open ordering on Thursday/Friday, while the current week is still running. Customers get 24–48 hours to order. You close orders Saturday evening and start prepping Sunday morning with a confirmed list.</div>
+
+            <div class="gs-h2">Critical Rule — Always Build on the Right Slot</div>
+            <p class="gs-p">The most common mistake is uploading dish photos or filling in "Serves with" while on the wrong slot. The portal only shows the Building Next slot's dishes — so any photos or details set on the Current Week tab are invisible to customers.</p>
+            <div class="gs-example">
+              <div class="label">Example of the wrong way vs right way</div>
+              <span style="color:#ff453a">✗ Wrong:</span> You're on the <strong>📦 Current Week</strong> tab. You upload a photo for "Teriyaki Salmon." The portal is showing <strong>Building Next</strong> dishes — your photo is saved but customers can't see it.<br><br>
+              <span style="color:#30d158">✓ Right:</span> You switch to <strong>🔜 Building Next</strong> first. The banner at the top confirms "Portal reads from this slot." You upload the photo — it appears on the customer portal immediately.
+            </div>
+            <div class="gs-callout amber"><b>How to check:</b> Each dish card has a coloured banner in its Portal section — green means "edits here go live on the portal," red means "wrong slot — customers won't see these changes." The tab banner at the top of the dish grid also tells you the portal status at a glance.</div>
 
             <div class="gs-h2">Advance Week</div>
             <p class="gs-p">When the current week's orders are fulfilled and you're ready to move on, click <strong>⏭ Advance Week</strong> (top-right of the Weekly Menu panel). This does four things atomically:</p>
@@ -2844,6 +2875,15 @@ select.route-confirm-input option { background:var(--surface2); }
               <li><strong>Clears the Building Next slot</strong> — next slot is empty and ready for the week after</li>
               <li><strong>Migrates orders</strong> — any orders placed via the portal for next week automatically become current-week orders, so Fulfillment and Packaging pick them up immediately</li>
             </ul>
+            <div class="gs-example">
+              <div class="label">Example: Advancing from "07 Apr – 13 Apr" to "14 Apr – 20 Apr"</div>
+              It's Thursday. Wednesday's drop is complete. Building Next has "14 Apr – 20 Apr" with 6 dishes and 45 portal orders already confirmed.<br><br>
+              You click ⏭ Advance Week. In one step:<br>
+              • "07 Apr – 13 Apr" is archived to History with its full P&L<br>
+              • "14 Apr – 20 Apr" becomes the Current Week<br>
+              • All 45 next-week orders are now visible on the current Orders page<br>
+              • Building Next is empty and ready for "21 Apr – 27 Apr"
+            </div>
             <div class="gs-callout red"><b>Before advancing:</b> Confirm all current-week orders, make sure portions are synced, and ensure the Building Next slot has a week label and at least one dish. The Advance Week button will block if either of those conditions isn't met.</div>
 
             <div class="gs-h2">Card Layout</div>
@@ -3452,14 +3492,17 @@ select.route-confirm-input option { background:var(--surface2); }
             </table>
             <p class="gs-p">This means you can build and publish next week's menu while still fulfilling this week — customers seamlessly transition to ordering the new menu without any action on your end.</p>
 
-            <div class="gs-h2">Weekly Setup Checklist (Menu Tab)</div>
+            <div class="gs-h2">Weekly Setup Checklist — Step by Step</div>
+            <p class="gs-p">Follow this in order every week. Each step has a clear "when to do it" so nothing gets missed.</p>
             <div class="gs-steps">
-              <div class="gs-step"><div class="gs-step-num">1</div><div class="gs-step-body"><div class="gs-step-title">Switch to Building Next and build the menu</div><div class="gs-step-text">Click the <strong>🔜 Building Next</strong> tab in Weekly Menu. Add dishes, set S1 and S2 portion counts, assign Fuel Lines, and upload photos. Set the week label so orders are tagged correctly.</div></div></div>
-              <div class="gs-step"><div class="gs-step-num">2</div><div class="gs-step-body"><div class="gs-step-title">Set delivery drop dates</div><div class="gs-step-text">In the Drop Dates strip (Building Next slot), pick the Sunday and Wednesday delivery dates. These appear on the portal session headers (e.g. "Sunday 6th April") so customers know exactly when to expect their order.</div></div></div>
-              <div class="gs-step"><div class="gs-step-num">3</div><div class="gs-step-body"><div class="gs-step-title">Set a deadline (optional)</div><div class="gs-step-text">In the portal strip, click <strong>⚙ Deadline</strong> and enter a datetime. The portal auto-closes at that time and shows a countdown to customers.</div></div></div>
-              <div class="gs-step"><div class="gs-step-num">4</div><div class="gs-step-body"><div class="gs-step-title">Open the portal</div><div class="gs-step-text">Click <strong>Publish &amp; Open Portal</strong> in the portal strip (while on the Building Next tab). Status changes to 🟢 Open. As soon as Building Next has dishes, the portal already shows that menu — publishing just opens ordering.</div></div></div>
-              <div class="gs-step"><div class="gs-step-num">5</div><div class="gs-step-body"><div class="gs-step-title">Advance Week when current week is done</div><div class="gs-step-text">Once current-week orders are fulfilled, click <strong>⏭ Advance Week</strong>. The Building Next menu becomes Current, the portal closes for next-week ordering, and all next-week orders migrate to current so Production and Fulfillment pick them up.</div></div></div>
+              <div class="gs-step"><div class="gs-step-num">1</div><div class="gs-step-body"><div class="gs-step-title">Switch to Building Next and build the menu <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;▸ Do this Thursday, after Wednesday drop</span></div><div class="gs-step-text">Click the <strong>🔜 Building Next</strong> tab in Weekly Menu. Add all dishes for the coming week. For each dish: set S1 and S2 portion counts (how many you plan to cook), assign the Fuel Line (Fuel Plus or Fuel Lite), upload the dish photo, fill in the "Serves with" field (e.g. "Turmeric Rice, Chow Chow Slaw"), and toggle any attribute tags (High Protein, Vegan, etc.).<br><br><em>Example: It's Thursday 10 Apr. You've just completed this week's Wednesday drop. You switch to Building Next and add 6 dishes for the week of 14–20 Apr — Teriyaki Salmon, Tikka Bowl, and 4 others — each with a photo, serves description, and 25 S1 / 20 S2 portions.</em></div></div></div>
+              <div class="gs-step"><div class="gs-step-num">2</div><div class="gs-step-body"><div class="gs-step-title">Set the week label <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;▸ Do this at the same time as step 1</span></div><div class="gs-step-text">In the <strong>Week label</strong> field next to the slot tabs, type the week range (e.g. <code>14 Apr – 20 Apr</code>). This label tags every order placed that week so you can identify them in the Orders page and Weekly Archive. Without a label, the portal will not allow you to open ordering.<br><br><em>Example: You type "14 Apr – 20 Apr" in the week label field while on Building Next. All customer orders placed this week will be tagged with this label.</em></div></div></div>
+              <div class="gs-step"><div class="gs-step-num">3</div><div class="gs-step-body"><div class="gs-step-title">Set delivery drop dates <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;▸ Do this at the same time as step 1</span></div><div class="gs-step-text">In the Drop Dates strip below the slot tabs, pick the Sunday and Wednesday delivery dates. These dates appear on the customer portal session headers so customers know exactly when their order will arrive.<br><br><em>Example: You set Sunday = 14 Apr and Wednesday = 17 Apr. Customers on the portal see "Sunday 14th April" and "Wednesday 17th April" as their session choices, not just "Session 1 / Session 2."</em></div></div></div>
+              <div class="gs-step"><div class="gs-step-num">4</div><div class="gs-step-body"><div class="gs-step-title">Open the portal for orders <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;▸ Do this Friday evening</span></div><div class="gs-step-text">In the portal strip at the top of the page, click <strong>Open for Orders</strong>. Then click <strong>⚙ Deadlines</strong> and set a closing time for Sunday and Wednesday ordering (e.g. Saturday 20:00 for Sunday delivery, Tuesday 20:00 for Wednesday delivery). The portal auto-closes at that time and shows a countdown to customers. Status changes to 🟢 Open.<br><br><em>Example: It's Friday 11 Apr at 18:00. You click "Open for Orders" and set the Sunday deadline to Sat 12 Apr 20:00 and Wednesday deadline to Tue 15 Apr 20:00. Customers can now see and order next week's menu. The Sunday window closes automatically Saturday night.</em><br><br><strong>Note:</strong> As soon as you added a dish to Building Next in step 1, customers could already <em>see</em> the new menu on the portal. Opening for orders is what lets them place and pay — the two are separate.</div></div></div>
+              <div class="gs-step"><div class="gs-step-num">5</div><div class="gs-step-body"><div class="gs-step-title">Confirm incoming orders <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;▸ Do this Saturday, as orders come in</span></div><div class="gs-step-text">Go to the <strong>Orders</strong> page. New portal orders arrive with a 🟡 Pending badge. Review them and click <strong>✓ Confirm</strong> to accept, or use <strong>Bulk Confirm</strong> to accept all at once. Check the allocation bar at the top of the Orders page — if a dish shows more orders than planned portions, increase its S1 or S2 count in the Weekly Menu to cover demand.<br><br><em>Example: By Saturday 10:00, you have 38 confirmed orders. The allocation bar shows "Teriyaki Salmon: 22 ordered / 20 planned" — it's over. You go to Building Next → Teriyaki Salmon and bump S2 from 20 to 25 to give yourself headroom.</em></div></div></div>
+              <div class="gs-step"><div class="gs-step-num">6</div><div class="gs-step-body"><div class="gs-step-title">Advance Week <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;▸ Do this Thursday, after this Wednesday's drop</span></div><div class="gs-step-text">Once all orders for the current week are delivered and confirmed, click <strong>⏭ Advance Week</strong> (top-right of the Weekly Menu panel). This archives the current week, promotes Building Next to Current, migrates all portal orders into the current week view, and clears Building Next so you can start the cycle again.<br><br><em>Example: It's Thursday 17 Apr. Wednesday's drop is done — all 38 orders delivered. You click Advance Week. "14 Apr – 20 Apr" is now your Current Week, all its orders are visible in Fulfillment. Building Next is empty, ready for you to build "21 Apr – 27 Apr."</em></div></div></div>
             </div>
+            <div class="gs-callout red"><b>Before advancing:</b> Make sure all current-week orders are confirmed (not just pending). Ensure Building Next has a week label and at least one dish. Advance Week will block with an error if either condition isn't met.</div>
 
             <div class="gs-h2">How Orders Flow In</div>
             <table class="gs-table">
@@ -4634,90 +4677,208 @@ function renderDashboard() {
       ${k.delta}
     </div>`).join('');
 
-  // ── Revenue trend chart ───────────────────────────────────
-  // Show 'no archive data' notice inline when no history
-  const trendNotice = document.getElementById('dash-trend-notice');
-  if (!trendNotice && hist.length === 0) {
-    const chartBody = document.querySelector('#page-dashboard .dash-card-body');
-    if (chartBody) {
-      const notice = document.createElement('div');
-      notice.id = 'dash-trend-notice';
-      notice.style.cssText = 'text-align:center;padding:30px 16px;color:var(--text3);font-size:12px;';
-      notice.innerHTML = '<div style="font-size:28px;margin-bottom:8px">📅</div><div>Archive your first week to see the revenue trend chart.</div><div style="margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="showPage(\'menu\')">Go to Weekly Menu →</button></div>';
-      chartBody.appendChild(notice);
-    }
+  // ── Operational strip ─────────────────────────────────────
+  const opsStripEl = document.getElementById('dash-ops-strip');
+  if (opsStripEl) {
+    // Orders summary for current production slot
+    const prodSlot = getProductionSlot();
+    const prodWeek = getProductionWeekLabel();
+    const allOrders = (DB.weeklyOrders || []).filter(function(o) {
+      return o.slot ? (o.slot === prodSlot) : (prodWeek && o.week === prodWeek);
+    });
+    const pendingOrds  = allOrders.filter(function(o) { return getOrderStatus(o) === 'pending'; }).length;
+    const confirmedOrds = allOrders.filter(function(o) { return getOrderStatus(o) === 'confirmed' || getOrderStatus(o) === 'in_production'; }).length;
+    const packedOrds   = allOrders.filter(function(o) { return getOrderStatus(o) === 'packed' || getOrderStatus(o) === 'staged'; }).length;
+    const deliveredOrds = allOrders.filter(function(o) { return getOrderStatus(o) === 'delivered'; }).length;
+    const totalOrds    = allOrders.filter(function(o) { return getOrderStatus(o) !== 'cancelled'; }).length;
+
+    // Portal status
+    const portalStatus  = getPortalSessionStatus();
+    const portalOpen    = portalStatus.anyOpen;
+    const portalDotCol  = portalOpen ? '#30d158' : 'var(--text3)';
+    const portalLabel   = portalOpen
+      ? (portalStatus.s1.open && portalStatus.s2.open ? 'Sun & Wed open' : portalStatus.s1.open ? 'Sunday open' : 'Wednesday open')
+      : 'Ordering closed';
+
+    // Next week readiness
+    const hasNextDishes = (DB.nextMenuDishes || []).length > 0;
+    const hasNextLabel  = !!(DB.nextMenuWeekLabel || '').trim();
+    const hasNextDates  = !!(DB.nextDropDates && (DB.nextDropDates.sunday || DB.nextDropDates.wednesday));
+    const nextReady     = hasNextDishes && hasNextLabel && hasNextDates;
+    const nextScore     = (hasNextDishes ? 1 : 0) + (hasNextLabel ? 1 : 0) + (hasNextDates ? 1 : 0);
+    const nextColour    = nextReady ? '#30d158' : nextScore > 0 ? '#ff9f0a' : 'var(--text3)';
+    const nextMsg       = nextReady ? 'Ready to open ordering' :
+                          !hasNextDishes ? 'No dishes added yet' :
+                          !hasNextLabel  ? 'Week label missing' : 'Drop dates missing';
+    const nextChecks = [
+      { ok: hasNextDishes, label: 'Dishes added' },
+      { ok: hasNextLabel,  label: 'Week label set' },
+      { ok: hasNextDates,  label: 'Drop dates set' },
+    ];
+
+    opsStripEl.innerHTML =
+      // Card 1: Portal + orders
+      '<div class="dash-card" style="padding:12px 14px">' +
+        '<div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Customer Portal</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">' +
+          '<span style="width:7px;height:7px;border-radius:50%;background:' + portalDotCol + ';flex-shrink:0"></span>' +
+          '<span style="font-size:13px;font-weight:700;color:' + portalDotCol + '">' + portalLabel + '</span>' +
+        '</div>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' +
+          '<div style="font-size:10px;color:var(--text2)">S1 ' + (portalStatus.s1.open ? '<span style="color:#30d158">🟢</span>' : '<span style="color:var(--text3)">⚫</span>') + ' ' + portalStatus.s1.text + '</div>' +
+          '<div style="font-size:10px;color:var(--text2)">S2 ' + (portalStatus.s2.open ? '<span style="color:#30d158">🟢</span>' : '<span style="color:var(--text3)">⚫</span>') + ' ' + portalStatus.s2.text + '</div>' +
+        '</div>' +
+        '<button class="btn btn-sm ' + (portalOpen ? 'btn-ghost' : 'btn-gold') + '" onclick="togglePortal();renderDashboard()" style="width:100%;font-size:11px">' + (portalOpen ? '⚫ Close Portal' : '🟢 Open for Orders') + '</button>' +
+      '</div>' +
+
+      // Card 2: Orders this week
+      '<div class="dash-card" style="padding:12px 14px">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+          '<div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px">Orders This Week</div>' +
+          '<div style="font-size:18px;font-weight:700;color:var(--text)">' + totalOrds + '</div>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">' +
+          '<div style="background:rgba(255,159,10,.1);border:1px solid rgba(255,159,10,.25);border-radius:6px;padding:6px 8px;text-align:center">' +
+            '<div style="font-size:18px;font-weight:700;color:#ff9f0a">' + pendingOrds + '</div>' +
+            '<div style="font-family:var(--mono);font-size:9px;color:var(--text3)">Pending</div>' +
+          '</div>' +
+          '<div style="background:rgba(48,209,88,.08);border:1px solid rgba(48,209,88,.2);border-radius:6px;padding:6px 8px;text-align:center">' +
+            '<div style="font-size:18px;font-weight:700;color:#30d158">' + confirmedOrds + '</div>' +
+            '<div style="font-family:var(--mono);font-size:9px;color:var(--text3)">Confirmed</div>' +
+          '</div>' +
+          '<div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:6px;padding:6px 8px;text-align:center">' +
+            '<div style="font-size:18px;font-weight:700;color:#a78bfa">' + packedOrds + '</div>' +
+            '<div style="font-family:var(--mono);font-size:9px;color:var(--text3)">Packed</div>' +
+          '</div>' +
+          '<div style="background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);border-radius:6px;padding:6px 8px;text-align:center">' +
+            '<div style="font-size:18px;font-weight:700;color:#60a5fa">' + deliveredOrds + '</div>' +
+            '<div style="font-family:var(--mono);font-size:9px;color:var(--text3)">Delivered</div>' +
+          '</div>' +
+        '</div>' +
+        (pendingOrds > 0
+          ? '<button class="btn btn-sm btn-gold" onclick="showPage(\'orders\')" style="width:100%;font-size:11px">⚡ ' + pendingOrds + ' order' + (pendingOrds > 1 ? 's' : '') + ' need confirming →</button>'
+          : '<button class="btn btn-sm btn-ghost" onclick="showPage(\'orders\')" style="width:100%;font-size:11px">View All Orders →</button>') +
+      '</div>' +
+
+      // Card 3: Next week readiness
+      '<div class="dash-card" style="padding:12px 14px">' +
+        '<div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px">Next Week</div>' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">' +
+          '<span style="width:7px;height:7px;border-radius:50%;background:' + nextColour + ';flex-shrink:0"></span>' +
+          '<span style="font-size:12px;font-weight:600;color:' + nextColour + '">' + (hasNextLabel ? (DB.nextMenuWeekLabel || 'Next week') : 'Not started') + '</span>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">' +
+        nextChecks.map(function(c) {
+          return '<div style="display:flex;align-items:center;gap:6px;font-size:11px;color:' + (c.ok ? 'var(--text2)' : 'var(--text3)') + '">' +
+            '<span style="font-size:12px">' + (c.ok ? '✅' : '○') + '</span>' + c.label + '</div>';
+        }).join('') +
+        '</div>' +
+        (nextReady
+          ? '<button class="btn btn-sm btn-ghost" onclick="switchMenuSlot(\'next\');showPage(\'menu\')" style="width:100%;font-size:11px">View Building Next →</button>'
+          : '<button class="btn btn-sm btn-gold" onclick="switchMenuSlot(\'next\');showPage(\'menu\')" style="width:100%;font-size:11px">🔜 Set Up Next Week →</button>') +
+      '</div>';
   }
+
+  // ── Revenue trend chart ───────────────────────────────────
   const trendPoints = [...hist].slice(0,8).reverse().map(h => ({
     label: h.label.substring(0,8),
     rev:   n(h.totalRev),
     margin: n(h.gm) * 100,
-    net:   n(h.totalRev) * n(h.netMargin||0),
+    net:   n(h.totalRev) * n(h.netMargin || 0),
   }));
   // Add "This Week" as the last point
   trendPoints.push({ label: wLabel, rev: totalRev, margin: margin*100, net: netProfit, isLive: true });
 
+  // Compute y-axis bounds — never go negative, add 20% headroom above max
+  const maxRev = Math.max(...trendPoints.map(p => p.rev), 0);
+  const maxNet = Math.max(...trendPoints.map(p => p.net), 0);
+  const revAxisMax = maxRev > 0 ? Math.ceil((maxRev * 1.2) / 50) * 50 : 500; // round up to nearest £50
+
   if (dashTrendChart) { try { dashTrendChart.destroy(); } catch(e){} dashTrendChart = null; }
   const tCtx = document.getElementById('dash-trend-chart');
-  if (tCtx && trendPoints.length > 1) {
-    dashTrendChart = new Chart(tCtx, {
-      type: 'line',
-      data: {
-        labels: trendPoints.map(p => p.label),
-        datasets: [
-          {
-            label: 'Revenue £',
-            data: trendPoints.map(p => p.rev),
-            borderColor: '#C9A84C',
-            backgroundColor: 'rgba(201,168,76,.08)',
-            fill: true, tension: .35,
-            pointBackgroundColor: trendPoints.map(p => p.isLive ? '#fff' : '#C9A84C'),
-            pointRadius: trendPoints.map(p => p.isLive ? 5 : 3),
-            pointBorderWidth: trendPoints.map(p => p.isLive ? 2 : 1),
-            pointBorderColor: trendPoints.map(p => p.isLive ? '#C9A84C' : '#C9A84C'),
-            yAxisID: 'yRev',
-          },
-          {
-            label: 'Food Margin %',
-            data: trendPoints.map(p => +p.margin.toFixed(1)),
-            borderColor: '#22c55e',
-            backgroundColor: 'transparent',
-            fill: false, tension: .35,
-            pointBackgroundColor: trendPoints.map(p => p.isLive ? '#fff' : '#22c55e'),
-            pointRadius: trendPoints.map(p => p.isLive ? 5 : 3),
-            pointBorderWidth: trendPoints.map(p => p.isLive ? 2 : 1),
-            pointBorderColor: trendPoints.map(p => p.isLive ? '#22c55e' : '#22c55e'),
-            borderDash: [4,3],
-            yAxisID: 'yPct',
-          }
-        ]
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: { display: true, position: 'top', labels: { boxWidth: 10, padding: 12, font: { size: 9, family: 'monospace' }, color: '#9ca3af' } },
-          tooltip: { backgroundColor: '#1e2028', borderColor: '#333', borderWidth: 1, titleFont: { size: 10 }, bodyFont: { size: 10 } }
+  if (tCtx) {
+    if (trendPoints.length > 1 && (hist.length > 0 || totalRev > 0)) {
+      dashTrendChart = new Chart(tCtx, {
+        type: 'line',
+        data: {
+          labels: trendPoints.map(p => p.label),
+          datasets: [
+            {
+              label: 'Revenue £',
+              data: trendPoints.map(p => p.rev),
+              borderColor: '#C9A84C',
+              backgroundColor: 'rgba(201,168,76,.08)',
+              fill: true, tension: .35,
+              pointBackgroundColor: trendPoints.map(p => p.isLive ? '#fff' : '#C9A84C'),
+              pointRadius: trendPoints.map(p => p.isLive ? 5 : 3),
+              pointBorderWidth: trendPoints.map(p => p.isLive ? 2 : 1),
+              pointBorderColor: '#C9A84C',
+              yAxisID: 'yRev',
+            },
+            {
+              label: 'Net Profit £',
+              data: trendPoints.map(p => +p.net.toFixed(0)),
+              borderColor: '#a78bfa',
+              backgroundColor: 'transparent',
+              fill: false, tension: .35,
+              pointBackgroundColor: trendPoints.map(p => p.isLive ? '#fff' : '#a78bfa'),
+              pointRadius: trendPoints.map(p => p.isLive ? 5 : 3),
+              pointBorderWidth: trendPoints.map(p => p.isLive ? 2 : 1),
+              pointBorderColor: '#a78bfa',
+              borderDash: [3,3],
+              yAxisID: 'yRev',
+            },
+            {
+              label: 'Food Margin %',
+              data: trendPoints.map(p => +p.margin.toFixed(1)),
+              borderColor: '#22c55e',
+              backgroundColor: 'transparent',
+              fill: false, tension: .35,
+              pointBackgroundColor: trendPoints.map(p => p.isLive ? '#fff' : '#22c55e'),
+              pointRadius: trendPoints.map(p => p.isLive ? 5 : 3),
+              pointBorderWidth: trendPoints.map(p => p.isLive ? 2 : 1),
+              pointBorderColor: '#22c55e',
+              borderDash: [4,3],
+              yAxisID: 'yPct',
+            }
+          ]
         },
-        scales: {
-          x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { font: { size: 8, family: 'monospace' }, color: '#555' } },
-          yRev: {
-            type: 'linear', position: 'left', grid: { color: 'rgba(255,255,255,.04)' },
-            ticks: { callback: v => '£'+v, font: { size: 8, family: 'monospace' }, color: '#C9A84C' }
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: true, position: 'top', labels: { boxWidth: 10, padding: 12, font: { size: 9, family: 'monospace' }, color: '#9ca3af' } },
+            tooltip: {
+              backgroundColor: '#1e2028', borderColor: '#333', borderWidth: 1,
+              titleFont: { size: 10 }, bodyFont: { size: 10 },
+              callbacks: {
+                label: function(ctx) {
+                  if (ctx.dataset.yAxisID === 'yPct') return ctx.dataset.label + ': ' + ctx.parsed.y + '%';
+                  return ctx.dataset.label + ': £' + ctx.parsed.y;
+                }
+              }
+            }
           },
-          yPct: {
-            type: 'linear', position: 'right', grid: { drawOnChartArea: false },
-            ticks: { callback: v => v+'%', font: { size: 8, family: 'monospace' }, color: '#22c55e' },
-            min: 0, max: 100
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,.04)' }, ticks: { font: { size: 8, family: 'monospace' }, color: '#555' } },
+            yRev: {
+              type: 'linear', position: 'left', grid: { color: 'rgba(255,255,255,.04)' },
+              min: 0, suggestedMax: revAxisMax,
+              ticks: { callback: function(v) { return '£'+v; }, font: { size: 8, family: 'monospace' }, color: '#C9A84C', maxTicksLimit: 5 }
+            },
+            yPct: {
+              type: 'linear', position: 'right', grid: { drawOnChartArea: false },
+              ticks: { callback: function(v) { return v+'%'; }, font: { size: 8, family: 'monospace' }, color: '#22c55e', maxTicksLimit: 5 },
+              min: 0, max: 100
+            }
           }
         }
-      }
-    });
-  } else if (tCtx) {
-    const ctx2 = tCtx.getContext('2d');
-    ctx2.fillStyle = '#444';
-    ctx2.font = '11px monospace';
-    ctx2.textAlign = 'center';
-    ctx2.fillText('Archive at least 1 week to see trend', tCtx.width/2, tCtx.height/2);
+      });
+    } else {
+      // No data yet — show empty state inside canvas container
+      const parent = tCtx.parentElement;
+      if (parent) parent.innerHTML = '<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text3);font-size:12px;gap:8px"><div style="font-size:28px">📅</div><div>Archive your first week to see the trend chart.</div><button class="btn btn-ghost btn-sm" onclick="showPage(\'menu\')">Go to Weekly Menu →</button></div>';
+    }
   }
 
   // ── P&L waterfall ─────────────────────────────────────────
@@ -4757,6 +4918,20 @@ function renderDashboard() {
   // ── Dish performance table ────────────────────────────────
   document.getElementById('dash-dish-count').textContent = dishes.length ? dishes.length + (dishes.length===1?' dish':' dishes') : '';
   const totalRevCheck = totalRev || 1;
+  // Tally confirmed+ orders per dish for the production slot
+  const prodSlotForTable = getProductionSlot();
+  const prodWeekForTable = getProductionWeekLabel();
+  const confirmedOrdersForTable = (DB.weeklyOrders || []).filter(function(o) {
+    var inSlot = o.slot ? (o.slot === prodSlotForTable) : (prodWeekForTable && o.week === prodWeekForTable);
+    return inSlot && getOrderStatus(o) !== 'cancelled' && getOrderStatus(o) !== 'pending';
+  });
+  var ordersPerDish = {};
+  confirmedOrdersForTable.forEach(function(o) {
+    Object.keys(o.allocation || {}).forEach(function(dId) {
+      ordersPerDish[dId] = (ordersPerDish[dId] || 0) + (o.allocation[dId] || 0);
+    });
+  });
+
   document.getElementById('dash-dish-table').innerHTML = dishes.length ? dishes
     .map(d => {
       const t     = calcDishTotals(d);
@@ -4765,12 +4940,18 @@ function renderDashboard() {
       const dm    = t.sell > 0 ? (t.sell - (t.cost + dishFixed)) / t.sell : 0;
       const cls   = dm >= 0.5 ? 'g' : dm >= 0.35 ? 'a' : 'r';
       const revShare = t.sell * ports / totalRevCheck;
-      return { d, t, ports, dm, cls, revShare };
+      const ordered  = ordersPerDish[d.id] || 0;
+      const overSub  = ordered > 0 && ports > 0 && ordered > ports;
+      return { d, t, ports, dm, cls, revShare, ordered, overSub };
     })
     .sort((a,b) => b.revShare - a.revShare)
-    .map(({d, t, ports, dm, cls, revShare}) => {
+    .map(({d, t, ports, dm, cls, revShare, ordered, overSub}) => {
       const barW = Math.max(revShare * 100, 2).toFixed(0);
-      return `<div class="dash-dish-row">
+      const ordLabel = ordered > 0 ? (overSub
+        ? `<span style="color:#ff453a;font-weight:700">${ordered}/${ports} ⚠</span>`
+        : `<span style="color:#30d158">${ordered}/${ports}</span>`)
+        : `<span style="color:var(--text3)">${ports > 0 ? '0/'+ports : '—'}</span>`;
+      return `<div class="dash-dish-row" style="grid-template-columns:1fr auto auto auto auto auto">
         <div>
           <div style="font-weight:600;font-size:12px">${d.name}</div>
           <div style="height:3px;background:var(--surface3);border-radius:2px;margin-top:4px;width:100%">
@@ -4780,6 +4961,7 @@ function renderDashboard() {
         <div style="font-family:var(--mono);font-size:11px;color:var(--text2);text-align:right">£${t.cost.toFixed(2)}</div>
         <div style="font-family:var(--mono);font-size:11px;text-align:right">£${t.sell.toFixed(2)}</div>
         <div class="dash-margin-pill ${cls}">${pct(dm)}</div>
+        <div style="font-family:var(--mono);font-size:11px;text-align:right">${ordLabel}</div>
         <div style="font-family:var(--mono);font-size:11px;color:var(--text3);text-align:right">${(revShare*100).toFixed(0)}%</div>
       </div>`;
     }).join('') : `<div class="muted small" style="padding:16px">No dishes yet</div>`;
@@ -6095,6 +6277,31 @@ function renderMenu(){
   if (sunInput) sunInput.value = dd.sunday || '';
   if (wedInput) wedInput.value = dd.wednesday || '';
   updateDropDateDeadlineDisplay();
+
+  // Slot context banner
+  var bannerEl = document.getElementById('menu-slot-banner');
+  if (bannerEl) {
+    var hasNext = !!(DB.nextMenuDishes && DB.nextMenuDishes.length > 0);
+    if (menuActiveSlot === 'next') {
+      var portalState = hasNext
+        ? '<span style="color:#30d158">🟢 Portal is already showing this week\'s menu (dishes are live to browse)</span>'
+        : '<span style="color:var(--gold)">⚠ Portal will switch to this menu as soon as you add the first dish</span>';
+      bannerEl.innerHTML = '<div style="background:rgba(10,132,255,.08);border:1px solid rgba(10,132,255,.25);border-radius:7px;padding:9px 12px;font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.6">'
+        + '<strong style="color:#0a84ff;text-transform:uppercase;font-size:9px;letter-spacing:.8px">🔜 Building Next Week</strong><br>'
+        + 'Upload photos, set "Serves with", and configure tags <strong>here</strong> — this is the slot the portal reads. ' + portalState + '.<br>'
+        + '<span style="color:var(--text3)">When ready: open ordering via the portal strip above. When current week is done: hit ⏭ Advance Week.</span>'
+        + '</div>';
+    } else {
+      var currentMsg = hasNext
+        ? '<span style="color:var(--gold)">⚠ Portal is showing <strong>Building Next</strong> dishes — edits here are not portal-visible</span>'
+        : '<span style="color:#30d158">🟢 Portal is reading from this slot — photos and "Serves with" set here go live on the portal</span>';
+      bannerEl.innerHTML = '<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.6">'
+        + '<strong style="color:var(--text3);text-transform:uppercase;font-size:9px;letter-spacing:.8px">📦 Current Week — Production</strong><br>'
+        + 'Manage portions, confirm orders, and run the kitchen. ' + currentMsg + '.'
+        + '</div>';
+    }
+  }
+
   const slotDishes = getSlotDishes();
   const dishes=slotDishes.filter(d=>!menuSearchFilter||d.name.toLowerCase().includes(menuSearchFilter.toLowerCase()));
   document.getElementById('menu-count').textContent=slotDishes.length+' dish'+(slotDishes.length!==1?'es':'');
@@ -6201,6 +6408,19 @@ function renderMenu(){
 
           <div class="menu-section-sep"></div>
           <div class="menu-card-section-label">Portal</div>
+          ${(function(){
+            var hasNext = DB.nextMenuDishes && DB.nextMenuDishes.length > 0;
+            var portalSlot = hasNext ? 'Building Next' : 'Current Week';
+            var isThisSlot = (hasNext && menuActiveSlot === 'next') || (!hasNext && menuActiveSlot === 'current');
+            if (!isThisSlot) {
+              return '<div style="background:rgba(255,69,58,.1);border:1px solid rgba(255,69,58,.4);border-radius:6px;padding:6px 8px;margin-bottom:8px;font-family:var(--mono);font-size:9px;color:#ff453a;line-height:1.4">' +
+                '⚠ Portal is reading from <strong>' + portalSlot + '</strong> dishes.<br>' +
+                'Photos &amp; "Serves with" set here won\'t show on the portal.<br>' +
+                '<span style="color:var(--text2)">Switch to the <strong>' + portalSlot + '</strong> tab to edit portal-visible dishes.</span>' +
+                '</div>';
+            }
+            return '<div style="background:rgba(48,209,88,.08);border:1px solid rgba(48,209,88,.25);border-radius:6px;padding:5px 8px;margin-bottom:8px;font-family:var(--mono);font-size:9px;color:#30d158">✓ Portal reads from this slot — edits here go live</div>';
+          })()}
           <div class="box-type-row" style="margin-bottom:6px">
             <button class="box-type-btn ${!dish.fuelLine||dish.fuelLine==='Fuel Plus'?'active':''}" onclick="ud(${realIdx},'fuelLine','Fuel Plus')">⚡ Fuel Plus</button>
             <button class="box-type-btn ${dish.fuelLine==='Fuel Lite'?'active':''}" onclick="ud(${realIdx},'fuelLine','Fuel Lite')">✦ Fuel Lite</button>
@@ -9205,6 +9425,7 @@ function loadFromFirebase(callback) {
     if (remote) {
       delete remote._ts;
       Object.assign(DB, remote);
+      migrateData(); // backfill any fields added since this data was last saved
       callback(true);
     } else {
       callback(false);
@@ -9227,6 +9448,13 @@ function migrateData() {
   (DB.weeklyOrders || []).forEach(function(o) {
     if (o.session === 'S1') o.session = 'Sunday';
     else if (o.session === 'S2') o.session = 'Wednesday';
+  });
+  // Backfill serves/tags fields onto dishes created before these fields were added
+  var allDishes = (DB.menuDishes || []).concat(DB.nextMenuDishes || []);
+  allDishes.forEach(function(d) {
+    if (d.serves === undefined) d.serves = '';
+    if (!Array.isArray(d.tags)) d.tags = [];
+    if (!d.photoUrl) d.photoUrl = '';
   });
 }
 
