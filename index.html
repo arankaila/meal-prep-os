@@ -677,6 +677,16 @@ tr:hover .inv-row-actions{opacity:1;}
 /* WEEKLY MENU CARDS */
 .menu-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s,box-shadow .2s;}
 .menu-card:hover{border-color:var(--border2);box-shadow:0 3px 16px rgba(0,0,0,.25);}
+.menu-card[data-fuel="Fuel Plus"]{border-left:3px solid rgba(251,191,36,.45);}
+.menu-card[data-fuel="Fuel Lite"]{border-left:3px solid rgba(74,222,128,.4);}
+.menu-stat-chip.c-kcal{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.2);}
+.menu-stat-chip.c-kcal .menu-stat-val{color:#fb923c;}
+.menu-stat-chip.c-prot{background:rgba(96,165,250,.1);border-color:rgba(96,165,250,.2);}
+.menu-stat-chip.c-prot .menu-stat-val{color:#60a5fa;}
+.menu-stat-chip.c-carb{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.2);}
+.menu-stat-chip.c-carb .menu-stat-val{color:var(--gold);}
+.menu-stat-chip.c-fat{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.2);}
+.menu-stat-chip.c-fat .menu-stat-val{color:#a78bfa;}
 .menu-card-header{padding:12px 16px 10px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
 .menu-card-num{width:24px;height:24px;border-radius:6px;background:rgba(201,168,76,.15);color:var(--gold);font-family:var(--mono);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(201,168,76,.25);}
 .menu-card-name-input{background:transparent;border:none;color:var(--text);font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:-.2px;flex:1;min-width:0;cursor:text;outline:none;}
@@ -688,6 +698,25 @@ tr:hover .inv-row-actions{opacity:1;}
 .menu-comp-row:last-child{border-bottom:none;}
 .menu-comp-type{font-family:var(--mono);font-size:7px;width:14px;text-align:center;opacity:.7;}
 .menu-section-sep{height:1px;background:var(--border);margin:10px 0;}
+.tag-chip{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:9px;padding:4px 9px;border-radius:5px;cursor:pointer;letter-spacing:.3px;background:var(--surface3);color:var(--text3);border:1px solid var(--border);transition:background .15s,color .15s,border-color .15s;white-space:nowrap;line-height:1.2;}
+.tag-chip:hover{border-color:var(--border2);color:var(--text2);}
+.tag-chip.active{background:rgba(201,168,76,.15);color:var(--gold);border-color:rgba(201,168,76,.4);}
+.tag-chip.active:hover{background:rgba(201,168,76,.22);}
+.tag-chip.custom{background:rgba(59,130,246,.1);color:#93c5fd;border-color:rgba(59,130,246,.3);}
+.tag-chip-remove{background:none;border:none;color:inherit;cursor:pointer;font-size:11px;padding:0 0 0 2px;opacity:.6;line-height:1;flex-shrink:0;}
+.tag-chip-remove:hover{opacity:1;}
+.tag-add-row{display:flex;gap:4px;margin-top:6px;}
+.tag-add-input{flex:1;padding:4px 8px;font-size:10px;font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text);outline:none;}
+.tag-add-input:focus{border-color:rgba(201,168,76,.5);}
+.tag-add-input::placeholder{color:var(--text3);}
+.tag-add-btn{padding:4px 10px;font-size:10px;font-family:var(--mono);background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text2);cursor:pointer;white-space:nowrap;}
+.tag-add-btn:hover{border-color:var(--border2);color:var(--text);}
+.photo-row-clean{display:flex;align-items:center;gap:8px;margin-top:4px;}
+.photo-thumb-clean{width:36px;height:36px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0;}
+.photo-placeholder-clean{width:36px;height:36px;border-radius:5px;background:var(--surface3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.portal-slot-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:4px;margin-bottom:6px;}
+.portal-slot-live{background:rgba(48,209,88,.1);color:#30d158;border:1px solid rgba(48,209,88,.25);}
+.portal-slot-off{background:rgba(255,69,58,.1);color:#ff453a;border:1px solid rgba(255,69,58,.3);}
 .menu-comp-select{flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:10px;padding:3px 6px;font-family:var(--sans);min-width:0;outline:none;cursor:pointer;}
 .menu-comp-select:focus{border-color:var(--gold);}
 .menu-scale-input{width:44px;background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text2);font-family:var(--mono);font-size:10px;padding:3px 5px;text-align:center;outline:none;}
@@ -1411,6 +1440,15 @@ select.route-confirm-input option { background:var(--surface2); }
 /* Storage + reheat */
 .label-card .lc-storage { font-size:7.5px; color:var(--text3); margin-top:3px; line-height:1.4; }
 .label-card .lc-reheat  { font-size:7.5px; color:var(--text3); margin-top:2px; line-height:1.4; border-top:1px solid var(--border); padding-top:3px; }
+.label-card.lc-athlete { border-color:rgba(251,146,60,.45); border-left:3px solid rgba(251,146,60,.65); }
+.label-card .lc-athlete-banner { font-family:var(--mono); font-size:7px; font-weight:700; color:#fb923c; letter-spacing:1px; text-transform:uppercase; padding:2px 0 5px; display:flex; align-items:center; gap:5px; border-bottom:1px solid rgba(251,146,60,.2); margin-bottom:5px; }
+.label-print-bar.lb-athlete { background:rgba(251,146,60,.06); border-color:rgba(251,146,60,.3); }
+.labels-summary-bar { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px 16px; margin-bottom:18px; }
+.lsumm-chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; }
+.lsumm-chip { display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10px; padding:3px 10px; border-radius:5px; background:var(--surface3); border:1px solid var(--border); color:var(--text2); }
+.lsumm-chip strong { color:var(--text); }
+.lsumm-chip.lsumm-athlete { background:rgba(251,146,60,.1); border-color:rgba(251,146,60,.3); color:#fb923c; }
+.lsumm-chip.lsumm-athlete strong { color:#fb923c; }
 
 /* Print overrides */
 @media print {
@@ -1523,6 +1561,7 @@ select.route-confirm-input option { background:var(--surface2); }
     <div class="nav-section">
       <div class="nav-label">Finance</div>
       <div class="nav-item" onclick="showPage('coststack')"><span class="icon">💰</span>Cost Stack</div>
+      <div class="nav-item" onclick="showPage('discounts')"><span class="icon">🏷️</span>Discount Codes</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Analytics</div>
@@ -1837,8 +1876,18 @@ select.route-confirm-input option { background:var(--surface2); }
     <!-- PACKAGING -->
     <div class="page" id="page-packsheet">
       <div class="section-header">
-        <div><div class="section-title">Packaging</div><div class="section-sub">Exactly what goes in each box · Kitchen staff guide</div></div>
+        <div><div class="section-title">Packaging</div><div class="section-sub">Pack sheet · Label printing · Kitchen staff guide</div></div>
         <div class="flex gap-8 items-center no-print">
+          <div class="tabs" style="margin-bottom:0" id="pack-view-tabs">
+            <div class="tab active" onclick="setPackView('sheet',this)">📦 Pack Sheet</div>
+            <div class="tab" onclick="setPackView('labels',this)">🏷 Print Labels</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PACK SHEET VIEW -->
+      <div id="pack-sheet-view">
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:12px" class="no-print">
           <div class="tabs" style="margin-bottom:0" id="pack-session-tabs">
             <div class="tab active" onclick="setPackSession('all',this)">All</div>
             <div class="tab" onclick="setPackSession('sunday',this)">Sunday</div>
@@ -1846,9 +1895,44 @@ select.route-confirm-input option { background:var(--surface2); }
           </div>
           <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Print</button>
         </div>
+        <div class="print-header"><h1>29 Performance · Packaging</h1><p id="print-date"></p></div>
+        <div id="pack-content" class="pack-grid"></div>
       </div>
-      <div class="print-header"><h1>29 Performance · Packaging</h1><p id="print-date"></p></div>
-      <div id="pack-content" class="pack-grid"></div>
+
+      <!-- LABELS VIEW -->
+      <div id="pack-labels-view" style="display:none">
+        <div class="no-print label-controls">
+          <!-- Row 1: session + name toggle + print -->
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">SESSION:</span>
+            <button class="del-filter-btn active" onclick="setLabelSession(this,'all')">All</button>
+            <button class="del-filter-btn" onclick="setLabelSession(this,'Sunday')">Sunday Only</button>
+            <button class="del-filter-btn" onclick="setLabelSession(this,'Wednesday')">Wednesday Only</button>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;margin-left:6px;padding:4px 10px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2)">
+              <input type="checkbox" id="lbl-show-name" onchange="renderLabels()" style="width:13px;height:13px;cursor:pointer;accent-color:var(--gold)">
+              Show name on label
+            </label>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="renderLabels()">&#x27F3; Refresh</button>
+            <button class="btn btn-gold btn-sm" onclick="printDymoLabels()">&#x1F5A8; Print All — Dymo</button>
+          </div>
+          <!-- Row 2: use-by + storage -->
+          <div class="label-ctrl-row">
+            <div class="label-ctrl-group">
+              <label class="form-label">Use-By Date</label>
+              <input id="lbl-useby" class="form-input" type="text" placeholder="e.g. 05/03/2026" style="width:140px;font-size:11px;font-family:var(--mono)" oninput="renderLabels()">
+            </div>
+            <div class="label-ctrl-group" style="flex:1">
+              <label class="form-label">Storage Instructions <span style="color:var(--text3);font-weight:400">(editable)</span></label>
+              <input id="lbl-storage" class="form-input" type="text" value="Storage: Refrigerate and chill below 5 °C" style="font-size:11px;width:100%" oninput="renderLabels()">
+            </div>
+          </div>
+          <div class="label-ctrl-group" style="margin-top:8px">
+            <label class="form-label">Reheating Instructions <span style="color:var(--text3);font-weight:400">(editable)</span></label>
+            <textarea id="lbl-reheat" class="form-input" rows="2" style="font-size:11px;width:100%;resize:vertical" oninput="renderLabels()">Reheating: Remove sleeve and any condiment pot(s). Place the food container in the microwave on full power for 3–4 minutes (depending on wattage). Stir at midpoint. Let stand for 1 minute and enjoy.</textarea>
+          </div>
+        </div>
+        <div id="labels-body"></div>
+      </div>
     </div>
 
     <!-- PRODUCTION -->
@@ -2102,6 +2186,21 @@ select.route-confirm-input option { background:var(--surface2); }
       </div>
     </div>
 
+    <!-- DISCOUNT CODES -->
+    <div class="page" id="page-discounts">
+      <div class="section-header">
+        <div><div class="section-title">Discount Codes</div><div class="section-sub">Promotional codes · Usage tracking · Live on the order portal</div></div>
+        <button class="btn btn-gold" onclick="openDiscountModal()">+ New Code</button>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All Codes</div>
+          <div class="card-sub">Codes are validated in real-time on the customer portal</div>
+        </div>
+        <div id="discounts-list" style="padding:14px 16px"></div>
+      </div>
+    </div>
+
     <!-- COST STACK -->
     <div class="page" id="page-coststack">
       <div class="print-header"><h1>29 Performance · Cost Stack</h1><p id="print-date-cost"></p></div>
@@ -2242,7 +2341,6 @@ select.route-confirm-input option { background:var(--surface2); }
       <div class="del-tabs no-print">
         <button class="del-tab active" id="del-tab-customers" onclick="showDeliveryTab('customers')">&#x1F465; Customer Database</button>
         <button class="del-tab" id="del-tab-route" onclick="showDeliveryTab('route')">&#x1F68C; Route Sheet</button>
-        <button class="del-tab" id="del-tab-labels" onclick="showDeliveryTab('labels')">&#x1F3F7; Print Labels</button>
       </div>
 
       <!-- CUSTOMERS TAB -->
@@ -2288,40 +2386,6 @@ select.route-confirm-input option { background:var(--surface2); }
         <div id="route-sheet-body"></div>
       </div>
 
-      <!-- LABELS TAB -->
-      <div class="del-panel" id="del-panel-labels">
-        <div class="no-print label-controls">
-          <!-- Row 1: session + name toggle + print -->
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-            <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">SESSION:</span>
-            <button class="del-filter-btn active" onclick="setLabelSession(this,'all')">All</button>
-            <button class="del-filter-btn" onclick="setLabelSession(this,'Sunday')">Sunday Only</button>
-            <button class="del-filter-btn" onclick="setLabelSession(this,'Wednesday')">Wednesday Only</button>
-            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;margin-left:6px;padding:4px 10px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2)">
-              <input type="checkbox" id="lbl-show-name" onchange="renderLabels()" style="width:13px;height:13px;cursor:pointer;accent-color:var(--gold)">
-              Show name on label
-            </label>
-            <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="renderLabels()">&#x27F3; Refresh</button>
-            <button class="btn btn-gold btn-sm" onclick="printDymoLabels()">&#x1F5A8; Print All — Dymo</button>
-          </div>
-          <!-- Row 2: use-by + reheat edit -->
-          <div class="label-ctrl-row">
-            <div class="label-ctrl-group">
-              <label class="form-label">Use-By Date</label>
-              <input id="lbl-useby" class="form-input" type="text" placeholder="e.g. 05/03/2026" style="width:140px;font-size:11px;font-family:var(--mono)" oninput="renderLabels()">
-            </div>
-            <div class="label-ctrl-group" style="flex:1">
-              <label class="form-label">Storage Instructions <span style="color:var(--text3);font-weight:400">(editable)</span></label>
-              <input id="lbl-storage" class="form-input" type="text" value="Storage: Refrigerate and chill below 5 °C" style="font-size:11px;width:100%" oninput="renderLabels()">
-            </div>
-          </div>
-          <div class="label-ctrl-group" style="margin-top:8px">
-            <label class="form-label">Reheating Instructions <span style="color:var(--text3);font-weight:400">(editable)</span></label>
-            <textarea id="lbl-reheat" class="form-input" rows="2" style="font-size:11px;width:100%;resize:vertical" oninput="renderLabels()">Reheating: Remove sleeve and any condiment pot(s). Place the food container in the microwave on full power for 3–4 minutes (depending on wattage). Stir at midpoint. Let stand for 1 minute and enjoy.</textarea>
-          </div>
-        </div>
-        <div id="labels-body"></div>
-      </div>
 
     </div><!-- /page-delivery -->
 
@@ -4532,6 +4596,7 @@ const PAGE_CFG = {
   purchasing:{title:'Purchasing',sub:'Supplier-sorted · PAR from Inventory · Print-friendly'},
   labour:{title:'Labour Planner',sub:'Staff roster · Shift scheduling · Weekly labour costs'},
   athletes:{title:'Athletes',sub:'Manage athlete roster for variant dishes'},
+  discounts:{title:'Discount Codes',sub:'Promotional codes · Usage tracking · Portal integration'},
   coststack:{title:'Cost Stack',sub:'Full editable cost build-up · Custom cost lines · Live margin'},
   history:{title:'Weekly Archive',sub:'Menu + Labour · Consolidated P&L · Trend analysis'},
   orders:{title:'Orders',sub:'Incoming customer orders · Review · Confirm · Athlete variants'},
@@ -4570,6 +4635,7 @@ function showPage(id) {
     coststack: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-gold" onclick="addCostItem()">+ Add Cost Item</button></div>`,
     labour: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-ghost btn-sm" onclick="renderLabour()">⟳ Refresh</button><button class="btn btn-ghost btn-sm" onclick="quickArchive()">💾 Archive Week</button><button class="btn btn-gold" onclick="openLabourModal()">+ Add Staff</button></div>`,
     athletes: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="renderAthletes()">⟳ Refresh</button><button class="btn btn-gold" onclick="openAthleteModal()">+ Add Athlete</button></div>`,
+    discounts: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="renderDiscounts()">⟳ Refresh</button><button class="btn btn-gold" onclick="openDiscountModal()">+ New Code</button></div>`,
     history: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-gold" onclick="quickArchive()">💾 Archive Week</button></div>`,
     fulfillment: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="renderFulfillmentStation()">⟳ Refresh</button><button class="btn btn-ghost btn-sm" onclick="downloadAllPackedLabels()">🖨 All Labels</button><button class="btn btn-gold" onclick="packAllSafe()">✓ Pack All Safe</button></div>`,
   };
@@ -4581,6 +4647,7 @@ function showPage(id) {
     production: renderProduction, purchasing: renderPurchasing, coststack: renderCostStack,
     history: renderHistory, guide: ()=>{ showGuideSection('gs-start'); }, labour: renderLabour,
     athletes: renderAthletes,
+    discounts: renderDiscounts,
     inventory: renderInventory,
     orders: renderOrdersPanel,
     delivery: renderDelivery,
@@ -6007,6 +6074,13 @@ function setMenuSession(v, el) {
   el.classList.add('active');
   renderMenu();
 }
+function setPackView(view, el) {
+  document.querySelectorAll('#pack-view-tabs .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('pack-sheet-view').style.display  = view === 'sheet'  ? '' : 'none';
+  document.getElementById('pack-labels-view').style.display = view === 'labels' ? '' : 'none';
+  if (view === 'labels') renderLabels();
+}
 function setPackSession(v, el) {
   packSessionFilter = v;
   document.querySelectorAll('#pack-session-tabs .tab').forEach(t => t.classList.remove('active'));
@@ -6334,7 +6408,9 @@ function renderMenu(){
         ${slot!=='condiment'&&slot!=='complete'?`<input class="menu-scale-input" type="number" value="${n(dish['scale'+slot.charAt(0).toUpperCase()+slot.slice(1)])||1}" step="0.05" min="0.1" title="${type} scale" onchange="ud(${realIdx},'scale${slot.charAt(0).toUpperCase()+slot.slice(1)}',this.value)">` : `<span style="width:44px"></span>`}
       </div>`).join('');
 
-    return `<div class="menu-card" id="menu-card-${realIdx}">
+    const athleteHtml = renderAthleteSection(dish, realIdx);
+    const hasAthleteVariant = !!dish.athleteVariant;
+    return `<div class="menu-card" id="menu-card-${realIdx}" data-fuel="${dish.fuelLine||'Fuel Plus'}">
       <div class="menu-card-header">
         <div class="menu-card-num">${realIdx+1}</div>
         <input class="menu-card-name-input" value="${dish.name}" onchange="ud(${realIdx},'name',this.value)" spellcheck="false">
@@ -6345,35 +6421,40 @@ function renderMenu(){
       </div>
       <div class="menu-card-body">
 
-        <!-- LEFT COL: Components -->
+        <!-- LEFT COL: Recipe + Serves With + Photo -->
         <div class="menu-card-section">
-          <div class="menu-card-section-label">Components</div>
+          <div class="menu-card-section-label" style="letter-spacing:.5px">🧩 Recipe</div>
           ${compRows}
           <div class="menu-overall-row">
             <span class="menu-overall-label">Overall ×</span>
             <input class="menu-scale-input" type="number" value="${n(dish.scaleOverall)||1}" step="0.05" min="0.1" title="Overall scale" onchange="ud(${realIdx},'scaleOverall',this.value)">
           </div>
-        </div>
-
-        <!-- RIGHT COL: Packaging + Sessions + Nutrition + Portal + Athletes -->
-        <div class="menu-card-section">
-
-          <div class="menu-card-section-label">Packaging</div>
-          <div class="box-type-row">
-            <button class="box-type-btn ${(!dish.boxType||dish.boxType==='3-compartment')?'active':''}" onclick="ud(${realIdx},'boxType','3-compartment')" title="3-compartment box">▣ 3-Comp</button>
-            <button class="box-type-btn ${dish.boxType==='single'?'active':''}" onclick="ud(${realIdx},'boxType','single')" title="Single compartment box">☐ Single</button>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 8px">
-            <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">Condiment tubs</span>
-            <div class="tub-counter">
-              <button class="tub-btn" onclick="adjTubs(${realIdx},-1)">−</button>
-              <div class="tub-count">${n(dish.condimentTubs)||0}</div>
-              <button class="tub-btn" onclick="adjTubs(${realIdx},+1)">+</button>
-            </div>
-          </div>
 
           <div class="menu-section-sep"></div>
-          <div class="menu-card-section-label">Sessions</div>
+          <div class="menu-card-section-label" style="letter-spacing:.5px">🥗 Serves With</div>
+          <input class="menu-comp-select" style="font-size:11px" type="text" placeholder="e.g. Turmeric Rice, Chow Chow Salad" value="${(dish.serves||'').replace(/"/g,'&quot;')}" onchange="ud(${realIdx},'serves',this.value.trim())" spellcheck="false">
+
+          <div class="menu-section-sep"></div>
+          <div class="menu-card-section-label" style="letter-spacing:.5px">📷 Photo</div>
+          <div class="photo-row-clean">
+            ${dish.photoUrl
+              ? `<img class="photo-thumb-clean" src="${(dish.photoUrl||'').replace(/"/g,'&quot;')}" alt="dish photo">`
+              : `<div class="photo-placeholder-clean">📷</div>`}
+            <div style="flex:1;min-width:0">
+              <input class="menu-comp-select" style="font-size:10px;display:none" type="url" placeholder="Photo URL" id="photo-url-${realIdx}" value="${(dish.photoUrl||'').replace(/"/g,'&quot;')}" onchange="ud(${realIdx},'photoUrl',this.value.trim())" spellcheck="false">
+              <div style="display:flex;gap:4px;align-items:center">
+                <button class="photo-upload-btn" id="photo-btn-${realIdx}" onclick="triggerPhotoUpload(${realIdx})" title="Upload photo">↑ Upload</button>
+                <button class="btn btn-ghost" style="font-size:9px;padding:3px 7px" onclick="document.getElementById('photo-url-${realIdx}').style.display=document.getElementById('photo-url-${realIdx}').style.display==='none'?'block':'none'">URL</button>
+              </div>
+            </div>
+            <input type="file" accept="image/*" style="display:none" id="photo-file-${realIdx}" onchange="handlePhotoUpload(${realIdx},this)">
+          </div>
+        </div>
+
+        <!-- RIGHT COL: Drops + Macros + Portal + Tags + Box -->
+        <div class="menu-card-section">
+
+          <div class="menu-card-section-label" style="letter-spacing:.5px">📅 Drops</div>
           <div class="menu-session-block">
             <div class="menu-session-cell ${s1Active?'s1-active':''}">
               <span class="menu-session-label">Sunday</span>
@@ -6398,51 +6479,59 @@ function renderMenu(){
           </div>
 
           <div class="menu-section-sep"></div>
-          <div class="menu-card-section-label">Nutrition <span style="font-weight:400;letter-spacing:0;text-transform:none;font-size:8px">per portion</span></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
-            <div class="menu-stat-chip"><span class="menu-stat-val">${t.kcal.toFixed(0)}</span><span class="menu-stat-label">kcal</span></div>
-            <div class="menu-stat-chip"><span class="menu-stat-val">${t.prot.toFixed(1)}g</span><span class="menu-stat-label">protein</span></div>
-            <div class="menu-stat-chip"><span class="menu-stat-val">${t.carb.toFixed(1)}g</span><span class="menu-stat-label">carbs</span></div>
-            <div class="menu-stat-chip"><span class="menu-stat-val">${t.fat.toFixed(1)}g</span><span class="menu-stat-label">fat</span></div>
+          <div class="menu-card-section-label" style="letter-spacing:.5px">🔥 Macros <span style="font-weight:400;letter-spacing:0;text-transform:none;font-size:8px">per portion</span></div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px">
+            <div class="menu-stat-chip c-kcal" style="flex:1;min-width:54px"><span class="menu-stat-val">${t.kcal.toFixed(0)}</span><span class="menu-stat-label">kcal</span></div>
+            <div class="menu-stat-chip c-prot" style="flex:1;min-width:54px"><span class="menu-stat-val">${t.prot.toFixed(1)}g</span><span class="menu-stat-label">prot</span></div>
+            <div class="menu-stat-chip c-carb" style="flex:1;min-width:54px"><span class="menu-stat-val">${t.carb.toFixed(1)}g</span><span class="menu-stat-label">carbs</span></div>
+            <div class="menu-stat-chip c-fat" style="flex:1;min-width:54px"><span class="menu-stat-val">${t.fat.toFixed(1)}g</span><span class="menu-stat-label">fat</span></div>
           </div>
 
           <div class="menu-section-sep"></div>
-          <div class="menu-card-section-label">Portal</div>
-          ${(function(){
-            var hasNext = DB.nextMenuDishes && DB.nextMenuDishes.length > 0;
-            var portalSlot = hasNext ? 'Building Next' : 'Current Week';
-            var isThisSlot = (hasNext && menuActiveSlot === 'next') || (!hasNext && menuActiveSlot === 'current');
-            if (!isThisSlot) {
-              return '<div style="background:rgba(255,69,58,.1);border:1px solid rgba(255,69,58,.4);border-radius:6px;padding:6px 8px;margin-bottom:8px;font-family:var(--mono);font-size:9px;color:#ff453a;line-height:1.4">' +
-                '⚠ Portal is reading from <strong>' + portalSlot + '</strong> dishes.<br>' +
-                'Photos &amp; "Serves with" set here won\'t show on the portal.<br>' +
-                '<span style="color:var(--text2)">Switch to the <strong>' + portalSlot + '</strong> tab to edit portal-visible dishes.</span>' +
-                '</div>';
-            }
-            return '<div style="background:rgba(48,209,88,.08);border:1px solid rgba(48,209,88,.25);border-radius:6px;padding:5px 8px;margin-bottom:8px;font-family:var(--mono);font-size:9px;color:#30d158">✓ Portal reads from this slot — edits here go live</div>';
-          })()}
-          <div class="box-type-row" style="margin-bottom:6px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+            <div class="menu-card-section-label" style="margin-bottom:0;border-bottom:none;letter-spacing:.5px">🌐 Portal</div>
+            ${(function(){
+              var hasNext = DB.nextMenuDishes && DB.nextMenuDishes.length > 0;
+              var portalSlot = hasNext ? 'Building Next' : 'Current Week';
+              var isThisSlot = (hasNext && menuActiveSlot === 'next') || (!hasNext && menuActiveSlot === 'current');
+              return isThisSlot
+                ? '<span class="portal-slot-badge portal-slot-live">✓ Live</span>'
+                : '<span class="portal-slot-badge portal-slot-off" title="Portal reads from ' + portalSlot + ' — switch tabs to edit portal-visible dishes">⚠ Not live</span>';
+            })()}
+          </div>
+          <div class="box-type-row" style="margin-bottom:8px">
             <button class="box-type-btn ${!dish.fuelLine||dish.fuelLine==='Fuel Plus'?'active':''}" onclick="ud(${realIdx},'fuelLine','Fuel Plus')">⚡ Fuel Plus</button>
             <button class="box-type-btn ${dish.fuelLine==='Fuel Lite'?'active':''}" onclick="ud(${realIdx},'fuelLine','Fuel Lite')">✦ Fuel Lite</button>
           </div>
-          <div style="margin-bottom:6px">
-            <div style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Serves with</div>
-            <input class="menu-comp-select" style="font-size:11px" type="text" placeholder="e.g. Turmeric Rice, Chow Chow Salad" value="${(dish.serves||'').replace(/"/g,'&quot;')}" onchange="ud(${realIdx},'serves',this.value.trim())" spellcheck="false">
-          </div>
-          <div style="margin-bottom:8px">${renderTagToggles(dish, realIdx)}</div>
-          <div class="photo-upload-row">
-            ${dish.photoUrl?`<img class="photo-thumb has-photo" src="${(dish.photoUrl||'').replace(/"/g,'&quot;')}" alt="dish photo">`:``}
-            <input class="menu-comp-select" style="font-size:10px" type="url" placeholder="📷 Photo URL" id="photo-url-${realIdx}" value="${(dish.photoUrl||'').replace(/"/g,'&quot;')}" onchange="ud(${realIdx},'photoUrl',this.value.trim())" spellcheck="false">
-            <button class="photo-upload-btn" id="photo-btn-${realIdx}" onclick="triggerPhotoUpload(${realIdx})" title="${window._fbStorage?'Upload photo':'Connect Firebase Storage to enable uploads'}">↑ Upload</button>
-            <input type="file" accept="image/*" style="display:none" id="photo-file-${realIdx}" onchange="handlePhotoUpload(${realIdx},this)">
-          </div>
 
           <div class="menu-section-sep"></div>
-          <div class="menu-card-section-label">Athletes</div>
-          ${renderAthleteSection(dish, realIdx)}
+          <div style="margin-bottom:8px">${renderTagToggles(dish, realIdx)}</div>
+
+          <div class="menu-section-sep"></div>
+          <div class="menu-card-section-label" style="letter-spacing:.5px">📦 Box</div>
+          <div class="box-type-row">
+            <button class="box-type-btn ${(!dish.boxType||dish.boxType==='3-compartment')?'active':''}" onclick="ud(${realIdx},'boxType','3-compartment')" title="3-compartment box">▣ 3-Comp</button>
+            <button class="box-type-btn ${dish.boxType==='single'?'active':''}" onclick="ud(${realIdx},'boxType','single')" title="Single compartment box">☐ Single</button>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0 8px">
+            <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">Condiment tubs</span>
+            <div class="tub-counter">
+              <button class="tub-btn" onclick="adjTubs(${realIdx},-1)">−</button>
+              <div class="tub-count">${n(dish.condimentTubs)||0}</div>
+              <button class="tub-btn" onclick="adjTubs(${realIdx},+1)">+</button>
+            </div>
+          </div>
 
         </div><!-- end right col -->
       </div><!-- end menu-card-body -->
+
+      <!-- ATHLETES — full width bottom strip -->
+      <div style="border-top:1px solid var(--border);padding:${hasAthleteVariant?'12px 16px':'6px 16px'}">
+        ${hasAthleteVariant
+          ? `<div class="menu-card-section-label" style="letter-spacing:.5px;margin-bottom:8px">🏅 Athletes</div>${athleteHtml}`
+          : `<div style="display:flex;justify-content:flex-end">${athleteHtml}</div>`}
+      </div>
+
       <div class="menu-card-footer">
         <div class="menu-stat-chip"><span class="menu-stat-val">£${t.cost.toFixed(2)}</span><span class="menu-stat-label">cost</span></div>
         <span style="font-size:9px;font-family:var(--mono);padding:2px 6px;border-radius:4px;background:${!dish.fuelLine||dish.fuelLine==='Fuel Plus'?'rgba(251,191,36,.12)':'rgba(74,222,128,.12)'};color:${!dish.fuelLine||dish.fuelLine==='Fuel Plus'?'#fbbf24':'#4ade80'}">${dish.fuelLine||'Fuel Plus'}</span>
@@ -6568,27 +6657,52 @@ function createAthleteVariant(idx) {
 }
 
 // Renders toggleable attribute tag buttons for the Portal section
+var PRESET_TAGS = [
+  { key: 'high-protein', label: 'High Protein' },
+  { key: 'low-fat',      label: '↓ Low Fat'    },
+  { key: 'low-carb',     label: '↓ Low Carb'   },
+  { key: 'chefs-choice', label: "Chef's Choice" },
+  { key: 'vegan',        label: 'Vegan'         },
+  { key: 'high-fibre',   label: 'High Fibre'    },
+  { key: '9-amino',      label: '9 Amino Acids' },
+  { key: 'omega3',       label: 'High Omega-3'  }
+];
+var PRESET_TAG_KEYS = PRESET_TAGS.map(function(t) { return t.key; });
+
 function renderTagToggles(dish, realIdx) {
-  var allTags = [
-    { key: 'high-protein',  label: 'High Protein' },
-    { key: 'low-fat',       label: '↓ Low Fat' },
-    { key: 'low-carb',      label: '↓ Low Carb' },
-    { key: 'chefs-choice',  label: "Chef's Choice" },
-    { key: 'vegan',         label: 'Vegan' },
-    { key: 'high-fibre',    label: 'High Fibre' },
-    { key: '9-amino',       label: '9 Amino Acids' },
-    { key: 'omega3',        label: 'High Omega-3' }
-  ];
   var current = Array.isArray(dish.tags) ? dish.tags : [];
-  var header = '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px">Tags</div>';
-  var btns = allTags.map(function(t) {
-    var active = current.indexOf(t.key) !== -1;
-    var style = active
-      ? 'background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.4);'
-      : 'background:var(--surface3);color:var(--text3);border:1px solid var(--border);';
-    return '<button style="' + style + 'font-family:var(--mono);font-size:8px;padding:3px 7px;border-radius:4px;cursor:pointer;margin:2px 2px 0 0;letter-spacing:.3px" onclick="toggleTag(' + realIdx + ',\'' + t.key + '\')">' + t.label + '</button>';
-  }).join('');
-  return header + '<div style="display:flex;flex-wrap:wrap">' + btns + '</div>';
+  var customTags = current.filter(function(k) { return PRESET_TAG_KEYS.indexOf(k) === -1; });
+
+  var header = '<div style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px">Tags</div>';
+
+  // Preset tag chips — two rows of 4
+  var presetChips = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:' + (customTags.length ? '4' : '0') + 'px">'
+    + PRESET_TAGS.map(function(t) {
+        var active = current.indexOf(t.key) !== -1;
+        return '<button class="tag-chip' + (active ? ' active' : '') + '" onclick="toggleTag(' + realIdx + ',\'' + t.key + '\')">' + t.label + '</button>';
+      }).join('')
+    + '</div>';
+
+  // Custom tags with × remove
+  var customChips = customTags.length
+    ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">'
+      + customTags.map(function(k) {
+          var safe = k.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+          var safeDat = k.replace(/"/g,'&quot;');
+          return '<span class="tag-chip active custom">' + safe
+            + '<button class="tag-chip-remove" onclick="removeCustomTag(this)" data-idx="' + realIdx + '" data-tag="' + safeDat + '" title="Remove">×</button>'
+            + '</span>';
+        }).join('')
+      + '</div>'
+    : '';
+
+  // Add custom tag row
+  var addRow = '<div class="tag-add-row">'
+    + '<input type="text" class="tag-add-input" id="tag-input-' + realIdx + '" placeholder="Add a custom tag…" onkeydown="addCustomTag(' + realIdx + ',event)">'
+    + '<button class="tag-add-btn" onclick="addCustomTag(' + realIdx + ',null)">+ Add</button>'
+    + '</div>';
+
+  return header + presetChips + customChips + addRow;
 }
 
 function toggleTag(idx, tagKey) {
@@ -6599,6 +6713,32 @@ function toggleTag(idx, tagKey) {
   if (pos === -1) { dish.tags.push(tagKey); } else { dish.tags.splice(pos, 1); }
   save();
   renderMenu();
+}
+
+function addCustomTag(idx, e) {
+  if (e && e.type === 'keydown' && e.key !== 'Enter') return;
+  if (e && e.key === 'Enter') e.preventDefault();
+  var input = document.getElementById('tag-input-' + idx);
+  if (!input) return;
+  var tag = input.value.trim();
+  if (!tag) return;
+  var dish = getSlotDishes()[idx];
+  if (!dish) return;
+  if (!Array.isArray(dish.tags)) dish.tags = [];
+  if (dish.tags.indexOf(tag) === -1) {
+    dish.tags.push(tag);
+    save();
+    renderMenu();
+  } else {
+    input.value = '';
+  }
+}
+
+function removeCustomTag(btn) {
+  var idx = parseInt(btn.dataset.idx);
+  var tag = btn.dataset.tag;
+  if (isNaN(idx) || !tag) return;
+  toggleTag(idx, tag);
 }
 
 function renderAthleteSection(dish, realIdx) {
@@ -6822,9 +6962,10 @@ function renderPackSheet(){
       </div>`;
     }).join('');
 
-    const s1Label = (packSessionFilter!=='s2'&&packSessionFilter!=='wednesday') && n(dish.drop1)>0 ? `<span class="badge" style="background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2)">Sun · ${dish.drop1}</span>` : '';
-    const s2Label = (packSessionFilter!=='s1'&&packSessionFilter!=='sunday') && n(dish.drop2)>0 ? `<span class="badge" style="background:rgba(59,130,246,.1);color:#93c5fd;border:1px solid rgba(59,130,246,.2)">Wed · ${dish.drop2}</span>` : '';
-    const highlights=getNutritionHighlights(t).slice(0,3).map(h=>`<span class="nut-highlight ${h.pct>=1?'nh-high':'nh-med'}">${h.label} ${(h.pct*100).toFixed(0)}%</span>`).join('');
+    const _d1 = liveDrop1[dish.id] || n(dish.drop1) || 0;
+    const _d2 = liveDrop2[dish.id] || n(dish.drop2) || 0;
+    const s1Label = (packSessionFilter!=='s2'&&packSessionFilter!=='wednesday') && _d1>0 ? `<span class="badge" style="background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2);font-size:10px">☀ Sunday: ${_d1}</span>` : '';
+    const s2Label = (packSessionFilter!=='s1'&&packSessionFilter!=='sunday') && _d2>0 ? `<span class="badge" style="background:rgba(59,130,246,.1);color:#93c5fd;border:1px solid rgba(59,130,246,.2);font-size:10px">🌿 Wednesday: ${_d2}</span>` : '';
 
     // Box type banner
     const bt = dish.boxType||'3-compartment';
@@ -6843,8 +6984,8 @@ function renderPackSheet(){
         <div style="flex:1;min-width:0">
           <div class="pack-box-title">${dish.name}</div>
           <div class="pack-box-meta">
-            <span class="badge b-active">${portions} portion${portions!==1?'s':''}</span>
-            ${s1Label}${s2Label}${highlights}
+            <span class="badge b-active" style="font-size:11px;font-weight:700">${portions} portion${portions!==1?'s':''} total</span>
+            ${s1Label}${s2Label}
           </div>
         </div>
       </div>
@@ -6854,14 +6995,16 @@ function renderPackSheet(){
         ${tubHtml}
       </div>
       <div class="pack-body">
-        ${compRows||'<div class="muted small" style="padding:10px 0">No components assigned</div>'}
+        ${compRows
+          ? `<div style="display:flex;justify-content:flex-end;padding:0 0 4px;border-bottom:1px solid var(--border);margin-bottom:2px"><span style="font-size:9px;font-family:var(--mono);color:var(--text3);letter-spacing:.5px;text-transform:uppercase">cooked wt</span></div>${compRows}`
+          : '<div class="muted small" style="padding:10px 0">No components assigned</div>'}
       </div>
       <div class="pack-footer">
         <div class="pack-macro"><span class="pack-macro-val">${t.kcal.toFixed(0)}</span><span class="pack-macro-label">kcal</span></div>
         <div class="pack-macro"><span class="pack-macro-val">${t.prot.toFixed(1)}<span style="font-size:8px">g</span></span><span class="pack-macro-label">protein</span></div>
         <div class="pack-macro"><span class="pack-macro-val">${t.carb.toFixed(1)}<span style="font-size:8px">g</span></span><span class="pack-macro-label">carbs</span></div>
         <div class="pack-macro"><span class="pack-macro-val">${t.fat.toFixed(1)}<span style="font-size:8px">g</span></span><span class="pack-macro-label">fat</span></div>
-        <div class="pack-macro" style="border-color:rgba(201,168,76,.25)"><span class="pack-macro-val" style="color:var(--gold)">~${t.weight.toFixed(0)}<span style="font-size:8px">g</span></span><span class="pack-macro-label">total wt</span></div>
+        <div class="pack-macro" style="border-color:rgba(201,168,76,.25)"><span class="pack-macro-val" style="color:var(--gold)">~${t.weight.toFixed(0)}<span style="font-size:8px">g</span></span><span class="pack-macro-label">cooked wt</span></div>
       </div>
       ${allergens.length?`<div class="pack-allergen-row"><span style="font-size:9px;color:#f87171;font-family:var(--mono);margin-right:4px">⚠ ALLERGENS</span>${allergens.map(a=>`<span class="allergen-tag">${a}</span>`).join('')}</div>`:''}
     </div>`;
@@ -6904,9 +7047,8 @@ function renderPackSheet(){
     const athleteNames = (dish.athleteIds||[]).map(aId => (DB.athletes||[]).find(a=>a.id===aId)?.name).filter(Boolean).join(', ') || 'Unassigned';
     const _ad1 = liveDrop1[dish.id] || n(dish.drop1) || 0;
     const _ad2 = liveDrop2[dish.id] || n(dish.drop2) || 0;
-    const s1Label = (packSessionFilter!=='s2'&&packSessionFilter!=='wednesday') && _ad1>0 ? `<span class="badge" style="background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2)">Sun · ${_ad1}</span>` : '';
-    const s2Label = (packSessionFilter!=='s1'&&packSessionFilter!=='sunday') && _ad2>0 ? `<span class="badge" style="background:rgba(59,130,246,.1);color:#93c5fd;border:1px solid rgba(59,130,246,.2)">Wed · ${_ad2}</span>` : '';
-    const highlights=getNutritionHighlights(t).slice(0,3).map(h=>`<span class="nut-highlight ${h.pct>=1?'nh-high':'nh-med'}">${h.label} ${(h.pct*100).toFixed(0)}%</span>`).join('');
+    const as1Label = (packSessionFilter!=='s2'&&packSessionFilter!=='wednesday') && _ad1>0 ? `<span class="badge" style="background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2);font-size:10px">☀ Sunday: ${_ad1}</span>` : '';
+    const as2Label = (packSessionFilter!=='s1'&&packSessionFilter!=='sunday') && _ad2>0 ? `<span class="badge" style="background:rgba(59,130,246,.1);color:#93c5fd;border:1px solid rgba(59,130,246,.2);font-size:10px">🌿 Wednesday: ${_ad2}</span>` : '';
 
     const bt = dish.boxType||'3-compartment';
     const isThree = bt==='3-compartment';
@@ -6918,15 +7060,18 @@ function renderPackSheet(){
       ? `<span class="pack-tub-chip">${tubCount} condiment tub${tubCount>1?'s':''}</span>`
       : '';
 
-    return `<div class="pack-box">
+    return `<div class="pack-box" style="border:2px solid rgba(251,146,60,.35);background:rgba(251,146,60,.04)">
+      <div style="background:rgba(251,146,60,.12);border-bottom:1px solid rgba(251,146,60,.25);padding:5px 14px;font-size:9px;font-family:var(--mono);font-weight:700;color:#fb923c;letter-spacing:1px;text-transform:uppercase">
+        🏅 Athlete Variant · Bespoke macros — do not mix with standard boxes
+      </div>
       <div class="pack-box-header">
-        <div class="pack-box-num">🏅 ${athleteNum}</div>
+        <div class="pack-box-num" style="background:rgba(251,146,60,.15);color:#fb923c;border:1px solid rgba(251,146,60,.3)">A${athleteNum}</div>
         <div style="flex:1;min-width:0">
           <div class="pack-box-title">${dish.name}</div>
           <div class="pack-box-meta">
-            <span class="badge" style="background:rgba(251,146,60,.1);color:#fb923c;border:1px solid rgba(251,146,60,.2)">${athleteNames}</span>
-            <span class="badge b-active">${portions} portion${portions!==1?'s':''}</span>
-            ${s1Label}${s2Label}${highlights}
+            <span class="badge" style="background:rgba(251,146,60,.15);color:#fb923c;border:1px solid rgba(251,146,60,.3);font-weight:700">${athleteNames}</span>
+            <span class="badge b-active" style="font-size:11px;font-weight:700">${portions} portion${portions!==1?'s':''} total</span>
+            ${as1Label}${as2Label}
           </div>
         </div>
       </div>
@@ -6936,23 +7081,33 @@ function renderPackSheet(){
         ${tubHtml}
       </div>
       <div class="pack-body">
-        ${compRows||'<div class="muted small" style="padding:10px 0">No components assigned</div>'}
+        ${compRows
+          ? `<div style="display:flex;justify-content:flex-end;padding:0 0 4px;border-bottom:1px solid rgba(251,146,60,.2);margin-bottom:2px"><span style="font-size:9px;font-family:var(--mono);color:var(--text3);letter-spacing:.5px;text-transform:uppercase">cooked wt</span></div>${compRows}`
+          : '<div class="muted small" style="padding:10px 0">No components assigned</div>'}
       </div>
       <div class="pack-footer">
         <div class="pack-macro"><span class="pack-macro-val">${t.kcal.toFixed(0)}</span><span class="pack-macro-label">kcal</span></div>
         <div class="pack-macro"><span class="pack-macro-val">${t.prot.toFixed(1)}<span style="font-size:8px">g</span></span><span class="pack-macro-label">protein</span></div>
         <div class="pack-macro"><span class="pack-macro-val">${t.carb.toFixed(1)}<span style="font-size:8px">g</span></span><span class="pack-macro-label">carbs</span></div>
         <div class="pack-macro"><span class="pack-macro-val">${t.fat.toFixed(1)}<span style="font-size:8px">g</span></span><span class="pack-macro-label">fat</span></div>
-        <div class="pack-macro" style="border-color:rgba(201,168,76,.25)"><span class="pack-macro-val" style="color:var(--gold)">~${t.weight.toFixed(0)}<span style="font-size:8px">g</span></span><span class="pack-macro-label">total wt</span></div>
+        <div class="pack-macro" style="border-color:rgba(201,168,76,.25)"><span class="pack-macro-val" style="color:var(--gold)">~${t.weight.toFixed(0)}<span style="font-size:8px">g</span></span><span class="pack-macro-label">cooked wt</span></div>
       </div>
       ${allergens.length?`<div class="pack-allergen-row"><span style="font-size:9px;color:#f87171;font-family:var(--mono);margin-right:4px">⚠ ALLERGENS</span>${allergens.map(a=>`<span class="allergen-tag">${a}</span>`).join('')}</div>`:''}
     </div>`;
   }).filter(Boolean);
 
   const athleteSection = athleteCards.length > 0
-    ? `<div style="grid-column:1/-1;margin-top:24px;padding-top:16px;border-top:2px solid var(--border)">
-         <h3 style="color:var(--text1);font-size:14px;font-weight:600;margin-bottom:12px">🏅 Athlete Orders</h3>
-         ${athleteCards.join('')}
+    ? `<div style="grid-column:1/-1;margin-top:28px;padding:16px;border:2px solid rgba(251,146,60,.4);border-radius:10px;background:rgba(251,146,60,.04)">
+         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+           <span style="font-size:16px">🏅</span>
+           <div>
+             <div style="font-size:14px;font-weight:700;color:#fb923c">Athlete Variants</div>
+             <div style="font-size:11px;color:var(--text3);margin-top:1px">Bespoke macros · Must be packed and labelled separately · Do not mix with standard boxes</div>
+           </div>
+         </div>
+         <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+           ${athleteCards.join('')}
+         </div>
        </div>`
     : '';
 
@@ -9281,6 +9436,161 @@ function deleteAthlete(idx) {
 }
 
 // ═══════════════════════════════════════════
+// DISCOUNT CODES
+// ═══════════════════════════════════════════
+function escHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderDiscounts() {
+  var codes = DB.discountCodes || [];
+  var el = document.getElementById('discounts-list');
+  if (!el) return;
+  if (!codes.length) {
+    el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:28px">No discount codes yet — create your first code to start rewarding customers</div>';
+    return;
+  }
+  el.innerHTML = codes.map(function(dc) {
+    var valueLabel = dc.type === 'percent' ? dc.value + '% off' : '£' + parseFloat(dc.value).toFixed(2) + ' off';
+    var expiry = dc.expiresAt ? new Date(dc.expiresAt).toLocaleDateString('en-GB') : 'No expiry';
+    var usageLabel = dc.usageLimit ? (dc.usedCount + ' / ' + dc.usageLimit + ' uses') : (dc.usedCount + ' uses · unlimited');
+    var minLabel = dc.minOrderValue > 0 ? 'Min £' + parseFloat(dc.minOrderValue).toFixed(2) : 'No minimum';
+    var expired = dc.expiresAt && new Date(dc.expiresAt) < new Date();
+    var limitReached = dc.usageLimit && dc.usedCount >= dc.usageLimit;
+    var isActive = dc.active && !expired && !limitReached;
+    var statusColor = isActive ? 'var(--green)' : 'var(--red)';
+    var statusBg   = isActive ? 'rgba(34,197,94,.12)' : 'rgba(239,68,68,.1)';
+    var statusLabel = !dc.active ? 'Paused' : expired ? 'Expired' : limitReached ? 'Limit reached' : 'Active';
+    return '<div style="padding:14px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">'
+      + '<span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--gold);letter-spacing:1.5px">' + escHtml(dc.code) + '</span>'
+      + '<span style="font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:10px;background:' + statusBg + ';color:' + statusColor + '">' + statusLabel + '</span>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px 16px">'
+      + '<div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px">Discount</div><div style="font-size:13px;font-weight:600">' + valueLabel + '</div></div>'
+      + '<div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px">Usage</div><div style="font-size:13px;font-weight:600">' + usageLabel + '</div></div>'
+      + '<div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px">Min Order</div><div style="font-size:13px;font-weight:600">' + minLabel + '</div></div>'
+      + '<div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px">Expires</div><div style="font-size:13px;font-weight:600">' + expiry + '</div></div>'
+      + '</div>'
+      + (dc.description ? '<div style="margin-top:8px;font-size:11px;color:var(--text2);font-style:italic">' + escHtml(dc.description) + '</div>' : '')
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">'
+      + '<button class="btn btn-ghost btn-xs" onclick="openDiscountModal(\'' + dc.id + '\')">✎ Edit</button>'
+      + '<button class="btn btn-ghost btn-xs" onclick="toggleDiscountActive(\'' + dc.id + '\')">' + (dc.active ? '⏸ Pause' : '▶ Activate') + '</button>'
+      + '<button class="btn btn-ghost btn-xs" onclick="deleteDiscount(\'' + dc.id + '\')">🗑 Delete</button>'
+      + '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+var _editingDiscountId = null;
+function openDiscountModal(id) {
+  _editingDiscountId = id || null;
+  var existing = id ? (DB.discountCodes || []).find(function(c) { return c.id === id; }) : null;
+  var m = document.getElementById('discount-modal');
+  if (!m) {
+    m = document.createElement('div');
+    m.className = 'modal-overlay';
+    m.id = 'discount-modal';
+    var inputStyle = 'width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:5px;background:var(--surface2);color:var(--text);font-size:13px;font-family:var(--sans);';
+    m.innerHTML = '<div class="modal modal-lg">'
+      + '<div class="modal-header"><div class="modal-title" id="dm-title">New Discount Code</div><button class="modal-close" onclick="closeModal(\'discount-modal\')">×</button></div>'
+      + '<div class="modal-body"><div style="display:flex;flex-direction:column;gap:14px">'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Code *</label>'
+      + '<input type="text" id="dm-code" placeholder="e.g. LAUNCH20" style="' + inputStyle + 'font-family:var(--mono);text-transform:uppercase" oninput="this.value=this.value.toUpperCase().replace(/\\s/g,\'\')"></div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Type *</label>'
+      + '<select id="dm-type" style="' + inputStyle + '"><option value="percent">Percentage (%)</option><option value="fixed">Fixed amount (£)</option></select></div>'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Value *</label>'
+      + '<input type="number" id="dm-value" min="0.01" step="0.01" placeholder="e.g. 20" style="' + inputStyle + '"></div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Min order value (£)</label>'
+      + '<input type="number" id="dm-min" min="0" step="0.01" placeholder="0 = no minimum" style="' + inputStyle + '"></div>'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Usage limit</label>'
+      + '<input type="number" id="dm-limit" min="1" step="1" placeholder="Blank = unlimited" style="' + inputStyle + '"></div>'
+      + '</div>'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Expiry date (optional)</label>'
+      + '<input type="date" id="dm-expiry" style="' + inputStyle + '"></div>'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Description (optional)</label>'
+      + '<input type="text" id="dm-desc" placeholder="e.g. Launch promotion for new customers" style="' + inputStyle + '"></div>'
+      + '<div style="display:flex;align-items:center;gap:10px">'
+      + '<input type="checkbox" id="dm-active" checked style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">'
+      + '<label for="dm-active" style="font-size:13px;cursor:pointer;color:var(--text)">Active — customers can use this code immediately</label>'
+      + '</div>'
+      + '</div></div>'
+      + '<div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal(\'discount-modal\')">Cancel</button><button class="btn btn-gold" onclick="saveDiscount()">Save Code</button></div>'
+      + '</div>';
+    document.body.appendChild(m);
+  }
+  document.getElementById('dm-title').textContent = existing ? 'Edit Discount Code' : 'New Discount Code';
+  document.getElementById('dm-code').value    = existing ? existing.code : '';
+  document.getElementById('dm-type').value    = existing ? existing.type : 'percent';
+  document.getElementById('dm-value').value   = existing ? existing.value : '';
+  document.getElementById('dm-min').value     = existing ? (existing.minOrderValue > 0 ? existing.minOrderValue : '') : '';
+  document.getElementById('dm-limit').value   = existing ? (existing.usageLimit || '') : '';
+  document.getElementById('dm-expiry').value  = existing && existing.expiresAt ? existing.expiresAt.slice(0,10) : '';
+  document.getElementById('dm-desc').value    = existing ? (existing.description || '') : '';
+  document.getElementById('dm-active').checked = existing ? !!existing.active : true;
+  openModal('discount-modal');
+}
+
+function saveDiscount() {
+  var code  = (document.getElementById('dm-code').value || '').trim().toUpperCase().replace(/\s/g,'');
+  var type  = document.getElementById('dm-type').value;
+  var value = parseFloat(document.getElementById('dm-value').value);
+  var minVal = parseFloat(document.getElementById('dm-min').value) || 0;
+  var limit = parseInt(document.getElementById('dm-limit').value) || null;
+  var expiry = document.getElementById('dm-expiry').value || null;
+  var desc  = (document.getElementById('dm-desc').value || '').trim();
+  var active = document.getElementById('dm-active').checked;
+
+  if (!code) { notify('Code name is required', 'warn'); return; }
+  if (!/^[A-Z0-9_-]+$/.test(code)) { notify('Code can only contain letters, numbers, hyphens and underscores', 'warn'); return; }
+  if (isNaN(value) || value <= 0)  { notify('Please enter a valid discount value', 'warn'); return; }
+  if (type === 'percent' && value > 100) { notify('Percentage discount cannot exceed 100%', 'warn'); return; }
+  if (!Array.isArray(DB.discountCodes)) DB.discountCodes = [];
+
+  // Duplicate check
+  var dupe = DB.discountCodes.find(function(c) { return c.code === code && c.id !== _editingDiscountId; });
+  if (dupe) { notify('A code with that name already exists', 'warn'); return; }
+
+  if (_editingDiscountId) {
+    var idx = DB.discountCodes.findIndex(function(c) { return c.id === _editingDiscountId; });
+    if (idx >= 0) {
+      Object.assign(DB.discountCodes[idx], { code, type, value, minOrderValue: minVal, usageLimit: limit, expiresAt: expiry ? expiry + 'T23:59:59Z' : null, description: desc, active });
+    }
+  } else {
+    DB.discountCodes.push({ id: 'DC' + Date.now(), code, type, value, minOrderValue: minVal, usageLimit: limit, usedCount: 0, expiresAt: expiry ? expiry + 'T23:59:59Z' : null, description: desc, active, createdAt: new Date().toISOString() });
+  }
+  save();
+  closeModal('discount-modal');
+  renderDiscounts();
+  notify(_editingDiscountId ? 'Code updated ✓' : 'Discount code created ✓');
+}
+
+function toggleDiscountActive(id) {
+  var code = (DB.discountCodes || []).find(function(c) { return c.id === id; });
+  if (!code) return;
+  code.active = !code.active;
+  save();
+  renderDiscounts();
+  notify(code.active ? 'Code activated ✓' : 'Code paused');
+}
+
+function deleteDiscount(id) {
+  if (!confirm('Delete this discount code? This cannot be undone.')) return;
+  DB.discountCodes = (DB.discountCodes || []).filter(function(c) { return c.id !== id; });
+  save();
+  renderDiscounts();
+  notify('Code deleted');
+}
+
+// ═══════════════════════════════════════════
 // INFO MODAL
 // ═══════════════════════════════════════════
 function showInfoModal(title,content){
@@ -9449,6 +9759,8 @@ function migrateData() {
     if (o.session === 'S1') o.session = 'Sunday';
     else if (o.session === 'S2') o.session = 'Wednesday';
   });
+  // Ensure discountCodes array exists
+  if (!Array.isArray(DB.discountCodes)) DB.discountCodes = [];
   // Backfill serves/tags fields onto dishes created before these fields were added
   var allDishes = (DB.menuDishes || []).concat(DB.nextMenuDishes || []);
   allDishes.forEach(function(d) {
@@ -10648,7 +10960,12 @@ function renderOrderCard(ord, dishes) {
           '<span class="order-dish-qty">&times;'+i.qty+'</span>'+
           '<span class="order-dish-price">£'+(i.unitPrice*i.qty).toFixed(2)+'</span></div>';
       }).join('') +
-      '<div class="order-total-row"><span>Total</span><span>£'+total.toFixed(2)+'</span></div>' +
+      (ord.discount && ord.discount.amount > 0
+        ? '<div class="order-dish-row" style="font-size:11px;color:var(--text3)"><span style="flex:1">Subtotal</span><span></span><span>£'+total.toFixed(2)+'</span></div>' +
+          '<div class="order-dish-row" style="font-size:11px;color:var(--green)"><span style="flex:1">Discount ('+n2h(ord.discount.code||'')+')</span><span></span><span>−£'+parseFloat(ord.discount.amount).toFixed(2)+'</span></div>' +
+          '<div class="order-total-row"><span>Total</span><span>£'+Math.max(0,total-parseFloat(ord.discount.amount)).toFixed(2)+'</span></div>'
+        : '<div class="order-total-row"><span>Total</span><span>£'+total.toFixed(2)+'</span></div>'
+      ) +
       cancelNote + notesNote +
     '</div>' +
     // Actions
@@ -10927,7 +11244,7 @@ function renderRouteSheet() {
 // ── LABELS ────────────────────────────────────────────────────
 function setLabelSession(btn, s) {
   _labelSession = s;
-  document.querySelectorAll('#del-panel-labels .del-filter-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('#pack-labels-view .del-filter-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
   renderLabels();
 }
@@ -10953,17 +11270,17 @@ function renderLabels() {
   var dishes = getProductionDishes();
   var orders = getProductionOrders();
 
+  // Case-insensitive session filter (portal stores lowercase 'sunday'/'wednesday')
   if (_labelSession !== 'all') {
-    orders = orders.filter(function(o) { return o.session === _labelSession || o.session === 'Both'; });
+    var _filterLower = _labelSession.toLowerCase();
+    orders = orders.filter(function(o) {
+      var s = (o.session || '').toLowerCase();
+      return s === _filterLower || s === 'both';
+    });
   }
 
   var bodyEl = document.getElementById('labels-body');
   if (!bodyEl) return;
-
-  if (!orders.length) {
-    bodyEl.innerHTML = '<div class="del-empty">No orders this week. Add orders first, then print labels here.</div>';
-    return;
-  }
 
   var useBy    = (document.getElementById('lbl-useby')    || {value:''}).value.trim();
   var storage  = (document.getElementById('lbl-storage')  || {value:'Storage: Refrigerate and chill below 5 °C'}).value.trim();
@@ -10977,95 +11294,184 @@ function renderLabels() {
     return na.localeCompare(nb);
   });
 
-  // Flatten to one item per allocated dish per order
-  var items = [];
+  // Standard labels from orders — skip athlete dishes (handled separately)
+  var standardItems = [];
+  var athleteItems  = [];
+
   sorted.forEach(function(ord) {
     Object.keys(ord.allocation || {}).forEach(function(dId) {
-      if ((ord.allocation[dId] || 0) < 1) return;
+      var qty = Math.max(0, Math.round(ord.allocation[dId] || 0));
+      if (qty < 1) return;
       var dish = dishes.find(function(d) { return d.id === dId; });
-      if (dish) items.push({ ord: ord, dish: dish });
+      if (!dish || dish.athleteVariant) return; // athlete dishes handled via drops below
+      for (var q = 0; q < qty; q++) {
+        standardItems.push({ ord: ord, dish: dish, qIdx: q + 1, qtyTotal: qty });
+      }
     });
   });
 
-  if (!items.length) {
-    bodyEl.innerHTML = '<div class="del-empty">No dish allocations found. Add dish allocations in the Orders tab first.</div>';
+  // Athlete labels from dish drops — mirrors pack sheet logic, no manual order needed
+  var wantSunday    = _labelSession === 'all' || _labelSession.toLowerCase() === 'sunday';
+  var wantWednesday = _labelSession === 'all' || _labelSession.toLowerCase() === 'wednesday';
+  dishes.filter(function(d) { return d.athleteVariant; }).forEach(function(dish) {
+    var d1 = Math.round(n(dish.drop1) || 0);
+    var d2 = Math.round(n(dish.drop2) || 0);
+    var athId  = (dish.athleteIds || [])[0] || '';
+    var ath    = athId ? (DB.athletes || []).find(function(a) { return a.id === athId; }) : null;
+    // Synthetic order-like object so buildLabelCard can read name
+    var synOrd = { id: 'ATH_' + dish.id, customerId: null, recipientName: ath ? ath.name : 'Athlete', session: 'both', allocation: {} };
+    synOrd.allocation[dish.id] = 1;
+    if (wantSunday && d1 > 0) {
+      for (var q = 0; q < d1; q++) athleteItems.push({ ord: synOrd, dish: dish, qIdx: q + 1, qtyTotal: d1 });
+    }
+    if (wantWednesday && d2 > 0) {
+      for (var q = 0; q < d2; q++) athleteItems.push({ ord: synOrd, dish: dish, qIdx: q + 1, qtyTotal: d2 });
+    }
+  });
+
+  if (!standardItems.length && !athleteItems.length) {
+    var msg = orders.length
+      ? '<div class="del-empty">No dish allocations found. Add dish allocations in the Orders tab first.</div>'
+      : '<div class="del-empty">No orders this week. Add orders first, then print labels here.</div>';
+    bodyEl.innerHTML = msg;
     return;
   }
+  var items = standardItems.concat(athleteItems);
 
-  var html = '<div class="labels-grid">';
+  // ── Summary strip ──────────────────────────────────────────────────────────
+  var summaryMap = {}; // dish.id → {name, count, isAthlete, athDisplay}
+  items.forEach(function(item) {
+    var key = item.dish.id;
+    if (!summaryMap[key]) {
+      var athDisplay = '';
+      if (item.dish.athleteVariant) {
+        athDisplay = (item.dish.athleteIds || []).map(function(aId) {
+          var ath = (DB.athletes || []).find(function(a) { return a.id === aId; });
+          return ath ? ath.name : '';
+        }).filter(Boolean).join(' / ') || 'Athlete';
+      }
+      summaryMap[key] = { name: item.dish.name || '', count: 0, isAthlete: !!item.dish.athleteVariant, athDisplay: athDisplay };
+    }
+    summaryMap[key].count++;
+  });
 
-  items.forEach(function(item, idx) {
-    var ord  = item.ord;
-    var dish = item.dish;
-    var cust = getCustById(ord.customerId);
+  var totalLabels = items.length;
+  var stdChips = '', athChips = '';
+  Object.keys(summaryMap).forEach(function(key) {
+    var s = summaryMap[key];
+    if (s.isAthlete) {
+      athChips += '<span class="lsumm-chip lsumm-athlete">🏅 ' + n2h(s.athDisplay ? s.athDisplay + ' — ' + s.name : s.name) + ' <strong>×' + s.count + '</strong></span>';
+    } else {
+      stdChips += '<span class="lsumm-chip">' + n2h(s.name) + ' <strong>×' + s.count + '</strong></span>';
+    }
+  });
 
-    // Resolve name: order override > linked customer > blank
+  var summaryHtml =
+    '<div class="labels-summary-bar no-print">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between">' +
+        '<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">' +
+          '🏷 Labels needed this session — <span style="color:var(--gold)">' + totalLabels + ' total</span>' +
+        '</div>' +
+        '<div style="font-size:9px;font-family:var(--mono);color:var(--text3)">' +
+          (athleteItems.length ? '<span style="color:#fb923c;font-weight:700">' + athleteItems.length + ' athlete</span> + ' + standardItems.length + ' standard' : standardItems.length + ' standard') +
+        '</div>' +
+      '</div>' +
+      '<div class="lsumm-chips">' + stdChips + athChips + '</div>' +
+    '</div>';
+
+  // ── Label cards ────────────────────────────────────────────────────────────
+  // Build a label-card HTML string for a given item + global idx
+  function buildLabelCard(item, idx) {
+    var ord       = item.ord;
+    var dish      = item.dish;
+    var cust      = getCustById(ord.customerId);
+    var isAthlete = !!dish.athleteVariant;
+
+    var athName = '';
+    if (isAthlete) {
+      athName = (dish.athleteIds || []).map(function(aId) {
+        var ath = (DB.athletes || []).find(function(a) { return a.id === aId; });
+        return ath ? ath.name : '';
+      }).filter(Boolean).join(' / ') || 'Athlete';
+    }
+
     var nameStr = ord.recipientName || (cust ? cust.name : '');
     var dietary = cust ? cust.dietary : '';
 
-    // Macros + allergens from recipe engine
     var totals    = calcDishTotals(dish);
     var allergens = Array.from(totals.allergens || new Set()).sort();
     var mealId    = genMealId(dish);
 
-    // Single compact macro line — weight folded in
     var macroStr = (totals.kcal||0).toFixed(0) + ' kcal · P ' + (totals.prot||0).toFixed(1) + 'g'
       + ' · C ' + (totals.carb||0).toFixed(1) + 'g · F ' + (totals.fat||0).toFixed(1) + 'g'
       + (totals.weight ? ' · ~' + Math.round(totals.weight) + 'g' : '');
 
-    // Screen label for the print bar
-    var barLabel = n2h(dish.name || '');
+    var barLabel = isAthlete
+      ? '🏅 ' + n2h(athName) + ' — ' + n2h(dish.name || '')
+      : n2h(dish.name || '');
     if (showName && nameStr) barLabel += ' · ' + n2h(nameStr);
+    if (item.qtyTotal > 1) barLabel += ' <span style="color:var(--gold);font-weight:700">[' + item.qIdx + '/' + item.qtyTotal + ']</span>';
 
-    html +=
-      '<div class="label-wrap" id="lwrap-' + idx + '">' +
+    return '<div class="label-wrap" id="lwrap-' + idx + '">' +
 
-        // Screen-only bar above card with per-label print button
-        '<div class="label-print-bar no-print">' +
-          '<span style="font-size:10px;color:var(--text2);font-family:var(--mono)">' + barLabel + '</span>' +
-          '<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px" ' +
-            'onclick="printSingleLabel(' + idx + ')">&#x1F5A8; Print this label</button>' +
+      '<div class="label-print-bar no-print' + (isAthlete ? ' lb-athlete' : '') + '">' +
+        '<span style="font-size:10px;color:var(--text2);font-family:var(--mono)">' + barLabel + '</span>' +
+        '<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px" ' +
+          'onclick="printSingleLabel(' + idx + ')">&#x1F5A8; Print</button>' +
+      '</div>' +
+
+      '<div class="label-card' + (isAthlete ? ' lc-athlete' : '') + '" id="lcard-' + idx + '">' +
+
+        '<div class="lc-header">' +
+          '<div class="lc-biz">29 Performance · ' + n2h(week) + '</div>' +
+          (mealId ? '<div class="lc-mealid">' + n2h(mealId) + '</div>' : '') +
         '</div>' +
 
-        '<div class="label-card" id="lcard-' + idx + '">' +
+        (isAthlete ? '<div class="lc-athlete-banner">🏅 Athlete — ' + n2h(athName) + ' — Bespoke Macros</div>' : '') +
 
-          // Header row: brand · week   |   meal ID
-          '<div class="lc-header">' +
-            '<div class="lc-biz">29 Performance · ' + n2h(week) + '</div>' +
-            (mealId ? '<div class="lc-mealid">' + n2h(mealId) + '</div>' : '') +
-          '</div>' +
+        ((showName || isAthlete) && nameStr ? '<div class="lc-name">' + n2h(nameStr) + '</div>' : '') +
 
-          // Name (only when toggle is on and name exists)
-          (showName && nameStr ? '<div class="lc-name">' + n2h(nameStr) + '</div>' : '') +
+        '<div class="lc-dish-name">' + n2h(dish.name || '') + '</div>' +
+        '<div class="lc-macros">' + macroStr + '</div>' +
 
-          // Dish name — headline element
-          '<div class="lc-dish-name">' + n2h(dish.name || '') + '</div>' +
+        (allergens.length
+          ? '<div class="lc-allergens"><span class="lc-allerg-hdr">Contains:</span> ' + allergens.map(n2h).join(', ') + '</div>'
+          : '<div class="lc-allergens lc-allerg-none">No major allergens declared</div>') +
 
-          // Compact macro bar
-          '<div class="lc-macros">' + macroStr + '</div>' +
+        (dietary ? '<div class="lc-dietary">⚠️ ' + n2h(dietary) + '</div>' : '') +
+        (useBy   ? '<div class="lc-useby">Use by: <strong>' + n2h(useBy) + '</strong></div>' : '') +
+        (storage ? '<div class="lc-storage">' + n2h(storage) + '</div>' : '') +
+        (reheat  ? '<div class="lc-reheat">'  + n2h(reheat)  + '</div>' : '') +
 
-          // Allergens
-          (allergens.length
-            ? '<div class="lc-allergens"><span class="lc-allerg-hdr">Contains:</span> ' + allergens.map(n2h).join(', ') + '</div>'
-            : '<div class="lc-allergens lc-allerg-none">No major allergens declared</div>') +
+      '</div>' +   // .label-card
+    '</div>';      // .label-wrap
+  }
 
-          // Customer dietary flag (from profile)
-          (dietary ? '<div class="lc-dietary">⚠️ ' + n2h(dietary) + '</div>' : '') +
+  var html = summaryHtml;
 
-          // Use-by
-          (useBy ? '<div class="lc-useby">Use by: <strong>' + n2h(useBy) + '</strong></div>' : '') +
+  // Standard labels grid
+  if (standardItems.length) {
+    html += '<div class="labels-grid">';
+    standardItems.forEach(function(item, i) { html += buildLabelCard(item, i); });
+    html += '</div>';
+  }
 
-          // Storage
-          (storage ? '<div class="lc-storage">' + n2h(storage) + '</div>' : '') +
+  // Athlete labels grid — always shown if present, with clear separator
+  if (athleteItems.length) {
+    var athOffset = standardItems.length;
+    html +=
+      '<div class="no-print" style="display:flex;align-items:center;gap:10px;margin:20px 0 12px">' +
+        '<div style="flex:1;height:1px;background:rgba(251,146,60,.3)"></div>' +
+        '<span style="font-family:var(--mono);font-size:9px;font-weight:700;color:#fb923c;letter-spacing:1px;text-transform:uppercase;white-space:nowrap">' +
+          '🏅 Athlete Labels — Bespoke Macros — Pack &amp; Label Separately' +
+        '</span>' +
+        '<div style="flex:1;height:1px;background:rgba(251,146,60,.3)"></div>' +
+      '</div>' +
+      '<div class="labels-grid" style="border:2px solid rgba(251,146,60,.25);border-radius:8px;padding:14px;background:rgba(251,146,60,.03)">';
+    athleteItems.forEach(function(item, i) { html += buildLabelCard(item, athOffset + i); });
+    html += '</div>';
+  }
 
-          // Reheating
-          (reheat ? '<div class="lc-reheat">' + n2h(reheat) + '</div>' : '') +
-
-        '</div>' + // .label-card
-      '</div>';   // .label-wrap
-  });
-
-  html += '</div>';
   bodyEl.innerHTML = html;
 }
 
@@ -11127,9 +11533,9 @@ function printDymoLabels() {
   rules.push('  .sidebar,.topbar,.del-tabs,.label-controls,.no-print{display:none!important;}');
   rules.push('  .main,.content{display:block!important;height:auto!important;overflow:visible!important;padding:0!important;}');
   rules.push('  .page{display:none!important;}');
-  rules.push('  #page-delivery{display:block!important;height:auto!important;overflow:visible!important;}');
-  rules.push('  .del-panel{display:none!important;}');
-  rules.push('  #del-panel-labels{display:block!important;padding:0!important;overflow:visible!important;}');
+  rules.push('  #page-packsheet{display:block!important;height:auto!important;overflow:visible!important;}');
+  rules.push('  #pack-sheet-view{display:none!important;}');
+  rules.push('  #pack-labels-view{display:block!important;padding:0!important;overflow:visible!important;}');
   rules.push('  .labels-grid{display:block!important;margin:0!important;padding:0!important;}');
   rules.push('  .label-wrap{display:block!important;margin:0!important;padding:0!important;}');
   rules.push('  .label-print-bar{display:none!important;}');
@@ -11174,6 +11580,8 @@ function printDymoLabels() {
   rules.push('  .label-card .lc-useby{font-size:6.5pt!important;font-weight:700!important;font-family:monospace!important;display:inline-block!important;padding:0.3mm 1.5mm!important;margin:0.4mm 0!important;background:#fffbeb!important;border:0.5pt solid #f59e0b!important;color:#000!important;border-radius:2px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}');
   rules.push('  .label-card .lc-storage{font-size:4.5pt!important;color:#333!important;margin-top:0.4mm!important;line-height:1.3!important;}');
   rules.push('  .label-card .lc-reheat{font-size:4.5pt!important;color:#333!important;margin-top:0.2mm!important;border-top:0.3pt solid #ccc!important;padding-top:0.3mm!important;line-height:1.3!important;}');
+  rules.push('  .label-card.lc-athlete{border-left:2pt solid #e07b20!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}');
+  rules.push('  .label-card .lc-athlete-banner{font-size:5pt!important;font-weight:700!important;font-family:monospace!important;color:#b05a00!important;letter-spacing:0.5px!important;padding:0.3mm 0 0.5mm!important;border-bottom:0.4pt solid #e0a060!important;margin-bottom:0.5mm!important;display:block!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}');
   rules.push('}');
 
   var el = document.createElement('style');
