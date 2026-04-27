@@ -4285,7 +4285,7 @@ let DB = {
   ],
   menuPublished: false,
   orderDeadline: null,   // legacy — kept for backward compat
-  s1Deadline: null,      // Sunday ordering close — auto-calc: Friday 18:00 before drop
+  s1Deadline: null,      // Sunday ordering close — auto-calc: Thursday 18:00 before drop
   s2Deadline: null,      // Wednesday ordering close — auto-calc: Monday 18:00 before drop
   dropDates: { sunday: '', wednesday: '' },
   // Next-week slot — portal ordering + building
@@ -6290,12 +6290,13 @@ function recalcDishPortions(slotOrLabel) {
 }
 
 /* Calculate ordering deadline from a drop date.
-   Sunday drop  → Friday 18:00 (drop - 2 days)
+   Sunday drop  → Thursday 18:00 (drop - 3 days)
    Wednesday drop → Monday 18:00 (drop - 2 days) */
-function calcDropDeadline(dateStr) {
+function calcDropDeadline(dateStr, session) {
   if (!dateStr) return null;
   var d = new Date(dateStr + 'T12:00:00');
-  d.setDate(d.getDate() - 2);   // Friday for Sunday, Monday for Wednesday
+  var offset = (session === 'sunday') ? 3 : 2;  // Sunday: Thu 18:00, Wednesday: Mon 18:00
+  d.setDate(d.getDate() - offset);
   d.setHours(18, 0, 0, 0);
   return d.toISOString();
 }
@@ -6304,13 +6305,13 @@ function saveDropDate(session, val) {
   if (menuActiveSlot === 'next') {
     if (!DB.nextDropDates) DB.nextDropDates = {};
     DB.nextDropDates[session] = val || '';
-    if (session === 'sunday')    DB.nextS1Deadline = val ? calcDropDeadline(val) : null;
-    if (session === 'wednesday') DB.nextS2Deadline = val ? calcDropDeadline(val) : null;
+    if (session === 'sunday')    DB.nextS1Deadline = val ? calcDropDeadline(val, 'sunday') : null;
+    if (session === 'wednesday') DB.nextS2Deadline = val ? calcDropDeadline(val, 'wednesday') : null;
   } else {
     if (!DB.dropDates) DB.dropDates = {};
     DB.dropDates[session] = val || '';
-    if (session === 'sunday')    DB.s1Deadline = val ? calcDropDeadline(val) : null;
-    if (session === 'wednesday') DB.s2Deadline = val ? calcDropDeadline(val) : null;
+    if (session === 'sunday')    DB.s1Deadline = val ? calcDropDeadline(val, 'sunday') : null;
+    if (session === 'wednesday') DB.s2Deadline = val ? calcDropDeadline(val, 'wednesday') : null;
   }
   save();
   renderPortalPublishStrip();
@@ -6793,15 +6794,15 @@ function handlePhotoUpload(realIdx, input) {
   reader.onload = function(e) {
     var img = new Image();
     img.onload = function() {
-      // Resize to max 400×400 maintaining aspect ratio, then compress as JPEG 70%
-      var maxW = 400, maxH = 400;
+      // Resize to max 1200×1200 maintaining aspect ratio, then compress as JPEG 90%
+      var maxW = 1200, maxH = 1200;
       var w = img.width, h = img.height;
       if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
       if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
       var canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
       ud(realIdx, 'photoUrl', dataUrl);
       notify('📷 Photo saved ✓');
       if (btn) { btn.textContent = '↑ Upload'; btn.disabled = false; }
