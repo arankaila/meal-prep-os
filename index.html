@@ -783,6 +783,10 @@ tr:hover .inv-row-actions{opacity:1;}
 /* ── Athlete variant strip ── */
 .menu-athlete-strip{border-top:2px solid rgba(251,146,60,.45);background:rgba(251,146,60,.07);padding:8px 14px;}
 .menu-athlete-strip-add{border-top:1px solid var(--border);padding:4px 12px;display:flex;justify-content:flex-end;background:transparent;}
+/* Athlete variant — editable drop cells */
+.athlete-drop-cell{border-color:rgba(251,146,60,.55)!important;background:rgba(251,146,60,.1)!important;}
+.athlete-drop-input{color:rgba(251,146,60,.95)!important;background:transparent!important;border-bottom:1.5px solid rgba(251,146,60,.4)!important;border-top:none!important;border-left:none!important;border-right:none!important;padding-bottom:1px!important;}
+.athlete-drop-input:focus{color:#fb923c!important;border-bottom-color:rgba(251,146,60,.85)!important;outline:none!important;}
 .menu-overall-label{font-size:10px;color:var(--text3);font-family:var(--mono);}
 .menu-total-pill{background:var(--surface3);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:4px;}
 .menu-total-pill .tot-num{font-size:13px;font-weight:700;color:var(--text);}
@@ -6511,24 +6515,24 @@ function renderMenu(){
           <div>
             <div class="menu-card-section-label">📅 Drops</div>
             <div class="menu-session-block">
-              <div class="menu-session-cell ${s1Active?'s1-active':''}">
-                <span class="menu-session-label">Sunday</span>
+              <div class="menu-session-cell ${dish.athleteVariant ? 'athlete-drop-cell' : (s1Active?'s1-active':'')}">
+                <span class="menu-session-label">${dish.athleteVariant ? '🏅 Sun · edit' : 'Sunday'}</span>
                 <div style="display:flex;align-items:center;gap:6px">
-                  <input class="menu-session-input" type="number" value="${dish.drop1||0}" min="0" onchange="ud(${realIdx},'drop1',this.value)" ${dish.athleteVariant?'':'readonly'} ${!dish.athleteVariant&&!dish.availSunday?'disabled':''}>
-                  <label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer">
+                  <input class="menu-session-input${dish.athleteVariant?' athlete-drop-input':''}" type="number" value="${dish.drop1||0}" min="0" onchange="ud(${realIdx},'drop1',this.value)" ${dish.athleteVariant?'':'readonly'} ${!dish.athleteVariant&&!dish.availSunday?'disabled':''}>
+                  ${!dish.athleteVariant ? `<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer">
                     <input type="checkbox" ${dish.availSunday?'checked':''} onchange="ud(${realIdx},'availSunday',this.checked)" style="width:14px;height:14px">
                     <span style="color:var(--text2)">Avail</span>
-                  </label>
+                  </label>` : ''}
                 </div>
               </div>
-              <div class="menu-session-cell ${s2Active?'s2-active':''}">
-                <span class="menu-session-label">Wednesday</span>
+              <div class="menu-session-cell ${dish.athleteVariant ? 'athlete-drop-cell' : (s2Active?'s2-active':'')}">
+                <span class="menu-session-label">${dish.athleteVariant ? '🏅 Wed · edit' : 'Wednesday'}</span>
                 <div style="display:flex;align-items:center;gap:6px">
-                  <input class="menu-session-input" type="number" value="${dish.drop2||0}" min="0" onchange="ud(${realIdx},'drop2',this.value)" ${dish.athleteVariant?'':'readonly'} ${!dish.athleteVariant&&!dish.availWednesday?'disabled':''}>
-                  <label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer">
+                  <input class="menu-session-input${dish.athleteVariant?' athlete-drop-input':''}" type="number" value="${dish.drop2||0}" min="0" onchange="ud(${realIdx},'drop2',this.value)" ${dish.athleteVariant?'':'readonly'} ${!dish.athleteVariant&&!dish.availWednesday?'disabled':''}>
+                  ${!dish.athleteVariant ? `<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer">
                     <input type="checkbox" ${dish.availWednesday?'checked':''} onchange="ud(${realIdx},'availWednesday',this.checked)" style="width:14px;height:14px">
                     <span style="color:var(--text2)">Avail</span>
-                  </label>
+                  </label>` : ''}
                 </div>
               </div>
             </div>
@@ -6678,8 +6682,10 @@ function ud(idx,f,v){
 }
 
 function adjTubs(idx, delta) {
-  const cur = n(DB.menuDishes[idx].condimentTubs) || 0;
-  DB.menuDishes[idx].condimentTubs = Math.max(0, Math.min(2, cur + delta));
+  const dish = getSlotDishes()[idx];
+  if (!dish) return;
+  const cur = n(dish.condimentTubs) || 0;
+  dish.condimentTubs = Math.max(0, Math.min(2, cur + delta));
   save();
   renderMenu();
 }
@@ -6707,6 +6713,11 @@ function createAthleteVariant(idx) {
   athleteDish.name = originalDish.name + ' (Athlete)';
   athleteDish.athleteVariant = true;
   athleteDish.athleteIds = [];
+  // Zero out portions — athlete variant quantities are set manually, not from orders
+  athleteDish.drop1 = 0;
+  athleteDish.drop2 = 0;
+  athleteDish.availSunday = true;
+  athleteDish.availWednesday = true;
 
   // Add the new dish to the slot
   slotDishes.push(athleteDish);
@@ -8073,7 +8084,7 @@ function renderPurchasing(){
   const sessionLabel=purchSessionFilter==='all'?'All Sessions':(purchSessionFilter==='s1'||purchSessionFilter==='sunday')?'Sunday only':'Wednesday only';
   document.getElementById('print-date-purch').textContent='Order for week: '+new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · '+sessionLabel;
   const ingDemand={};
-  DB.menuDishes.forEach(dish=>{
+  getSlotDishes().forEach(dish=>{
     const slots=[{slot:'protein',scale:n(dish.scaleProtein)||1},{slot:'carb',scale:n(dish.scaleCarb)||1},{slot:'veg',scale:n(dish.scaleVeg)||1},{slot:'condiment',scale:1},{slot:'complete',scale:1}];
     const overall=n(dish.scaleOverall)||1;
     const totalPorts=dishPortions(dish,purchSessionFilter);
