@@ -10469,7 +10469,9 @@ function orderStatusLabel(s) {
 /* Returns a per-session availability summary for the portal.
    Reads from the "Building Next" slot if it has dishes, otherwise the Current slot. */
 function _portalUsesNextSlot() {
-  return !!(DB.nextMenuDishes && DB.nextMenuDishes.length > 0);
+  // Mirrors customer portal logic: Building Next only takes over when published,
+  // not merely because dishes have been added.
+  return !!(DB.nextMenuDishes && DB.nextMenuDishes.length > 0 && DB.nextMenuPublished);
 }
 function getPortalSessionStatus() {
   var hasNext = _portalUsesNextSlot();
