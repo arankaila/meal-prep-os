@@ -6451,6 +6451,9 @@ function renderMenu(){
 
     const athleteHtml = renderAthleteSection(dish, realIdx);
     const hasAthleteVariant = !!dish.athleteVariant;
+    // Pre-compute avail checkbox HTML — avoids nested template literals in card body
+    const _s1Checkbox = dish.athleteVariant ? '' : '<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" ' + (dish.availSunday?'checked':'') + ' onchange="ud('+realIdx+',\'availSunday\',this.checked)" style="width:14px;height:14px"><span style="color:var(--text2)">Avail</span></label>';
+    const _s2Checkbox = dish.athleteVariant ? '' : '<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" ' + (dish.availWednesday?'checked':'') + ' onchange="ud('+realIdx+',\'availWednesday\',this.checked)" style="width:14px;height:14px"><span style="color:var(--text2)">Avail</span></label>';
     // Completeness checks
     const _compChecks = [
       { label:'Name',   ok: !!(dish.name && dish.name.trim()) },
@@ -6519,20 +6522,14 @@ function renderMenu(){
                 <span class="menu-session-label">${dish.athleteVariant ? '🏅 Sun · edit' : 'Sunday'}</span>
                 <div style="display:flex;align-items:center;gap:6px">
                   <input class="menu-session-input${dish.athleteVariant?' athlete-drop-input':''}" type="number" value="${dish.drop1||0}" min="0" onchange="ud(${realIdx},'drop1',this.value)" ${dish.athleteVariant?'':'readonly'} ${!dish.athleteVariant&&!dish.availSunday?'disabled':''}>
-                  ${!dish.athleteVariant ? `<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer">
-                    <input type="checkbox" ${dish.availSunday?'checked':''} onchange="ud(${realIdx},'availSunday',this.checked)" style="width:14px;height:14px">
-                    <span style="color:var(--text2)">Avail</span>
-                  </label>` : ''}
+                  ${_s1Checkbox}
                 </div>
               </div>
               <div class="menu-session-cell ${dish.athleteVariant ? 'athlete-drop-cell' : (s2Active?'s2-active':'')}">
                 <span class="menu-session-label">${dish.athleteVariant ? '🏅 Wed · edit' : 'Wednesday'}</span>
                 <div style="display:flex;align-items:center;gap:6px">
                   <input class="menu-session-input${dish.athleteVariant?' athlete-drop-input':''}" type="number" value="${dish.drop2||0}" min="0" onchange="ud(${realIdx},'drop2',this.value)" ${dish.athleteVariant?'':'readonly'} ${!dish.athleteVariant&&!dish.availWednesday?'disabled':''}>
-                  ${!dish.athleteVariant ? `<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer">
-                    <input type="checkbox" ${dish.availWednesday?'checked':''} onchange="ud(${realIdx},'availWednesday',this.checked)" style="width:14px;height:14px">
-                    <span style="color:var(--text2)">Avail</span>
-                  </label>` : ''}
+                  ${_s2Checkbox}
                 </div>
               </div>
             </div>
