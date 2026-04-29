@@ -677,8 +677,8 @@ tr:hover .inv-row-actions{opacity:1;}
 /* WEEKLY MENU CARDS */
 .menu-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s,box-shadow .2s;}
 .menu-card:hover{border-color:var(--border2);box-shadow:0 3px 16px rgba(0,0,0,.25);}
-.menu-card[data-fuel="Fuel Plus"]{border-left:3px solid rgba(251,191,36,.45);}
-.menu-card[data-fuel="Fuel Lite"]{border-left:3px solid rgba(74,222,128,.4);}
+.menu-card[data-fuel="Fuel Plus"]{border-left:4px solid rgba(201,168,76,.6);}
+.menu-card[data-fuel="Fuel Lite"]{border-left:4px solid rgba(74,222,128,.55);}
 .menu-stat-chip.c-kcal{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.2);}
 .menu-stat-chip.c-kcal .menu-stat-val{color:#fb923c;}
 .menu-stat-chip.c-prot{background:rgba(96,165,250,.1);border-color:rgba(96,165,250,.2);}
@@ -687,17 +687,31 @@ tr:hover .inv-row-actions{opacity:1;}
 .menu-stat-chip.c-carb .menu-stat-val{color:var(--gold);}
 .menu-stat-chip.c-fat{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.2);}
 .menu-stat-chip.c-fat .menu-stat-val{color:#a78bfa;}
-.menu-card-header{padding:8px 12px 6px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.menu-card-header{padding:8px 12px 5px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:4px;}
+.menu-card-header-row{display:flex;align-items:center;gap:8px;}
 .menu-card-num{width:22px;height:22px;border-radius:5px;background:rgba(201,168,76,.15);color:var(--gold);font-family:var(--mono);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(201,168,76,.25);}
 .menu-card-name-input{background:transparent;border:none;color:var(--text);font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:-.2px;width:100%;cursor:text;outline:none;}
 .menu-card-name-input:focus{background:var(--surface3);border-radius:4px;padding:2px 6px;}
 .menu-card-serves-input{background:transparent;border:none;color:var(--text2);font-family:var(--sans);font-size:10px;width:100%;outline:none;padding:0;line-height:1.3;}
 .menu-card-serves-input::placeholder{color:var(--text3);font-style:italic;}
 .menu-card-serves-input:focus{background:var(--surface3);border-radius:3px;padding:1px 5px;}
-.menu-card-body{padding:8px 12px;display:flex;flex-direction:column;gap:6px;}
+.menu-card-body{padding:6px 12px 8px;display:flex;flex-direction:column;gap:5px;}
 .menu-card-section{display:flex;flex-direction:column;gap:0;}
-.menu-card-section-label{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;padding-bottom:2px;border-bottom:1px solid var(--border);}
-.menu-comp-row{display:flex;align-items:center;gap:7px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+.menu-card-section-label{font-family:var(--mono);font-size:7px;letter-spacing:1.2px;color:var(--text3);opacity:.65;text-transform:uppercase;margin-bottom:2px;padding-bottom:0;border-bottom:none;}
+.menu-comp-row{display:flex;align-items:center;gap:6px;padding:1.5px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+/* ── Inline macro row ── */
+.menu-macro-row{display:flex;gap:4px;align-items:stretch;}
+.menu-macro-chip{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:4px 2px;border-radius:4px;border:1px solid;}
+.menu-macro-chip .mmv{font-family:var(--mono);font-size:11px;font-weight:700;line-height:1;}
+.menu-macro-chip .mml{font-size:7px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.3px;opacity:.7;}
+.menu-macro-chip.c-kcal{background:rgba(251,146,60,.08);border-color:rgba(251,146,60,.18);}
+.menu-macro-chip.c-kcal .mmv{color:#fb923c;}
+.menu-macro-chip.c-prot{background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.18);}
+.menu-macro-chip.c-prot .mmv{color:#60a5fa;}
+.menu-macro-chip.c-carb{background:rgba(201,168,76,.08);border-color:rgba(201,168,76,.18);}
+.menu-macro-chip.c-carb .mmv{color:var(--gold);}
+.menu-macro-chip.c-fat{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.18);}
+.menu-macro-chip.c-fat .mmv{color:#a78bfa;}
 .menu-comp-row:last-child{border-bottom:none;}
 .menu-comp-type{font-family:var(--mono);font-size:7px;width:14px;text-align:center;opacity:.7;}
 .menu-section-sep{height:1px;background:var(--border);margin:5px 0;}
@@ -733,7 +747,7 @@ tr:hover .inv-row-actions{opacity:1;}
 .menu-session-input:focus{color:var(--gold);}
 .menu-card-footer{padding:10px 16px;border-top:1px solid var(--border);background:rgba(0,0,0,.1);display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 /* ── Menu card completeness bar ── */
-.menu-card-completeness{display:flex;gap:3px;padding:4px 12px 3px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:rgba(0,0,0,.06);}
+.menu-card-completeness{display:flex;gap:3px;padding:3px 12px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:rgba(0,0,0,.06);align-items:center;}
 .comp-check{font-size:8px;font-family:var(--mono);padding:1px 6px;border-radius:10px;letter-spacing:.3px;transition:all .15s;}
 .comp-check.ok{background:rgba(48,209,88,.1);color:#30d158;border:1px solid rgba(48,209,88,.25);}
 .comp-check.missing{background:rgba(255,69,58,.14);color:#ff453a;border:1px solid rgba(255,69,58,.35);font-weight:700;animation:none;}
@@ -6431,7 +6445,8 @@ function renderMenu(){
     const t=calcDishTotals(dish);
     const fixed=getTotalFixed();
     const cogs=t.cost+fixed;
-    const margin=t.sell>0?(t.sell-cogs)/t.sell:0;
+    const packCost=getPackagingCost();
+    const margin=t.sell>0?(t.sell-t.cost-packCost)/t.sell:0;  // food + packaging margin
     const marginClass=margin>=0.5?'menu-margin-green':margin>=0.35?'menu-margin-amber':'menu-margin-red';
     const allergenHtml=[...t.allergens].map(a=>`<span class="allergen-tag">${a.split(' ')[0]}</span>`).join('');
     const filteredTotal = dishPortions(dish, menuSessionFilter);
@@ -6478,34 +6493,34 @@ function renderMenu(){
         title="Sell price — must be set per dish" placeholder="0.00">
       ${!_sellPriceSet ? '<span style="font-size:10px;color:#ff453a;font-family:var(--mono);">← Required</span>' : ''}
       <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-        <span class="menu-sell-band-cost">cost £${t.cost.toFixed(2)}</span>
-        <div class="menu-sell-band-margin menu-margin-chip ${marginClass}">${pct(margin)}</div>
+        <span class="menu-sell-band-cost" title="Food £${t.cost.toFixed(2)} + Packaging £${packCost.toFixed(2)}">f+p £${(t.cost+packCost).toFixed(2)}</span>
+        <div class="menu-sell-band-margin menu-margin-chip ${marginClass}" title="Margin after food &amp; packaging costs">${pct(margin)}</div>
       </div>
     </div>`;
     return `<div class="menu-card" id="menu-card-${realIdx}" data-fuel="${dish.fuelLine||'Fuel Plus'}">
       <div class="menu-card-header">
-        <div class="menu-card-num" style="align-self:flex-start;margin-top:1px">${realIdx+1}</div>
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
-          <input class="menu-card-name-input" value="${dish.name}" onchange="ud(${realIdx},'name',this.value)" spellcheck="false" placeholder="Dish name…">
-          <input class="menu-card-serves-input" type="text" placeholder="Serves with… e.g. Turmeric Rice, Chow Chow Salad" value="${(dish.serves||'').replace(/"/g,'&quot;')}" onchange="ud(${realIdx},'serves',this.value.trim())" spellcheck="false">
+        <div class="menu-card-header-row">
+          <div class="menu-card-num">${realIdx+1}</div>
+          <input class="menu-card-name-input" value="${dish.name}" onchange="ud(${realIdx},'name',this.value)" spellcheck="false" placeholder="Dish name…" style="flex:1;min-width:0">
+          <div style="flex-shrink:0;cursor:pointer" onclick="triggerPhotoUpload(${realIdx})" title="${dish.photoUrl?'Click to change photo':'Click to upload photo'}">
+            ${dish.photoUrl
+              ? `<img class="photo-thumb-header" src="${(dish.photoUrl||'').replace(/"/g,'&quot;')}" alt="dish photo">`
+              : `<div class="photo-thumb-header-empty">📷</div>`}
+          </div>
+          <input type="file" accept="image/*" style="display:none" id="photo-file-${realIdx}" onchange="handlePhotoUpload(${realIdx},this)">
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+            <div class="menu-total-pill"><span class="tot-num">${filteredTotal}</span><span style="font-size:8px;color:var(--text3)">portions</span></div>
+            <button class="action-btn r" onclick="removeDish(${realIdx})" style="margin-left:2px">🗑</button>
+          </div>
         </div>
-        <div style="flex-shrink:0;align-self:flex-start;cursor:pointer" onclick="triggerPhotoUpload(${realIdx})" title="${dish.photoUrl?'Click to change photo':'Click to upload photo'}">
-          ${dish.photoUrl
-            ? `<img class="photo-thumb-header" src="${(dish.photoUrl||'').replace(/"/g,'&quot;')}" alt="dish photo">`
-            : `<div class="photo-thumb-header-empty">📷</div>`}
-        </div>
-        <input type="file" accept="image/*" style="display:none" id="photo-file-${realIdx}" onchange="handlePhotoUpload(${realIdx},this)">
-        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;align-self:flex-start;margin-top:1px">
-          <div class="menu-total-pill"><span class="tot-num">${filteredTotal}</span><span style="font-size:8px;color:var(--text3)">portions</span></div>
-          <button class="action-btn r" onclick="removeDish(${realIdx})" style="margin-left:2px">🗑</button>
-        </div>
+        <input class="menu-card-serves-input" type="text" placeholder="Serves with…" value="${(dish.serves||'').replace(/"/g,'&quot;')}" onchange="ud(${realIdx},'serves',this.value.trim())" spellcheck="false" style="width:100%;padding-left:30px">
       </div>
       ${_completenessBar}
       <div class="menu-card-body">
 
-        <!-- RECIPE: full width so component names are fully visible -->
+        <!-- RECIPE -->
         <div>
-          <div class="menu-card-section-label">🧩 Recipe</div>
+          <div class="menu-card-section-label">Recipe</div>
           ${compRows}
           <div class="menu-overall-row">
             <span class="menu-overall-label">Overall ×</span>
@@ -6513,20 +6528,20 @@ function renderMenu(){
           </div>
         </div>
 
-        <!-- DROPS + MACROS: side by side, filling the space below recipe -->
+        <!-- DROPS + MACROS -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start">
           <div>
-            <div class="menu-card-section-label">📅 Drops</div>
+            <div class="menu-card-section-label">Drops</div>
             <div class="menu-session-block">
               <div class="menu-session-cell ${dish.athleteVariant ? 'athlete-drop-cell' : (s1Active?'s1-active':'')}">
-                <span class="menu-session-label">${dish.athleteVariant ? '🏅 Sun · edit' : 'Sunday'}</span>
+                <span class="menu-session-label">${dish.athleteVariant ? '🏅 Sun' : 'Sunday'}</span>
                 <div style="display:flex;align-items:center;gap:6px">
                   <input class="menu-session-input${dish.athleteVariant?' athlete-drop-input':''}" type="number" value="${dish.drop1||0}" min="0" onchange="ud(${realIdx},'drop1',this.value)" ${dish.athleteVariant?'':'readonly'} ${!dish.athleteVariant&&!dish.availSunday?'disabled':''}>
                   ${_s1Checkbox}
                 </div>
               </div>
               <div class="menu-session-cell ${dish.athleteVariant ? 'athlete-drop-cell' : (s2Active?'s2-active':'')}">
-                <span class="menu-session-label">${dish.athleteVariant ? '🏅 Wed · edit' : 'Wednesday'}</span>
+                <span class="menu-session-label">${dish.athleteVariant ? '🏅 Wed' : 'Wednesday'}</span>
                 <div style="display:flex;align-items:center;gap:6px">
                   <input class="menu-session-input${dish.athleteVariant?' athlete-drop-input':''}" type="number" value="${dish.drop2||0}" min="0" onchange="ud(${realIdx},'drop2',this.value)" ${dish.athleteVariant?'':'readonly'} ${!dish.athleteVariant&&!dish.availWednesday?'disabled':''}>
                   ${_s2Checkbox}
@@ -6535,56 +6550,42 @@ function renderMenu(){
             </div>
           </div>
           <div>
-            <div class="menu-card-section-label">🔥 Macros <span style="font-weight:400;letter-spacing:0;text-transform:none;font-size:8px">/ portion</span></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px">
-              <div class="menu-stat-chip c-kcal"><span class="menu-stat-val">${t.kcal.toFixed(0)}</span><span class="menu-stat-label">kcal</span></div>
-              <div class="menu-stat-chip c-prot"><span class="menu-stat-val">${t.prot.toFixed(1)}g</span><span class="menu-stat-label">prot</span></div>
-              <div class="menu-stat-chip c-carb"><span class="menu-stat-val">${t.carb.toFixed(1)}g</span><span class="menu-stat-label">carbs</span></div>
-              <div class="menu-stat-chip c-fat"><span class="menu-stat-val">${t.fat.toFixed(1)}g</span><span class="menu-stat-label">fat</span></div>
+            <div class="menu-card-section-label">Macros / portion</div>
+            <div class="menu-macro-row">
+              <div class="menu-macro-chip c-kcal"><span class="mmv">${t.kcal.toFixed(0)}</span><span class="mml">kcal</span></div>
+              <div class="menu-macro-chip c-prot"><span class="mmv">${t.prot.toFixed(1)}</span><span class="mml">pro</span></div>
+              <div class="menu-macro-chip c-carb"><span class="mmv">${t.carb.toFixed(1)}</span><span class="mml">carb</span></div>
+              <div class="menu-macro-chip c-fat"><span class="mmv">${t.fat.toFixed(1)}</span><span class="mml">fat</span></div>
             </div>
           </div>
         </div>
 
-        <!-- PORTAL STATUS + FUEL LINE: combined compact row -->
-        <div>
-          ${(function(){
-            var hasNext = DB.nextMenuDishes && DB.nextMenuDishes.length > 0;
-            var portalSlot = hasNext ? 'Building Next' : 'Current Week';
-            var isThisSlot = (hasNext && menuActiveSlot === 'next') || (!hasNext && menuActiveSlot === 'current');
-            if (!isThisSlot) {
-              return `<div class="menu-not-live-banner" style="margin-bottom:5px">⚠ NOT VISIBLE ON PORTAL<span style="font-weight:400;font-size:9px;margin-left:4px">Portal shows ${portalSlot}</span></div>`;
-            }
-            return '';
-          })()}
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            ${(function(){
-              var hasNext = DB.nextMenuDishes && DB.nextMenuDishes.length > 0;
-              var isThisSlot = (hasNext && menuActiveSlot === 'next') || (!hasNext && menuActiveSlot === 'current');
-              return isThisSlot ? '<span class="portal-slot-badge portal-slot-live" style="margin-bottom:0">✓ Live</span>' : '<span class="portal-slot-badge portal-slot-off" style="margin-bottom:0">🌐</span>';
-            })()}
-            <button class="box-type-btn ${!dish.fuelLine||dish.fuelLine==='Fuel Plus'?'active':''}" onclick="ud(${realIdx},'fuelLine','Fuel Plus')" style="flex:1">⚡ Fuel Plus</button>
-            <button class="box-type-btn ${dish.fuelLine==='Fuel Lite'?'active':''}" onclick="ud(${realIdx},'fuelLine','Fuel Lite')" style="flex:1">✦ Fuel Lite</button>
-          </div>
-        </div>
+        <!-- PORTAL BADGE + FUEL LINE: single compact row, no extra wrapper -->
+        ${(function(){
+          var hasNext = DB.nextMenuDishes && DB.nextMenuDishes.length > 0;
+          var portalSlot = hasNext ? 'Building Next' : 'Current Week';
+          var isThisSlot = (hasNext && menuActiveSlot === 'next') || (!hasNext && menuActiveSlot === 'current');
+          var notLiveBanner = isThisSlot ? '' : '<div class="menu-not-live-banner" style="margin-bottom:4px">⚠ NOT VISIBLE ON PORTAL<span style="font-weight:400;font-size:9px;margin-left:4px">Portal shows ' + portalSlot + '</span></div>';
+          var liveBadge = isThisSlot ? '<span class="portal-slot-badge portal-slot-live" style="margin-bottom:0">✓ Live</span>' : '<span class="portal-slot-badge portal-slot-off" style="margin-bottom:0">🌐</span>';
+          return notLiveBanner + '<div style="display:flex;align-items:center;gap:5px">' + liveBadge + '<button class="box-type-btn ' + (!dish.fuelLine||dish.fuelLine==='Fuel Plus'?'active':'') + '" onclick="ud(' + realIdx + ',\'fuelLine\',\'Fuel Plus\')" style="flex:1">⚡ Fuel Plus</button><button class="box-type-btn ' + (dish.fuelLine==='Fuel Lite'?'active':'') + '" onclick="ud(' + realIdx + ',\'fuelLine\',\'Fuel Lite\')" style="flex:1">✦ Fuel Lite</button></div>';
+        })()}
 
-        <!-- TAGS: compact active-only chips + add input -->
+        <!-- TAGS -->
         ${renderTagToggles(dish, realIdx)}
 
-        <!-- BOX + CONDIMENT TUBS: single inline row -->
-        <div>
-          <div class="menu-card-section-label">📦 Box &amp; Packaging</div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <div class="box-type-row" style="flex:1;margin:0">
-              <button class="box-type-btn ${(!dish.boxType||dish.boxType==='3-compartment')?'active':''}" onclick="ud(${realIdx},'boxType','3-compartment')">▣ 3-Comp</button>
-              <button class="box-type-btn ${dish.boxType==='single'?'active':''}" onclick="ud(${realIdx},'boxType','single')">☐ Single</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-              <span style="font-size:9px;color:var(--text3);font-family:var(--mono);white-space:nowrap">Tubs</span>
-              <div class="tub-counter">
-                <button class="tub-btn" onclick="adjTubs(${realIdx},-1)">−</button>
-                <div class="tub-count">${n(dish.condimentTubs)||0}</div>
-                <button class="tub-btn" onclick="adjTubs(${realIdx},+1)">+</button>
-              </div>
+        <!-- BOX + TUBS: single compact row, label inline -->
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="menu-card-section-label" style="margin-bottom:0;flex-shrink:0">Packaging</span>
+          <div class="box-type-row" style="flex:1;margin:0">
+            <button class="box-type-btn ${(!dish.boxType||dish.boxType==='3-compartment')?'active':''}" onclick="ud(${realIdx},'boxType','3-compartment')">▣ 3-Comp</button>
+            <button class="box-type-btn ${dish.boxType==='single'?'active':''}" onclick="ud(${realIdx},'boxType','single')">☐ Single</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:3px;flex-shrink:0">
+            <span style="font-size:8px;color:var(--text3);font-family:var(--mono)">Tubs</span>
+            <div class="tub-counter">
+              <button class="tub-btn" onclick="adjTubs(${realIdx},-1)">−</button>
+              <div class="tub-count">${n(dish.condimentTubs)||0}</div>
+              <button class="tub-btn" onclick="adjTubs(${realIdx},+1)">+</button>
             </div>
           </div>
         </div>
@@ -6594,7 +6595,7 @@ function renderMenu(){
       <!-- ATHLETES — full width bottom strip -->
       ${hasAthleteVariant
         ? `<div class="menu-athlete-strip">
-             <div class="menu-card-section-label" style="letter-spacing:.5px;margin-bottom:6px">🏅 Athlete Variants</div>
+             <div class="menu-card-section-label" style="margin-bottom:5px">Athlete Variant</div>
              ${athleteHtml}
            </div>`
         : `<div class="menu-athlete-strip-add">${athleteHtml}</div>`}
@@ -6758,7 +6759,7 @@ function renderTagToggles(dish, realIdx) {
     + '</datalist>';
 
   return '<div class="tag-compact-row">'
-    + '<div class="menu-card-section-label" style="letter-spacing:.5px">🏷 Tags</div>'
+    + '<div class="menu-card-section-label" style="margin-bottom:2px">Tags</div>'
     + (current.length ? '<div class="tag-active-chips">' + activeChips + '</div>' : '')
     + '<div class="tag-add-row">'
     + '<input type="text" list="tag-presets-' + realIdx + '" class="tag-add-input" id="tag-input-' + realIdx + '" placeholder="Add tag… (pick or type)" onkeydown="addCustomTag(' + realIdx + ',event)">'
