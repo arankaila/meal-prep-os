@@ -2712,12 +2712,12 @@ select.route-confirm-input option { background:var(--surface2); }
           <div class="guide-section active" id="gs-start">
             <div class="gs-hero">
               <div class="gs-title">🚀 Getting Started</div>
-              <div class="gs-sub">Meal Prep OS v1.0 · What this system is · The weekly workflow · First-time setup order</div>
+              <div class="gs-sub">Meal Prep OS v1.1 · What this system is · The weekly workflow · First-time setup order</div>
             </div>
 
             <div class="gs-h2">What is 29 Performance Meal Prep OS?</div>
             <p class="gs-p">A single-file kitchen intelligence system for athlete meal prep businesses. Everything — ingredient costs, recipe builds, weekly menus, batch production, staff scheduling, purchasing, and multi-week financial history — lives in one HTML file. No server, no subscription, no internet required. Open it in any modern browser and you have a full operational OS.</p>
-            <p class="gs-p">All data saves automatically to your browser's localStorage. Export a JSON backup regularly (sidebar → ⬇ Export) to protect your data.</p>
+            <p class="gs-p">All data saves automatically to localStorage (instant, offline-safe) and syncs to Firebase in real time when configured — so Aran and staff always see the same data on any device. Export a JSON backup regularly (sidebar → ⬇ Export) as a secondary safeguard.</p>
 
             <div class="gs-h2">The Core System Layers</div>
             <div class="gs-flow" style="justify-content:center;gap:4px;flex-wrap:wrap;padding:16px 0;">
@@ -2819,9 +2819,9 @@ select.route-confirm-input option { background:var(--surface2); }
                 <tr><td><strong>Orders (Delivery tab)</strong></td><td>Confirm, cancel, or manually add orders (e.g. athlete dishes)</td><td>Portal orders arrive automatically as Pending. Status auto-advances (confirmed → in_production → packed) as production and packing progresses.</td></tr>
                 <tr><td><strong>Labour</strong></td><td>Staff roster, shifts per day, hourly rates, notes</td><td>Total hours, total cost, cost per portion</td></tr>
                 <tr><td><strong>Cost Stack</strong></td><td>Packaging values, overhead lines, sell price; or override Labour per Dish manually</td><td>Food cost (from menu avg), <strong>Labour per Dish (from Labour shifts)</strong>, margin calculations</td></tr>
-                <tr><td><strong>Purchasing</strong></td><td>Nothing — read-only output</td><td>Ingredient usage from all menu dishes × planned S1/S2 portion counts</td></tr>
+                <tr><td><strong>Purchasing</strong></td><td>Nothing — read-only output</td><td>Ingredient usage from active-slot menu dishes × S1/S2 portions (confirmed order counts if synced, else manual values)</td></tr>
                 <tr><td><strong>Production</strong></td><td>Individual cell overrides (qty, time, staff, notes)</td><td>Batch quantities from menu × recipe. Starting a component auto-sets confirmed orders to In Production.</td></tr>
-                <tr><td><strong>Packaging</strong></td><td>Nothing — read-only output</td><td>Menu dishes + recipe cooked weights</td></tr>
+                <tr><td><strong>Packaging</strong></td><td>Nothing — read-only output</td><td>Menu dishes + recipe cooked weights. Portion counts come from confirmed orders if present; falls back to manual S1/S2 values otherwise. Athlete variants shown in a separate section.</td></tr>
                 <tr><td><strong>Weekly Archive</strong></td><td>Week label, then confirm via checklist modal</td><td>Full snapshot: all dishes, all shifts, full cost stack, P&L</td></tr>
               </tbody>
             </table>
@@ -3004,7 +3004,8 @@ select.route-confirm-input option { background:var(--surface2); }
             <div class="gs-callout red"><b>Before advancing:</b> Confirm all current-week orders, make sure portions are synced, and ensure the Building Next slot has a week label and at least one dish. The Advance Week button will block if either of those conditions isn't met.</div>
 
             <div class="gs-h2">Card Layout</div>
-            <p class="gs-p">Each dish is displayed as a card with two columns. The left column contains the five component selectors (Protein, Carb, Veg, Condiment, Complete) each shown with a coloured type badge — <span style="font-size:11px;background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3);border-radius:3px;padding:1px 5px;font-family:monospace">PRO</span> <span style="font-size:11px;background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3);border-radius:3px;padding:1px 5px;font-family:monospace">CARB</span> <span style="font-size:11px;background:rgba(167,139,250,.15);color:#c4b5fd;border:1px solid rgba(167,139,250,.3);border-radius:3px;padding:1px 5px;font-family:monospace">VEG</span> <span style="font-size:11px;background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.3);border-radius:3px;padding:1px 5px;font-family:monospace">SCE</span> <span style="font-size:11px;background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3);border-radius:3px;padding:1px 5px;font-family:monospace">FULL</span> — plus the scale inputs for each. The right column contains Sessions, Nutrition &amp; Macros, Pricing &amp; Margin, Allergens, and Athletes sections, divided by horizontal separators. The stats bar below the dish cards shows session portion totals, portion counts, and average sell price.</p>
+            <p class="gs-p">Each dish card has a two-row header: the top row shows the dish number, name input, photo thumbnail, and the total portions pill. The second row is the "Serves with" field spanning the full card width. Below the header, a completeness bar flags missing fields (name, recipe, photo, price, drops) — all must show a ✓ before the dish is considered ready to go live.</p>
+            <p class="gs-p">The card body has two columns. The left column contains the five component selectors — <span style="font-size:11px;background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3);border-radius:3px;padding:1px 5px;font-family:monospace">PRO</span> <span style="font-size:11px;background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3);border-radius:3px;padding:1px 5px;font-family:monospace">CARB</span> <span style="font-size:11px;background:rgba(167,139,250,.15);color:#c4b5fd;border:1px solid rgba(167,139,250,.3);border-radius:3px;padding:1px 5px;font-family:monospace">VEG</span> <span style="font-size:11px;background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.3);border-radius:3px;padding:1px 5px;font-family:monospace">SCE</span> <span style="font-size:11px;background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3);border-radius:3px;padding:1px 5px;font-family:monospace">FULL</span> — with their individual scale inputs, plus an Overall Scale. The right column shows the S1/S2 drop inputs and a horizontal macro strip (kcal · protein · carb · fat). Below both columns are the portal/Fuel Line toggles, attribute tags, and the box/tub packaging row. The sell price band at the bottom of the card shows f+p cost (food + packaging) and the margin %. If the margin is green (≥50%) you're in a healthy position; amber (35–49%) is acceptable; red (&lt;35%) needs attention. The stats bar below the whole dish grid summarises total portions, box types, and tub counts by session.</p>
 
             <div class="gs-h2">Component Column Reference</div>
             <table class="gs-table">
@@ -3017,7 +3018,7 @@ select.route-confirm-input option { background:var(--surface2); }
                 <tr><td><strong>Overall Scale</strong></td><td>Decimal multiplier — default 1.0</td><td>Applied to every component simultaneously. 0.8 = 80% of all portions (e.g. lighter plan)</td></tr>
                 <tr><td><strong>Session 01 / Session 02</strong></td><td>Number of portions for each cooking session</td><td>S1 = Sunday drop, S2 = Wednesday drop. Drive all batch calculations in Production and Purchasing.</td></tr>
                 <tr><td><strong>Sell £</strong></td><td>Enter your selling price per portion</td><td>Used in margin calculation, revenue estimates, and shown on the customer portal</td></tr>
-                <tr><td><strong>Margin %</strong></td><td>Auto-calculated</td><td>(Sell − Food Cost − Fixed Costs) ÷ Sell. Green ≥50%, amber 35–50%, red &lt;35%</td></tr>
+                <tr><td><strong>Margin %</strong></td><td>Auto-calculated</td><td>(Sell − Food Cost − Packaging Cost) ÷ Sell. Green ≥50%, amber 35–50%, red &lt;35%. The full margin including labour and overhead is visible in the Cost Stack tab.</td></tr>
                 <tr><td><strong>Allergens</strong></td><td>Auto-compiled</td><td>All allergens from all ingredient lines across all components for this dish</td></tr>
               </tbody>
             </table>
@@ -3058,25 +3059,38 @@ select.route-confirm-input option { background:var(--surface2); }
           <div class="guide-section" id="gs-packsheet">
             <div class="gs-hero">
               <div class="gs-title">📦 Packaging</div>
-              <div class="gs-sub">Kitchen staff guide · Box-by-box weights · Allergen display · Printing</div>
+              <div class="gs-sub">Kitchen staff guide · Box-by-box weights · Allergen display · Session filtering · Athlete variants · Printing</div>
             </div>
 
             <div class="gs-h2">What the Packaging Sheet Shows</div>
-            <p class="gs-p">The Packaging sheet is a <strong>read-only output</strong> generated from your current weekly menu. It shows each dish with every component's cooked weight — exactly what goes in each box. It is designed to be printed and given to kitchen staff as their packing guide.</p>
+            <p class="gs-p">The Packaging sheet is a <strong>read-only output</strong> for kitchen staff. It shows every dish being packed that session, with each component's cooked weight, box type, allergens, and per-serving macros. It is designed to be printed and handed to the packing team as their definitive guide — one card per dish.</p>
             <table class="gs-table">
-              <thead><tr><th>Column</th><th>Source</th></tr></thead>
+              <thead><tr><th>Element</th><th>Source</th></tr></thead>
               <tbody>
-                <tr><td><strong>Component name</strong></td><td>Recipe name</td></tr>
-                <tr><td><strong>Weight (g)</strong></td><td>Ingredient raw qty × total yield (proc × cook), then × component scale × overall scale</td></tr>
-                <tr><td><strong>Component type</strong></td><td>Protein / Carb / Veg / Condiment — colour-coded</td></tr>
-                <tr><td><strong>Allergens</strong></td><td>Compiled from all ingredient allergen tags for that dish</td></tr>
-                <tr><td><strong>Macros</strong></td><td>Per-serving summary for staff or customer label reference</td></tr>
+                <tr><td><strong>Component name + cooked weight</strong></td><td>Recipe name · raw qty × total yield (proc% × cook%) × component scale × overall scale</td></tr>
+                <tr><td><strong>Finish steps (green bullets)</strong></td><td>Any "finish steps" set on the recipe — e.g. "drizzle sauce", "add garnish". Appear below the component name.</td></tr>
+                <tr><td><strong>Box type banner</strong></td><td>▣ 3-Compartment or ☐ Single — set per dish on the Weekly Menu card</td></tr>
+                <tr><td><strong>Condiment tub count</strong></td><td>Number of tubs per dish (0–2) — set on the Weekly Menu card</td></tr>
+                <tr><td><strong>Portion counts (Sunday / Wednesday badges)</strong></td><td>Live-confirmed order counts if orders exist; falls back to the manually-set S1/S2 values if no orders are confirmed yet</td></tr>
+                <tr><td><strong>Allergens</strong></td><td>Compiled from all ingredient allergen tags across all components for that dish</td></tr>
+                <tr><td><strong>Macros footer</strong></td><td>Per-serving kcal, protein, carbs, fat, and total cooked weight for label reference</td></tr>
               </tbody>
             </table>
 
+            <div class="gs-h2">Summary Strip</div>
+            <p class="gs-p">At the top of the Packaging sheet (screen-only, not printed) there are four summary cards: <strong>Total Boxes</strong>, <strong>3-Compartment count</strong>, <strong>Single count</strong>, and <strong>Condiment Tubs</strong>. These auto-update when you switch the session filter. Use them for a quick sanity check before printing — the totals should match what you have prepped.</p>
+
+            <div class="gs-h2">Session Filter (S1 / S2 / All)</div>
+            <p class="gs-p">Use the <strong>All / Sunday / Wednesday</strong> filter above the Packaging sheet to limit the view to one session. When filtered to Sunday or Wednesday, only dishes with confirmed portions for that session are shown — dishes with 0 portions in that session are hidden automatically. Use this when briefing the packing team for a specific drop.</p>
+            <div class="gs-callout green"><b>Live portions:</b> Once orders are confirmed via the Orders page, the portion counts on the Packaging sheet update automatically to reflect confirmed demand. If a dish has confirmed orders for one session but zero for another, the zero is shown correctly — it does not fall back to the planned count.</div>
+
+            <div class="gs-h2">🏅 Athlete Variants</div>
+            <p class="gs-p">Athlete variant dishes are shown in a separate orange-bordered section at the bottom of the Packaging sheet, clearly labelled "<strong>Athlete Variants — Bespoke macros — do not mix with standard boxes</strong>". Each athlete card shows the assigned athlete's name, the box type, component weights, and allergens. Pack and label these separately before running the standard boxes.</p>
+            <div class="gs-callout amber"><b>Separation is critical.</b> Athlete variants often have different component scales or ingredients. Never put them in the same packing run as standard boxes. The sheet separates them to make this unambiguous for kitchen staff.</div>
+
             <div class="gs-h2">Printing the Packaging Sheet</div>
-            <p class="gs-p">Click the <strong>🖨 Print</strong> button or press <span class="gs-kbd">Ctrl+P</span> / <span class="gs-kbd">Cmd+P</span>. The system applies a print stylesheet that hides the sidebar and navigation, showing only the pack content in a clean black-and-white layout at A4 size. For best results, set your browser's print margins to minimum and disable headers/footers in the browser print dialog.</p>
-            <div class="gs-callout amber"><b>No menu?</b> If the Packaging sheet is empty, you haven't built a weekly menu yet, or all dishes have 0 portions. Check the Weekly Menu and ensure Session 01 / Session 02 are filled in.</div>
+            <p class="gs-p">Click the <strong>🖨 Print</strong> button or press <span class="gs-kbd">Ctrl+P</span> / <span class="gs-kbd">Cmd+P</span>. The system applies a print stylesheet that hides the sidebar and navigation, showing only the pack content in a clean black-and-white A4 layout. For best results, set browser print margins to minimum and disable headers/footers in the browser print dialog. Filter to the relevant session before printing.</p>
+            <div class="gs-callout amber"><b>Nothing showing?</b> If the Packaging sheet is empty, either no weekly menu exists, or all dishes have 0 portions for the selected session. Check the Weekly Menu and confirm Session 01 / Session 02 values are filled in, or switch the session filter to <strong>All</strong>.</div>
           </div>
 
           <!-- ═══ PRODUCTION ═══ -->
@@ -6443,8 +6457,6 @@ function renderMenu(){
   document.getElementById('menu-card-grid').innerHTML = dishes.map((dish,idx)=>{
     const realIdx=slotDishes.indexOf(dish);
     const t=calcDishTotals(dish);
-    const fixed=getTotalFixed();
-    const cogs=t.cost+fixed;
     const packCost=getPackagingCost();
     const margin=t.sell>0?(t.sell-t.cost-packCost)/t.sell:0;  // food + packaging margin
     const marginClass=margin>=0.5?'menu-margin-green':margin>=0.35?'menu-margin-amber':'menu-margin-red';
@@ -6621,7 +6633,6 @@ function updateMenuKPIs(){
   const totalPorts=slotD.reduce((s,d)=>s+dishPortions(d,menuSessionFilter),0);
   const totalRev=slotD.reduce((s,d)=>{const t=calcDishTotals(d);return s+t.sell*dishPortions(d,menuSessionFilter);},0);
   const totalCost=slotD.reduce((s,d)=>{const t=calcDishTotals(d);return s+t.cost*dishPortions(d,menuSessionFilter);},0);
-  const fixed=getTotalFixed();
   const foodProfit=totalRev-totalCost;
   const foodMarginPct=totalRev>0?foodProfit/totalRev:0;
   const sessionLabel = menuSessionFilter==='sunday' || menuSessionFilter==='s1' ? ' · Sunday' : menuSessionFilter==='wednesday' || menuSessionFilter==='s2' ? ' · Wednesday' : '';
@@ -6945,10 +6956,14 @@ function renderPackSheet(){
       });
     }
   });
-  // Helper: live portions for a dish respecting session filter
+  // Helper: live portions for a dish respecting session filter.
+  // If ANY confirmed order data exists for this dish, live counts are authoritative
+  // (0 for a session means genuinely no orders — do not fall back to planned drops).
+  // Only fall back to manual drop1/drop2 when no order data exists at all.
   function livePortions(dish, sf) {
-    var d1 = liveDrop1[dish.id] || n(dish.drop1) || 0;
-    var d2 = liveDrop2[dish.id] || n(dish.drop2) || 0;
+    var hasLiveData = (dish.id in liveDrop1) || (dish.id in liveDrop2);
+    var d1 = hasLiveData ? (liveDrop1[dish.id] || 0) : (n(dish.drop1) || 0);
+    var d2 = hasLiveData ? (liveDrop2[dish.id] || 0) : (n(dish.drop2) || 0);
     if (!sf || sf === 'all') return d1 + d2;
     if (sf === 's1' || sf === 'sunday') return d1;
     if (sf === 's2' || sf === 'wednesday') return d2;
@@ -6960,8 +6975,9 @@ function renderPackSheet(){
   _packDishes.forEach(function(d){
     const bt=d.boxType||'3-compartment';
     const tubs=n(d.condimentTubs)||0;
-    const d1 = liveDrop1[d.id] || n(d.drop1) || 0;
-    const d2 = liveDrop2[d.id] || n(d.drop2) || 0;
+    var hasLiveData = (d.id in liveDrop1) || (d.id in liveDrop2);
+    const d1 = hasLiveData ? (liveDrop1[d.id] || 0) : (n(d.drop1) || 0);
+    const d2 = hasLiveData ? (liveDrop2[d.id] || 0) : (n(d.drop2) || 0);
     if(bt==='3-compartment'){ three1+=d1; three2+=d2; }
     else { single1+=d1; single2+=d2; }
     tubs1+=d1*tubs; tubs2+=d2*tubs;
@@ -7035,8 +7051,8 @@ function renderPackSheet(){
       </div>`;
     }).join('');
 
-    const _d1 = liveDrop1[dish.id] || n(dish.drop1) || 0;
-    const _d2 = liveDrop2[dish.id] || n(dish.drop2) || 0;
+    const _d1 = (dish.id in liveDrop1) ? liveDrop1[dish.id] : (n(dish.drop1) || 0);
+    const _d2 = (dish.id in liveDrop2) ? liveDrop2[dish.id] : (n(dish.drop2) || 0);
     const s1Label = (packSessionFilter!=='s2'&&packSessionFilter!=='wednesday') && _d1>0 ? `<span class="badge" style="background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2);font-size:10px">☀ Sunday: ${_d1}</span>` : '';
     const s2Label = (packSessionFilter!=='s1'&&packSessionFilter!=='sunday') && _d2>0 ? `<span class="badge" style="background:rgba(59,130,246,.1);color:#93c5fd;border:1px solid rgba(59,130,246,.2);font-size:10px">🌿 Wednesday: ${_d2}</span>` : '';
 
@@ -7118,8 +7134,8 @@ function renderPackSheet(){
     }).join('');
 
     const athleteNames = (dish.athleteIds||[]).map(aId => (DB.athletes||[]).find(a=>a.id===aId)?.name).filter(Boolean).join(', ') || 'Unassigned';
-    const _ad1 = liveDrop1[dish.id] || n(dish.drop1) || 0;
-    const _ad2 = liveDrop2[dish.id] || n(dish.drop2) || 0;
+    const _ad1 = (dish.id in liveDrop1) ? liveDrop1[dish.id] : (n(dish.drop1) || 0);
+    const _ad2 = (dish.id in liveDrop2) ? liveDrop2[dish.id] : (n(dish.drop2) || 0);
     const as1Label = (packSessionFilter!=='s2'&&packSessionFilter!=='wednesday') && _ad1>0 ? `<span class="badge" style="background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2);font-size:10px">☀ Sunday: ${_ad1}</span>` : '';
     const as2Label = (packSessionFilter!=='s1'&&packSessionFilter!=='sunday') && _ad2>0 ? `<span class="badge" style="background:rgba(59,130,246,.1);color:#93c5fd;border:1px solid rgba(59,130,246,.2);font-size:10px">🌿 Wednesday: ${_ad2}</span>` : '';
 
