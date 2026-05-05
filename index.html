@@ -6336,10 +6336,14 @@ function recalcDishPortions(slotOrLabel) {
     // Legacy: determine slot from week label
     slot = (DB.nextMenuWeekLabel && slotOrLabel === DB.nextMenuWeekLabel) ? 'next' : 'current';
   }
+  var week = slot === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
   var dishes = slot === 'next' ? (DB.nextMenuDishes||[]) : (DB.menuDishes||[]);
   var orders = (DB.weeklyOrders||[]).filter(function(o){
-    return (o.slot||'current') === slot &&
-           getOrderStatus(o) !== 'cancelled' &&
+    // Match by slot+week to prevent old orders from previous weeks bleeding into
+    // current production counts. Mirrors getProductionOrders() matching logic.
+    var inSlot = o.slot ? (o.slot === slot) : (week && o.week === week);
+    if (!inSlot) return false;
+    return getOrderStatus(o) !== 'cancelled' &&
            getOrderStatus(o) !== 'pending';
   });
   var s1={}, s2={};
@@ -9772,6 +9776,8 @@ function _startFbListener() {
     if (remoteTs > _lastSaved + 500) {
       delete remote._ts;
       Object.assign(DB, remote);
+      // Check auto-publish on every incoming sync (another device may have built the next menu)
+      checkAndAutoPublish();
       // Refresh the currently visible page
       var activePage = document.querySelector('.page.active');
       if (activePage) {
@@ -10100,6 +10106,8 @@ function initTheme() {
   if (fbOk) {
     loadFromFirebase(function(gotRemote) {
       if (gotRemote) {
+        // Run auto-publish check on fresh data before rendering
+        checkAndAutoPublish();
         // Re-render current page with fresh data
         var activePage = document.querySelector('.page.active');
         if (activePage) {
@@ -10612,10 +10620,23 @@ function renderPortalPublishStrip() {
     : (!hasNext && !(DB.menuDishes && DB.menuDishes.length) ? ' · no menu built yet' : '');
   var noLblWarn = !weekLabel
     ? ' <span style="color:var(--gold);font-weight:600">⚠ set a week label before opening</span>' : '';
+
+  // Show scheduled auto-publish time when next menu is ready but not yet published
+  var autoPublishNote = '';
+  if (!hasNext && DB.nextMenuDishes && DB.nextMenuDishes.length > 0 && DB.nextMenuWeekLabel && !DB.nextMenuPublished && DB.s2Deadline) {
+    var goLive = new Date(DB.s2Deadline);
+    var now    = new Date();
+    if (goLive > now) {
+      autoPublishNote = ' <span style="color:var(--green);font-weight:600">⚡ auto-switches to ' + DB.nextMenuWeekLabel + ' at ' +
+        goLive.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}) + ' ' +
+        goLive.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + '</span>';
+    }
+  }
+
   var dot = function(s) { return s.open ? '<span style="color:var(--green)">🟢</span>' : '<span style="color:var(--text3)">⚫</span>'; };
   strip.innerHTML =
     '<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">' +
-      '<div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Customer Portal — ' + slotLabel + weekDisp + noLblWarn + '</div>' +
+      '<div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Customer Portal — ' + slotLabel + weekDisp + noLblWarn + autoPublishNote + '</div>' +
       '<div style="display:flex;gap:16px;flex-wrap:wrap">' +
         '<span style="font-size:12px;font-weight:600;color:' + (st.s1.open?'var(--green)':'var(--text3)') + '">' + dot(st.s1) + ' Sunday — ' + st.s1.text + '</span>' +
         '<span style="font-size:12px;font-weight:600;color:' + (st.s2.open?'var(--green)':'var(--text3)') + '">' + dot(st.s2) + ' Wednesday — ' + st.s2.text + '</span>' +
@@ -10680,6 +10701,31 @@ function showPortalSettings() {
   updateDropDateDeadlineDisplay();
   notify('Deadlines updated ✓');
 }
+
+// ── Auto-publish: switch portal to next week's menu when Wednesday deadline passes ──
+// Runs on startup, on every Firebase sync, and on a 5-min interval.
+// Trigger: current week's s2Deadline (Monday 18:00) has passed
+//          AND next menu has dishes + week label
+//          AND next menu is not yet published.
+// Safe to call repeatedly — returns early if conditions aren't met.
+function checkAndAutoPublish() {
+  var now = new Date();
+  var hasNextReady   = !!(DB.nextMenuDishes && DB.nextMenuDishes.length > 0 && (DB.nextMenuWeekLabel || '').trim());
+  var notPublished   = !DB.nextMenuPublished;
+  var deadlinePassed = !!(DB.s2Deadline && new Date(DB.s2Deadline) <= now);
+
+  if (!hasNextReady || !notPublished || !deadlinePassed) return false;
+
+  DB.nextMenuPublished = true;
+  DB.menuPublished     = false;  // close current week's ordering window
+  saveToFirebaseNow();           // immediate — can't risk the 1.5s debounce
+  renderPortalPublishStrip();
+  notify('🔄 Portal auto-switched to ' + DB.nextMenuWeekLabel + ' — next week is now live for orders');
+  return true;
+}
+
+// Run auto-publish check every 5 minutes while the ops app is open
+setInterval(checkAndAutoPublish, 5 * 60 * 1000);
 
 /* Advance week: archive current → promote next → current → clear next slot */
 function advanceWeek() {
