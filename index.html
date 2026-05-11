@@ -461,7 +461,7 @@ textarea{resize:vertical;min-height:80px;}
   .menu-card-section-label { font-size: 7px !important; color: #666 !important; letter-spacing: 1px !important; text-transform: uppercase !important; font-family: monospace !important; margin-bottom: 3px !important; }
   .menu-comp-row { display: flex !important; align-items: center !important; padding: 3px 0 !important; border-bottom: 1px solid #eee !important; font-size: 9px !important; gap: 5px !important; }
   .menu-comp-type { font-size: 7px !important; font-weight: 700 !important; background: #e8e8e8 !important; color: #333 !important; padding: 1px 4px !important; border-radius: 3px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .menu-comp-select { font-size: 8.5px !important; color: #000 !important; background: transparent !important; border: none !important; flex: 1 !important; }
+  .menu-comp-select, .menu-comp-search { font-size: 8.5px !important; color: #000 !important; background: transparent !important; border: none !important; flex: 1 !important; }
   .menu-scale-input { display: none !important; }
   .menu-section-sep { display: none !important; }
   .menu-session-block { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 4px !important; }
@@ -736,6 +736,10 @@ tr:hover .inv-row-actions{opacity:1;}
 .portal-slot-off{background:rgba(255,69,58,.1);color:#ff453a;border:1px solid rgba(255,69,58,.3);}
 .menu-comp-select{flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:10px;padding:3px 6px;font-family:var(--sans);min-width:0;outline:none;cursor:pointer;}
 .menu-comp-select:focus{border-color:var(--gold);}
+/* Searchable text input variant — same look as select but allows type-to-filter */
+.menu-comp-search{flex:1;background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:10px;padding:3px 6px;font-family:var(--sans);min-width:0;outline:none;cursor:text;}
+.menu-comp-search:focus{border-color:var(--gold);}
+.menu-comp-search::placeholder{color:var(--text3);font-style:italic;}
 .menu-scale-input{width:44px;background:var(--surface3);border:1px solid var(--border);border-radius:4px;color:var(--text2);font-family:var(--mono);font-size:10px;padding:3px 5px;text-align:center;outline:none;}
 .menu-scale-input:focus{border-color:rgba(201,168,76,.5);color:var(--gold);}
 .menu-session-block{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
@@ -5746,7 +5750,7 @@ function renderRecipes(){
     const tm=recTypeFilter==='all'||r.type===recTypeFilter;
     const sm=!recSearchFilter||r.name.toLowerCase().includes(recSearchFilter.toLowerCase());
     return tm&&sm;
-  });
+  }).sort((a,b)=>a.name.localeCompare(b.name));
   document.getElementById('rec-count').textContent=f.length;
   document.getElementById('rec-tbody').innerHTML=f.map(rec=>{
     const t=calcRecipeTotals(rec);
@@ -6096,7 +6100,7 @@ function renderComponents(){
     const tm=compTypeFilter==='all'||r.type===compTypeFilter;
     const sm=!compSearchFilter||r.name.toLowerCase().includes(compSearchFilter.toLowerCase());
     return tm&&sm;
-  });
+  }).sort((a,b)=>a.name.localeCompare(b.name));
   document.getElementById('comp-count').textContent=f.length;
   const byType={};
   active.forEach(r=>{byType[r.type]=(byType[r.type]||0)+1;});
@@ -6452,13 +6456,16 @@ function renderMenu(){
   const slotDishes = getSlotDishes();
   const dishes=slotDishes.filter(d=>!menuSearchFilter||d.name.toLowerCase().includes(menuSearchFilter.toLowerCase()));
   document.getElementById('menu-count').textContent=slotDishes.length+' dish'+(slotDishes.length!==1?'es':'');
-  const activeComps=DB.recipes.filter(r=>r.status==='Active');
-  const opts=(type)=>`<option value="">— None —</option>`+activeComps.filter(r=>!type||r.type===type).map(r=>`<option value="${r.name}">${r.name}</option>`).join('');
+  const activeComps=DB.recipes.filter(r=>r.status==='Active').sort((a,b)=>a.name.localeCompare(b.name));
+  // Build one shared datalist per component type — used by all dish card search inputs
+  const _compDlHtml = ['Protein','Carb','Veg','Condiment','Complete'].map(type=>
+    `<datalist id="comp-dl-${type}">${activeComps.filter(r=>r.type===type).map(r=>`<option value="${escHtml(r.name)}">`).join('')}</datalist>`
+  ).join('');
 
   const s1Active = menuSessionFilter === 's1' || menuSessionFilter === 'sunday';
   const s2Active = menuSessionFilter === 's2' || menuSessionFilter === 'wednesday';
 
-  document.getElementById('menu-card-grid').innerHTML = dishes.map((dish,idx)=>{
+  document.getElementById('menu-card-grid').innerHTML = _compDlHtml + dishes.map((dish,idx)=>{
     const realIdx=slotDishes.indexOf(dish);
     const t=calcDishTotals(dish);
     const packCost=getPackagingCost();
@@ -6476,7 +6483,10 @@ function renderMenu(){
     ].map(({slot,label,type,cls})=>`
       <div class="menu-comp-row">
         <span class="badge ${cls}" style="font-size:7px;padding:2px 5px;flex-shrink:0;letter-spacing:.4px;width:34px;text-align:center">${label}</span>
-        <select class="menu-comp-select" onchange="ud(${realIdx},'${slot}',this.value)" data-slot="${slot}" data-realidx="${realIdx}">${opts(type)}</select>
+        <input class="menu-comp-select menu-comp-search" type="text" list="comp-dl-${type}"
+          value="${escHtml(dish[slot]||'')}" placeholder="Search ${label.toLowerCase()}…"
+          data-slot="${slot}" data-realidx="${realIdx}" autocomplete="off" spellcheck="false"
+          onchange="udCompValidate(${realIdx},'${slot}',this.value,this)">
         ${slot!=='condiment'&&slot!=='complete'?`<input class="menu-scale-input" type="number" value="${n(dish['scale'+slot.charAt(0).toUpperCase()+slot.slice(1)])||1}" step="0.05" min="0.1" title="${type} scale" onchange="ud(${realIdx},'scale${slot.charAt(0).toUpperCase()+slot.slice(1)}',this.value)">` : `<span style="width:44px"></span>`}
       </div>`).join('');
 
@@ -6622,13 +6632,6 @@ function renderMenu(){
     </div>`;
   }).join('') || `<div style="grid-column:1/-1"><div class="empty-state"><div class="big">📋</div><div class="msg">No dishes yet — build your weekly menu by adding dishes below</div><button class="btn btn-gold" onclick="addDishRow()">+ Add First Dish</button></div></div>`;
 
-  // Set select values after render
-  dishes.forEach((dish, visIdx) => {
-    const card = document.getElementById('menu-card-'+slotDishes.indexOf(dish));
-    if (!card) return;
-    const sels = card.querySelectorAll('select[data-slot]');
-    sels.forEach(sel => { sel.value = dish[sel.dataset.slot] || ''; });
-  });
   updateMenuStats();
 }
 
@@ -6692,6 +6695,19 @@ function ud(idx,f,v){
   getSlotDishes()[idx][f]=v;
   save();
   renderMenu();
+}
+
+// Validates a component search input value — only saves if the value exactly matches
+// an active component of the correct type. Clears and re-renders if not.
+function udCompValidate(idx, slot, val, el) {
+  var typeMap = {protein:'Protein', carb:'Carb', veg:'Veg', condiment:'Condiment', complete:'Complete'};
+  var type = typeMap[slot];
+  var cleaned = String(val || '').trim();
+  if (cleaned) {
+    var valid = DB.recipes.filter(function(r){ return r.status === 'Active' && r.type === type; }).map(function(r){ return r.name; });
+    if (valid.indexOf(cleaned) === -1) cleaned = ''; // reject free-text that doesn't match a real component
+  }
+  ud(idx, slot, cleaned); // ud() saves + re-renders, which resets the input to the correct value
 }
 
 function adjTubs(idx, delta) {
