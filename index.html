@@ -283,12 +283,24 @@ textarea{resize:vertical;min-height:80px;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 
 /* COMPONENT PROGRESS */
-.comp-status-toggle{display:flex;align-items:center;gap:0;border-radius:6px;overflow:hidden;border:1px solid var(--border2);flex-shrink:0;margin-left:auto;}
+.comp-status-toggle{display:flex;align-items:center;gap:0;overflow:hidden;border:1px solid var(--border2);border-radius:6px;flex-shrink:0;margin-left:auto;}
 .comp-status-btn{padding:4px 9px;font-size:9px;font-family:var(--mono);font-weight:700;letter-spacing:.4px;cursor:pointer;border:none;background:var(--surface3);color:var(--text3);transition:all .12s;white-space:nowrap;}
 .comp-status-btn:hover{background:var(--surface2);color:var(--text2);}
 .comp-status-btn.active.not_started{background:rgba(255,255,255,.07);color:var(--text2);}
 .comp-status-btn.active.in_progress{background:rgba(96,165,250,.25);color:#60a5fa;}
 .comp-status-btn.active.complete{background:rgba(74,222,128,.25);color:#4ade80;}
+/* Prod card status row — dedicated full-width strip below header */
+.prod-card-status-row{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.06);gap:8px;}
+/* Two-column prod card body */
+.prod-card-body{display:flex;align-items:stretch;}
+.prod-card-left{flex:1;min-width:0;border-right:1px solid var(--border);display:flex;flex-direction:column;}
+.prod-card-right{width:260px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;}
+/* Phase panels — always visible, stacked in right column */
+.prod-phase-panel{border-top:1px solid var(--border);display:flex;flex-direction:column;}
+.prod-phase-panel:first-child{border-top:none;}
+.prod-phase-panel-hdr{font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:5px 10px 3px;display:flex;align-items:center;gap:5px;}
+.prod-phase-panel-body{padding:2px 10px 8px;flex:1;}
+.prod-phase-panel-empty{font-size:9px;color:var(--text3);font-style:italic;padding:2px 10px 8px;opacity:.6;}
 .prod-card.in-progress{border-color:rgba(96,165,250,.4);}
 .prod-card.complete{border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.03);}
 .prod-progress-overview{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;margin-bottom:14px;font-size:11px;font-family:var(--mono);}
@@ -306,16 +318,49 @@ textarea{resize:vertical;min-height:80px;}
 .prod-type-btn.pt-veg.active{background:#22c55e;color:#000;border-color:#22c55e;}
 .prod-type-btn.pt-condiment.active{background:#a78bfa;color:#fff;border-color:#a78bfa;}
 .prod-type-btn.pt-complete.active{background:#3b82f6;color:#fff;border-color:#3b82f6;}
-.prod-station-group{margin-bottom:24px;}
+.prod-station-group{margin-bottom:28px;}
 .prod-station-label{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);padding:6px 0 8px;border-bottom:1px solid var(--border);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
 .prod-station-label::after{content:'';flex:1;height:1px;}
-.prod-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;}
+/* Single-column full-width cards for kitchen clarity */
+.prod-cards-grid{display:flex;flex-direction:column;gap:16px;}
 .prod-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .15s,box-shadow .15s;}
 .prod-card:hover{border-color:var(--border2);box-shadow:0 3px 14px rgba(0,0,0,.25);}
-.prod-card-header{padding:12px 14px 10px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;}
-.prod-card-seq{width:26px;height:26px;border-radius:6px;background:rgba(201,168,76,.15);color:var(--gold);font-family:var(--mono);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(201,168,76,.25);}
-.prod-card-name{font-family:var(--display);font-weight:800;font-size:14px;letter-spacing:-.2px;line-height:1.2;flex:1;}
-.prod-card-meta{display:flex;gap:5px;align-items:center;margin-top:4px;flex-wrap:wrap;}
+.prod-card-header{padding:12px 16px 10px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.prod-card-seq{width:30px;height:30px;border-radius:7px;background:rgba(201,168,76,.15);color:var(--gold);font-family:var(--mono);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(201,168,76,.3);}
+.prod-card-name{font-family:var(--display);font-weight:800;font-size:17px;letter-spacing:-.3px;line-height:1.2;color:var(--text);}
+.prod-card-meta{display:flex;gap:5px;align-items:center;margin-left:auto;flex-wrap:wrap;}
+/* 3-panel body */
+.prod-card-body{display:flex;align-items:stretch;border-top:1px solid var(--border);}
+.prod-panel-nums{width:170px;flex-shrink:0;border-right:1px solid var(--border);display:flex;flex-direction:column;background:rgba(0,0,0,.05);}
+.prod-panel-nums-cell{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:2px;}
+.prod-panel-nums-cell:last-child{border-bottom:none;}
+.prod-panel-nums-label{font-family:var(--mono);font-size:7px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:3px;}
+.prod-panel-nums-val{font-family:var(--mono);font-size:28px;font-weight:900;color:var(--text1);line-height:1;}
+.prod-panel-nums-unit{font-family:var(--mono);font-size:10px;color:var(--text3);}
+.prod-panel-nums-input{background:none;border:none;font-family:var(--mono);font-size:28px;font-weight:900;color:var(--text1);width:100%;padding:0;line-height:1;outline:none;}
+.prod-panel-nums-input:focus{color:var(--gold);}
+.prod-panel-nums-text{font-size:11px;color:var(--text2);font-family:var(--mono);}
+.prod-panel-nums-timing{display:flex;flex-direction:column;gap:4px;padding:10px 14px;}
+.prod-panel-nums-time-row{display:flex;justify-content:space-between;align-items:baseline;}
+.prod-panel-nums-time-label{font-family:var(--mono);font-size:9px;color:var(--text3);}
+.prod-panel-nums-time-val{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text1);}
+/* Ingredient panel: fixed-ish width so name↔qty gap stays tight */
+.prod-panel-ings{flex:0 1 420px;min-width:220px;border-right:1px solid var(--border);display:flex;flex-direction:column;}
+.prod-panel-ings-hdr{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:8px 16px 6px;}
+/* Steps panel grows to fill remaining space */
+.prod-panel-steps{flex:1;min-width:240px;display:flex;flex-direction:column;}
+/* Kitchen ingredient rows */
+.prod-ing-row{display:flex;align-items:center;padding:7px 16px;border-bottom:1px solid var(--border);}
+.prod-ing-row:last-child{border-bottom:none;}
+.prod-ing-name{font-size:13px;color:var(--text1);font-weight:500;flex:1;min-width:0;padding-right:14px;}
+.prod-ing-qty{font-family:var(--mono);font-size:17px;font-weight:800;color:var(--gold);flex-shrink:0;white-space:nowrap;}
+.prod-ing-qty-unit{font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3);margin-left:2px;}
+/* Phase panels in steps column */
+.prod-phase-panel{border-top:1px solid var(--border);display:flex;flex-direction:column;}
+.prod-phase-panel:first-child{border-top:none;}
+.prod-phase-panel-hdr{font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:7px 14px 4px;display:flex;align-items:center;gap:5px;}
+.prod-phase-panel-body{padding:4px 14px 10px;}
+.prod-phase-panel-empty{font-size:9px;color:var(--text3);font-style:italic;padding:2px 14px 8px;opacity:.5;}
 .prod-batch-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-bottom:1px solid var(--border);}
 .prod-batch-cell{background:var(--surface);padding:10px 14px;display:flex;flex-direction:column;gap:2px;}
 .prod-batch-cell.highlight{background:rgba(201,168,76,.04);}
@@ -337,6 +382,11 @@ textarea{resize:vertical;min-height:80px;}
 .prod-timing-chip{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;text-align:center;}
 .prod-timing-label{font-family:var(--mono);font-size:7px;letter-spacing:.5px;text-transform:uppercase;color:var(--text3);}
 .prod-timing-val{font-family:var(--mono);font-size:14px;font-weight:700;line-height:1.2;}
+/* Kitchen ingredient batch section (legacy selectors — superseded by prod-panel-ings above) */
+.prod-ing-batch-section{padding:8px 14px 10px;border-top:1px solid var(--border);}
+.prod-ing-batch-hdr{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px;}
+/* Serving note */
+.prod-serve-note{padding:7px 14px 8px;border-top:1px solid var(--border);font-size:11px;color:var(--text2);font-style:italic;display:flex;align-items:flex-start;gap:6px;line-height:1.4;}
 /* PHASE STEP PANELS — RECIPE MODAL */
 .phase-panel{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px;}
 .phase-panel-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .12s;user-select:none;}
@@ -519,35 +569,45 @@ textarea{resize:vertical;min-height:80px;}
   .prod-print-page-hdr { grid-column: 1 / -1; font-family: monospace; font-size: 11px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #000 !important; border-bottom: 2px solid #000 !important; padding-bottom: 5px; display: flex; align-items: baseline; gap: 10px; break-after: avoid !important; page-break-after: avoid !important; }
   .prod-print-page-hdr-sub { font-size: 8px; font-weight: 400; letter-spacing: .5px; color: #666 !important; }
 
-  .prod-card { break-inside: avoid !important; page-break-inside: avoid !important; border: 1.5px solid #333 !important; border-radius: 5px !important; box-shadow: none !important; background: #fff !important; overflow: visible !important; display: flex !important; flex-direction: column !important; }
-  .prod-card-header  { background: #f0f0f0 !important; border-bottom: 1.5px solid #333 !important; padding: 9px 12px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .prod-card-name    { color: #000 !important; font-size: 13px !important; }
-  .prod-card-seq     { background: #e0e0e0 !important; color: #000 !important; border: 1px solid #999 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .prod-card-meta .badge { border: 1px solid #bbb !important; background: #f0f0f0 !important; color: #333 !important; }
-  .prod-batch-grid   { background: #bbb !important; gap: 1px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .prod-batch-cell   { background: #fff !important; padding: 7px 10px !important; }
-  .prod-batch-cell.highlight { background: #fffdf0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .prod-batch-label  { color: #666 !important; font-size: 7px !important; }
-  .prod-batch-input  { color: #000 !important; font-size: 20px !important; font-weight: 900 !important; }
-  .prod-batch-unit   { color: #666 !important; }
-  .prod-detail-row   { border-bottom: 1px solid #eee !important; padding: 5px 12px !important; }
-  .prod-detail-icon  { font-size: 10px !important; }
-  .prod-detail-label { color: #666 !important; font-size: 9px !important; }
-  .prod-detail-val, .prod-detail-input { color: #000 !important; font-size: 10px !important; }
-  .prod-timing-bar   { background: #f5f5f5 !important; border-top: 1px solid #ccc !important; padding: 7px 10px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .prod-timing-chip  { border: 1px solid #bbb !important; background: #fff !important; padding: 4px 6px !important; }
-  .prod-timing-val   { color: #000 !important; font-size: 12px !important; }
-  .prod-timing-label { color: #666 !important; font-size: 6px !important; }
-  .prod-ing-batch-section { border-top: 1px solid #ddd !important; padding: 5px 12px 7px !important; }
-  .prod-ing-batch-section span { color: #000 !important; font-size: 9px !important; }
-  .prod-ing-batch-section .ing-qty { color: #333 !important; font-weight: 700 !important; }
-  .prod-phase-tabs   { display: none !important; }
-  .prod-phase-body   { display: block !important; background: #f8f8f8 !important; border-top: 1px solid #ddd !important; padding: 6px 12px 8px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .prod-phase-body::before { content: attr(data-label); display: block; font-family: monospace; font-size: 6.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #888 !important; margin-bottom: 4px; padding-bottom: 3px; border-bottom: 1px solid #e0e0e0 !important; }
-  .prod-phase-empty  { display: none !important; }
-  .prod-step-row     { margin-bottom: 4px !important; gap: 7px !important; }
-  .prod-step-num     { width: 16px !important; height: 16px !important; font-size: 7px !important; }
-  .prod-step-text    { color: #000 !important; font-size: 9.5px !important; line-height: 1.4 !important; }
+  /* ── Production print: full-width single-column cards ── */
+  .prod-cards-grid  { display: flex !important; flex-direction: column !important; gap: 10mm !important; }
+  .prod-card { break-inside: avoid !important; page-break-inside: avoid !important; border: 1.5px solid #333 !important; border-radius: 4px !important; box-shadow: none !important; background: #fff !important; overflow: visible !important; display: flex !important; flex-direction: column !important; }
+  .prod-card-header { background: #111 !important; border-bottom: 2px solid #333 !important; padding: 8px 12px !important; display: flex !important; align-items: center !important; gap: 10px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .prod-card-seq    { background: #333 !important; color: #fff !important; border: none !important; font-size: 11px !important; width: 24px !important; height: 24px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .prod-card-name   { color: #fff !important; font-size: 16px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .prod-card-meta .badge { border: 1px solid #666 !important; background: #444 !important; color: #fff !important; font-size: 8px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .prod-card-status-row { display: none !important; }
+  /* 3-panel body */
+  .prod-card-body   { display: flex !important; border-top: 1.5px solid #333 !important; }
+  .prod-panel-nums  { width: 130px !important; flex-shrink: 0 !important; border-right: 1.5px solid #333 !important; background: #f8f8f8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .prod-panel-nums-cell { padding: 8px 10px !important; border-bottom: 1px solid #ddd !important; }
+  .prod-panel-nums-label { color: #888 !important; font-size: 6px !important; }
+  .prod-panel-nums-input { font-size: 24px !important; color: #000 !important; font-weight: 900 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .prod-panel-nums-unit  { color: #555 !important; }
+  .prod-panel-nums-text  { color: #000 !important; font-size: 10px !important; }
+  .prod-panel-nums-timing { padding: 8px 10px !important; }
+  .prod-panel-nums-time-label { color: #888 !important; font-size: 8px !important; }
+  .prod-panel-nums-time-val   { color: #000 !important; font-size: 12px !important; }
+  .prod-panel-ings  { flex: 0 1 360px !important; min-width: 160px !important; border-right: 1.5px solid #333 !important; }
+  .prod-panel-ings-hdr { color: #888 !important; font-size: 7px !important; padding: 5px 10px 3px !important; }
+  .prod-panel-steps { flex: 1 !important; min-width: 200px !important; }
+  /* Ingredient rows */
+  .prod-ing-row     { padding: 5px 10px !important; border-bottom: 1px solid #ddd !important; display: flex !important; align-items: center !important; }
+  .prod-ing-name    { font-size: 11px !important; color: #000 !important; font-weight: 500 !important; flex: 1 !important; padding-right: 10px !important; }
+  .prod-ing-qty     { font-size: 13px !important; color: #000 !important; font-weight: 900 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .prod-ing-qty-unit { color: #555 !important; font-size: 8px !important; }
+  .prod-serve-note  { padding: 4px 12px 6px !important; font-size: 9px !important; color: #333 !important; border-top: 1px solid #ddd !important; }
+  /* Phase panels */
+  .prod-phase-tabs  { display: none !important; }
+  .prod-phase-body  { display: none !important; }
+  .prod-phase-panel { border-top: 1px solid #ddd !important; display: flex !important; flex-direction: column !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .prod-phase-panel:first-child { border-top: none !important; }
+  .prod-phase-panel-hdr { color: #888 !important; font-size: 7px !important; padding: 5px 10px 2px !important; }
+  .prod-phase-panel-body { padding: 2px 10px 6px !important; }
+  .prod-phase-panel-empty { display: none !important; }
+  .prod-step-row    { margin-bottom: 3px !important; gap: 5px !important; }
+  .prod-step-num    { width: 14px !important; height: 14px !important; font-size: 7px !important; flex-shrink: 0 !important; }
+  .prod-step-text   { color: #000 !important; font-size: 9px !important; line-height: 1.4 !important; }
 }
 
 .print-header { display: none; }
@@ -679,6 +739,7 @@ tr:hover .inv-row-actions{opacity:1;}
 .menu-card:hover{border-color:var(--border2);box-shadow:0 3px 16px rgba(0,0,0,.25);}
 .menu-card[data-fuel="Fuel Plus"]{border-left:4px solid rgba(201,168,76,.6);}
 .menu-card[data-fuel="Fuel Lite"]{border-left:4px solid rgba(74,222,128,.55);}
+.menu-card[data-athlete="true"]{border-left:4px solid rgba(251,146,60,.75);}
 .menu-stat-chip.c-kcal{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.2);}
 .menu-stat-chip.c-kcal .menu-stat-val{color:#fb923c;}
 .menu-stat-chip.c-prot{background:rgba(96,165,250,.1);border-color:rgba(96,165,250,.2);}
@@ -687,8 +748,11 @@ tr:hover .inv-row-actions{opacity:1;}
 .menu-stat-chip.c-carb .menu-stat-val{color:var(--gold);}
 .menu-stat-chip.c-fat{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.2);}
 .menu-stat-chip.c-fat .menu-stat-val{color:#a78bfa;}
-.menu-card-header{padding:8px 12px 5px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:4px;}
+.menu-card-header{padding:8px 12px 8px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:5px;}
 .menu-card-header-row{display:flex;align-items:center;gap:8px;}
+.menu-card-header-meta{display:flex;align-items:center;gap:9px;}
+.menu-card-desc{font-size:10px;font-family:var(--mono);color:var(--text2);font-style:italic;line-height:1.35;flex:1;}
+.menu-card-desc-empty{font-size:9px;font-family:var(--mono);color:var(--text3);opacity:.45;font-style:italic;flex:1;}
 .menu-card-num{width:22px;height:22px;border-radius:5px;background:rgba(201,168,76,.15);color:var(--gold);font-family:var(--mono);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(201,168,76,.25);}
 .menu-card-name-input{background:transparent;border:none;color:var(--text);font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:-.2px;width:100%;cursor:text;outline:none;}
 .menu-card-name-input:focus{background:var(--surface3);border-radius:4px;padding:2px 6px;}
@@ -756,7 +820,7 @@ tr:hover .inv-row-actions{opacity:1;}
 .comp-check.ok{background:rgba(48,209,88,.1);color:#30d158;border:1px solid rgba(48,209,88,.25);}
 .comp-check.missing{background:rgba(255,69,58,.14);color:#ff453a;border:1px solid rgba(255,69,58,.35);font-weight:700;animation:none;}
 /* ── Sell price band ── */
-.menu-sell-band{padding:6px 12px;border-top:2px solid rgba(201,168,76,.35);background:rgba(201,168,76,.07);display:flex;align-items:center;gap:8px;}
+/* .menu-sell-band redefined below with session strip CSS */
 .menu-sell-band-label{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--gold);letter-spacing:.6px;text-transform:uppercase;}
 .menu-sell-band-input{background:var(--surface2);border:2px solid var(--gold);border-radius:5px;color:var(--gold);font-family:var(--mono);font-size:13px;font-weight:700;padding:3px 8px;width:70px;outline:none;text-align:center;}
 .menu-sell-band-input:focus{border-color:#fde68a;box-shadow:0 0 0 3px rgba(201,168,76,.2);}
@@ -768,10 +832,34 @@ tr:hover .inv-row-actions{opacity:1;}
 /* ── Photo placeholder warning ── */
 .photo-placeholder-clean.needs-photo{border:2px dashed rgba(255,69,58,.5);background:rgba(255,69,58,.07);color:#ff453a;}
 /* ── Photo thumbnail in header ── */
-.photo-thumb-header{width:36px;height:36px;border-radius:6px;object-fit:cover;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;transition:border-color .15s,opacity .15s;}
+.photo-thumb-header{width:48px;height:48px;border-radius:7px;object-fit:cover;border:1.5px solid var(--border);flex-shrink:0;cursor:pointer;transition:border-color .15s,opacity .15s;}
 .photo-thumb-header:hover{border-color:var(--gold);opacity:.85;}
-.photo-thumb-header-empty{width:36px;height:36px;border-radius:6px;background:var(--surface3);border:1.5px dashed rgba(255,69,58,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;cursor:pointer;color:rgba(255,69,58,.55);transition:border-color .15s;}
+.photo-thumb-header-empty{width:48px;height:48px;border-radius:7px;background:var(--surface3);border:1.5px dashed rgba(255,69,58,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;cursor:pointer;color:rgba(255,69,58,.55);transition:border-color .15s;}
 .photo-thumb-header-empty:hover{border-color:rgba(255,69,58,.8);}
+/* Sessions strip — always visible, kitchen-first */
+.menu-card-sessions{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);}
+.menu-card-session-blk{padding:8px 14px;display:flex;flex-direction:column;gap:1px;position:relative;}
+.menu-card-session-blk.sun{border-right:1px solid var(--border);}
+.menu-card-session-blk.sun-on{background:rgba(201,168,76,.07);}
+.menu-card-session-blk.wed-on{background:rgba(59,130,246,.06);}
+.mcs-label{font-size:8px;font-family:var(--mono);letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);margin-bottom:2px;}
+.mcs-count{font-size:24px;font-family:var(--mono);font-weight:700;color:var(--text1);line-height:1;}
+.mcs-count.zero{color:var(--text3);}
+.mcs-unit{font-size:9px;font-family:var(--mono);color:var(--text3);}
+.mcs-avail{position:absolute;top:7px;right:10px;font-size:9px;font-family:var(--mono);padding:1px 5px;border-radius:3px;}
+.mcs-avail.on{color:#30d158;background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.25);}
+.mcs-avail.off{color:var(--text3);background:var(--surface2);border:1px solid var(--border);}
+/* Attrs strip — fuel + box + status */
+.menu-card-attrs{padding:5px 10px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:rgba(0,0,0,.04);}
+.menu-attr-chip{font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:4px;border:1px solid;white-space:nowrap;}
+.menu-attr-chip.fuel-plus{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.3);color:var(--gold);}
+.menu-attr-chip.fuel-lite{background:rgba(74,222,128,.09);border-color:rgba(74,222,128,.3);color:#4ade80;}
+.menu-attr-chip.box{background:var(--surface2);border-color:var(--border2);color:var(--text3);}
+.menu-attr-chip.ready{background:rgba(48,209,88,.08);border-color:rgba(48,209,88,.25);color:#30d158;}
+.menu-attr-chip.incomplete{background:rgba(255,69,58,.1);border-color:rgba(255,69,58,.3);color:#ff453a;font-weight:700;}
+.menu-attr-chip.athlete{background:rgba(251,146,60,.12);border-color:rgba(251,146,60,.35);color:#fb923c;}
+/* Thinner sell band */
+.menu-sell-band{padding:5px 10px;border-top:1px solid rgba(201,168,76,.25);background:rgba(201,168,76,.05);display:flex;align-items:center;gap:7px;}
 /* ── Compact tags ── */
 .tag-compact-row{display:flex;flex-direction:column;gap:3px;}
 .tag-active-chips{display:flex;flex-wrap:wrap;gap:3px;min-height:0;}
@@ -796,7 +884,7 @@ tr:hover .inv-row-actions{opacity:1;}
 .photo-upload-btn.uploading{opacity:.5;cursor:not-allowed;}
 .photo-thumb{width:36px;height:36px;border-radius:4px;object-fit:cover;border:1px solid var(--border2);flex-shrink:0;display:none;}
 .photo-thumb.has-photo{display:block;}
-.menu-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:8px;}
+.menu-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px;}
 .menu-overall-row{display:flex;align-items:center;gap:6px;padding:2px 0;margin-top:2px;}
 /* ── Athlete variant strip ── */
 .menu-athlete-strip{border-top:2px solid rgba(251,146,60,.45);background:rgba(251,146,60,.07);padding:8px 14px;}
@@ -1572,6 +1660,140 @@ select.route-confirm-input option { background:var(--surface2); }
 .rl-drop-item:hover{background:var(--surface3);}
 .rl-drop-item .rl-cat{font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.3px;margin-left:auto;}
 
+/* ── Quick Build Planner ─────────────────────────────── */
+.qb-top-bar{display:flex;align-items:center;gap:10px;padding:0 0 16px;flex-wrap:wrap;}
+.qb-week-label{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);}
+.qb-week-select{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text);font-family:var(--sans);}
+.qb-top-spacer{flex:1;}
+.qb-section{margin-bottom:22px;}
+.qb-section-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
+.qb-flavour-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;}
+.qb-flavour-chip{display:inline-flex;align-items:center;gap:6px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:4px 10px 4px 13px;font-size:12px;font-family:var(--sans);font-weight:600;}
+.qb-chip-meta{font-size:10px;color:var(--text3);font-weight:400;font-family:var(--mono);}
+.qb-chip-remove{cursor:pointer;opacity:.5;font-size:16px;line-height:1;color:var(--text2);}
+.qb-chip-remove:hover{opacity:1;color:var(--red);}
+.qb-add-flavour{display:inline-flex;align-items:center;gap:6px;}
+.qb-add-flavour input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--text);font-family:var(--sans);width:160px;}
+.qb-add-flavour input:focus{outline:none;border-color:var(--gold);}
+.qb-flavour-hint{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.2px;margin-top:4px;}
+.qb-slots-table{width:100%;border-collapse:collapse;}
+.qb-slots-table th{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+.qb-slots-table td{padding:5px 5px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.qb-slots-table tr:last-child td{border-bottom:none;}
+.qb-slot-pushed td{opacity:.5;}
+.qb-slot-num{font-family:var(--mono);font-size:11px;color:var(--text3);text-align:center;min-width:20px;padding:0 8px;}
+.qb-slot-format select,.qb-slot-flavour select,.qb-slot-comp select{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:4px 5px;font-size:11px;color:var(--text);font-family:var(--sans);width:100%;}
+.qb-slot-format select{min-width:155px;}
+.qb-slot-flavour select{min-width:120px;}
+.qb-slot-comp select{min-width:100px;}
+.qb-slot-format select:focus,.qb-slot-flavour select:focus,.qb-slot-comp select:focus{outline:none;border-color:var(--gold);}
+.qb-slot-name input{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:12px;color:var(--text);font-family:var(--sans);width:100%;min-width:170px;}
+.qb-slot-name input:focus{outline:none;border-color:var(--gold);}
+.qb-push-btn{padding:3px 10px;border-radius:5px;border:1px solid var(--gold);background:transparent;color:var(--gold);font-size:10px;font-family:var(--sans);font-weight:600;cursor:pointer;white-space:nowrap;}
+.qb-push-btn:hover{background:var(--gold-dim);}
+.qb-push-btn.pushed{background:rgba(34,197,94,.1);border-color:var(--green);color:var(--green);cursor:default;pointer-events:none;}
+.qb-remove-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:2px 5px;border-radius:4px;line-height:1;}
+.qb-remove-btn:hover{color:var(--red);background:rgba(239,68,68,.1);}
+.qb-reuse-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.qb-reuse-chip{display:inline-flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:3px 10px;}
+.qb-reuse-name{font-size:11px;font-family:var(--sans);color:var(--text2);}
+.qb-reuse-count{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--gold);}
+.qb-slot-selector{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.qb-slot-options{display:flex;gap:12px;flex-wrap:wrap;}
+.qb-slot-option{flex:1;min-width:200px;border:2px solid var(--border);border-radius:8px;padding:12px 14px;cursor:pointer;transition:all .15s;background:var(--surface3);}
+.qb-slot-option:hover{border-color:var(--border2);background:var(--surface2);}
+.qb-slot-option-active{border-color:var(--gold)!important;background:var(--gold-dim)!important;}
+.qb-slot-option-header{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.qb-slot-option-icon{font-size:16px;}
+.qb-slot-option-name{font-family:var(--sans);font-size:13px;font-weight:700;color:var(--text1);}
+.qb-slot-option-badge{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;background:var(--gold);color:#000;padding:2px 7px;border-radius:10px;font-weight:700;}
+.qb-slot-option-meta{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:3px;}
+.qb-slot-option-count{font-size:11px;color:var(--text2);font-family:var(--sans);}
+.qb-slot-warning{margin-top:6px;font-size:11px;color:var(--amber);font-family:var(--sans);font-weight:600;}
+
+/* Weekly Menu — card toggle */
+.menu-card-toggle-btn{background:none;border:1px solid var(--border2);border-radius:5px;color:var(--text2);font-size:10px;padding:3px 9px;cursor:pointer;font-family:var(--mono);letter-spacing:.2px;transition:all .15s;white-space:nowrap;flex-shrink:0;}
+.menu-card-toggle-btn:hover{color:var(--gold);border-color:var(--gold);background:var(--gold-dim);}
+.menu-card-toggle-btn.open{color:var(--gold);border-color:var(--gold);background:var(--gold-dim);}
+.menu-card-edit-btn{background:none;border:1px solid var(--border2);border-radius:5px;color:var(--text3);font-size:10px;padding:3px 9px;cursor:pointer;font-family:var(--mono);letter-spacing:.2px;transition:all .15s;white-space:nowrap;flex-shrink:0;}
+.menu-card-edit-btn:hover{color:#ff9f0a;border-color:#ff9f0a;background:rgba(255,159,10,.08);}
+.menu-card-edit-btn.open{color:#ff9f0a;border-color:#ff9f0a;background:rgba(255,159,10,.1);}
+.menu-card-edit-panel{border-top:1px solid rgba(255,159,10,.25);background:rgba(255,159,10,.03);padding:10px 12px 14px;}
+.menu-card-edit-panel-header{display:flex;align-items:center;gap:6px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(255,159,10,.15);}
+.menu-card-edit-panel-label{font-size:9px;font-family:var(--mono);color:#ff9f0a;text-transform:uppercase;letter-spacing:.6px;}
+.menu-card-edit-section{margin-bottom:8px;}
+.menu-card-edit-section-label{font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.menu-card-details{border-top:1px solid var(--border);margin-top:2px;padding-top:8px;}
+
+/* Weekly Menu — compact component summary */
+.menu-comp-summary{display:flex;flex-wrap:wrap;gap:5px;align-items:center;min-height:22px;}
+.menu-comp-badge{display:inline-flex;align-items:center;gap:4px;background:var(--surface3);border:1px solid var(--border2);border-radius:6px;padding:3px 8px;max-width:100%;}
+.menu-comp-badge span:nth-child(2){font-size:11px;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
+.menu-recipe-edit-btn{background:none;border:1px solid var(--border2);border-radius:5px;color:var(--text3);font-size:9px;padding:2px 7px;cursor:pointer;font-family:var(--mono);letter-spacing:.3px;transition:color .1s,border-color .1s;white-space:nowrap;}
+.menu-recipe-edit-btn:hover{color:var(--text1);border-color:var(--gold);}
+
+/* QB slot detail row (scales + macros) */
+.qb-slot-detail-row>td{padding:0!important;background:var(--surface2)!important;border-top:none!important;}
+.qb-detail-panel{display:flex;flex-direction:column;gap:7px;padding:9px 12px 11px 38px;border-top:1px dashed var(--border);}
+.qb-detail-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.qb-detail-sep{border:none;border-top:1px solid var(--border);margin:1px 0;}
+.qb-avail-check{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--mono);color:var(--text2);cursor:pointer;padding:3px 8px;border-radius:4px;border:1px solid var(--border2);background:var(--surface3);}
+.qb-avail-check:has(input:checked){background:rgba(48,209,88,.1);border-color:rgba(48,209,88,.4);color:#30d158;}
+.qb-avail-check input{width:12px;height:12px;cursor:pointer;accent-color:#30d158;margin:0;}
+.qb-price-input{width:70px;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;color:var(--text1);font-size:10px;padding:3px 6px;outline:none;text-align:right;font-family:var(--mono);}
+.qb-price-input:focus{border-color:var(--gold);}
+.qb-serves-input{flex:1;min-width:200px;max-width:520px;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;color:var(--text1);font-size:10px;padding:3px 8px;outline:none;font-family:var(--mono);}
+.qb-serves-input:focus{border-color:var(--gold);}
+.qb-fuel-pill{display:inline-flex;border:1px solid var(--border2);border-radius:5px;overflow:hidden;flex-shrink:0;}
+.qb-fuel-opt{background:none;border:none;padding:3px 9px;font-size:9px;font-family:var(--mono);letter-spacing:.3px;cursor:pointer;color:var(--text3);transition:all .15s;}
+.qb-fuel-opt.fp.active{background:rgba(201,168,76,.15);color:var(--gold);}
+.qb-fuel-opt.fl.active{background:rgba(10,132,255,.12);color:#0a84ff;}
+.qb-detail-info-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:4px 0;}
+.qb-margin-chip{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;border:1px solid;}
+.qb-add-slot-row td{padding:6px 8px;border-top:1px dashed var(--border);}
+.qb-add-slot-btn{background:none;border:1px dashed var(--border2);border-radius:5px;color:var(--text3);font-size:10px;font-family:var(--mono);padding:4px 14px;cursor:pointer;letter-spacing:.3px;transition:all .15s;width:100%;}
+.qb-add-slot-btn:hover{color:var(--gold);border-color:var(--gold);background:rgba(201,168,76,.06);}
+.qb-detail-photo-thumb{width:38px;height:38px;object-fit:cover;border-radius:4px;border:1px solid var(--border2);cursor:pointer;}
+.qb-detail-photo-empty{width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;font-size:18px;cursor:pointer;}
+.qb-photo-btn{font-size:9px;font-family:var(--mono);padding:3px 8px;border-radius:4px;border:1px solid var(--border2);background:var(--surface3);color:var(--text2);cursor:pointer;}
+.qb-photo-btn:hover{border-color:var(--gold);color:var(--gold);}
+.qb-tag-add-input{background:var(--surface3);border:1px solid var(--border2);border-radius:4px;color:var(--text1);font-size:9px;padding:2px 7px;outline:none;width:110px;font-family:var(--mono);}
+.qb-tag-add-input:focus{border-color:var(--gold);}
+.qb-tag-add-btn{font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid var(--border2);background:var(--surface3);color:var(--text2);cursor:pointer;line-height:1.4;font-family:var(--mono);}
+.qb-tag-add-btn:hover{color:var(--gold);border-color:var(--gold);}
+.menu-card-info-chip{display:inline-flex;align-items:center;gap:3px;font-size:9px;font-family:var(--mono);padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);}
+.menu-card-info-chip.avail{background:rgba(48,209,88,.1);border-color:rgba(48,209,88,.3);color:#30d158;}
+.menu-card-info-chip.unavail{background:var(--surface2);color:var(--text3);text-decoration:line-through;}
+.menu-card-info-chip.fuel-plus{background:rgba(201,168,76,.1);border-color:rgba(201,168,76,.3);color:var(--gold);}
+.menu-card-info-chip.fuel-lite{background:rgba(10,132,255,.08);border-color:rgba(10,132,255,.25);color:#0a84ff;}
+.menu-card-info-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.menu-tag-ro-chip{display:inline-flex;align-items:center;font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(201,168,76,.1);color:var(--gold);border:1px solid rgba(201,168,76,.25);}
+.menu-card-readonly-label{font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.4px;flex-shrink:0;margin-right:2px;}
+.qb-detail-scales{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.qb-detail-label{font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;}
+.qb-scale-field{display:inline-flex;align-items:center;gap:3px;}
+.qb-scale-field input{width:46px;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;color:var(--text1);font-size:10px;padding:2px 4px;outline:none;text-align:center;font-family:var(--mono);}
+.qb-scale-field input:focus{border-color:var(--gold);}
+.qb-detail-macros{display:flex;align-items:center;gap:4px;margin-left:auto;flex-wrap:wrap;}
+.qb-macro-chip{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap;}
+.qb-macro-chip.kcal{background:rgba(255,204,0,.12);color:var(--gold);}
+.qb-macro-chip.prot{background:rgba(10,132,255,.12);color:var(--blue);}
+.qb-macro-chip.carb{background:rgba(255,159,10,.12);color:var(--amber);}
+.qb-macro-chip.fat{background:rgba(175,82,222,.12);color:#bf5af2;}
+.qb-detail-btn{background:none;border:1px solid var(--border2);border-radius:5px;color:var(--text2);font-size:10px;padding:4px 10px;cursor:pointer;transition:all .15s;font-family:var(--mono);line-height:1;white-space:nowrap;letter-spacing:.2px;}
+.qb-detail-btn:hover{color:var(--gold);border-color:var(--gold);background:var(--gold-dim);}
+.qb-detail-btn.open{color:var(--gold);border-color:var(--gold);background:var(--gold-dim);}
+
+/* QB saved templates */
+.qb-tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-top:4px;}
+.qb-tpl-card{background:var(--surface3);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;}
+.qb-tpl-header{display:flex;align-items:flex-start;gap:6px;}
+.qb-tpl-name{font-size:13px;font-weight:700;color:var(--text1);flex:1;line-height:1.3;word-break:break-word;}
+.qb-tpl-meta{display:flex;gap:10px;font-size:10px;color:var(--text3);font-family:var(--mono);flex-wrap:wrap;}
+.qb-tpl-macros{display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-height:20px;}
+.qb-tpl-actions{display:flex;gap:6px;margin-top:3px;}
+.qb-tpl-actions>.btn{flex:1;text-align:center;justify-content:center;}
+
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -1606,6 +1828,7 @@ select.route-confirm-input option { background:var(--surface2); }
     <div class="nav-section">
       <div class="nav-label">Operations</div>
       <div class="nav-item" onclick="showPage('menu')"><span class="icon">📋</span>Weekly Menu</div>
+      <div class="nav-item" onclick="showPage('quickbuild')"><span class="icon">⚡</span>Quick Build</div>
       <div class="nav-item" onclick="showPage('orders')"><span class="icon">📬</span>Orders <span id="nav-orders-badge" style="display:none;font-size:10px;font-family:var(--mono);background:var(--gold);color:#000;border-radius:10px;padding:1px 6px;margin-left:4px;font-weight:700"></span></div>
       <div class="nav-item" onclick="showPage('inventory')"><span class="icon">🗄️</span>Inventory</div>
       <div class="nav-item" onclick="showPage('purchasing')"><span class="icon">🚚</span>Purchasing</div>
@@ -1838,7 +2061,7 @@ select.route-confirm-input option { background:var(--surface2); }
       <div class="card">
         <div class="card-header"><div class="card-title">Recipe Components</div><div class="card-count" id="rec-count">0</div></div>
         <div class="table-wrap"><table>
-          <thead><tr><th>Type</th><th>Component</th><th>Ingredients</th><th>Cost</th><th>Kcal</th><th>P / C / F</th><th>Ckd Wt</th><th>Allergens</th><th>Version</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Type</th><th>Component</th><th>Family / Category</th><th>Ingredients</th><th>Cost</th><th>Kcal</th><th>P / C / F</th><th>Ckd Wt</th><th>Allergens</th><th>Version</th><th>Actions</th></tr></thead>
           <tbody id="rec-tbody"></tbody>
         </table></div>
       </div>
@@ -1866,7 +2089,7 @@ select.route-confirm-input option { background:var(--surface2); }
       <div class="card">
         <div class="card-header"><div class="card-title">All Components</div><div class="card-count" id="comp-count">0</div></div>
         <div class="table-wrap"><table>
-          <thead><tr><th>Type</th><th>Component</th><th>Cost</th><th>Kcal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Fibre</th><th>Ckd Weight</th><th>Nutrition Highlights</th><th>Allergens</th></tr></thead>
+          <thead><tr><th>Type</th><th>Component</th><th>Family / Category</th><th>Cost</th><th>Kcal</th><th>Protein</th><th>Carbs</th><th>Fat</th><th>Fibre</th><th>Ckd Weight</th><th>Nutrition Highlights</th><th>Allergens</th></tr></thead>
           <tbody id="comp-tbody"></tbody>
         </table></div>
       </div>
@@ -1875,7 +2098,7 @@ select.route-confirm-input option { background:var(--surface2); }
     <!-- WEEKLY MENU -->
     <div class="page" id="page-menu">
       <div class="section-header">
-        <div><div class="section-title">Weekly Menu Builder</div><div class="section-sub">Live stats · Component scaling · Margin tracking</div></div>
+        <div><div class="section-title">Weekly Menu</div><div class="section-sub">Drop management · Pricing · Photos · Portal publish</div></div>
         <div class="flex gap-8 items-center">
           <div class="tabs" style="margin-bottom:0" id="menu-session-tabs">
             <div class="tab active" onclick="setMenuSession('all',this)">All</div>
@@ -1883,8 +2106,6 @@ select.route-confirm-input option { background:var(--surface2); }
             <div class="tab" onclick="setMenuSession('wednesday',this)">Wednesday</div>
           </div>
           <button class="btn btn-ghost btn-sm" onclick="quickArchive()">💾 Archive Week</button>
-          <button class="btn btn-ghost btn-sm" onclick="clearMenu()">Clear</button>
-          <button class="btn btn-gold" onclick="addDishRow()">+ Add Dish</button>
         </div>
       </div>
 
@@ -2684,6 +2905,7 @@ select.route-confirm-input option { background:var(--surface2); }
             <div class="guide-toc-item" onclick="showGuideSection('gs-ingredients')"><span class="toc-icon">🧪</span>Ingredients</div>
             <div class="guide-toc-item" onclick="showGuideSection('gs-recipes')"><span class="toc-icon">📐</span>Recipes</div>
             <div class="guide-toc-head">Weekly Operations</div>
+            <div class="guide-toc-item" onclick="showGuideSection('gs-quickbuild')"><span class="toc-icon">⚡</span>Quick Build</div>
             <div class="guide-toc-item" onclick="showGuideSection('gs-menu')"><span class="toc-icon">📋</span>Weekly Menu</div>
             <div class="guide-toc-item" onclick="showGuideSection('gs-labour')"><span class="toc-icon">👥</span>Labour</div>
             <div class="guide-toc-item" onclick="showGuideSection('gs-coststack')"><span class="toc-icon">💰</span>Cost Stack</div>
@@ -2738,7 +2960,7 @@ select.route-confirm-input option { background:var(--surface2); }
             <div class="gs-h2">The Weekly Workflow — Day by Day</div>
             <p class="gs-p">Every week follows the same rhythm. Two weeks are always in play at once: one being fulfilled, one being built for the next cycle.</p>
             <div class="gs-steps">
-              <div class="gs-step"><div class="gs-step-num">1</div><div class="gs-step-body"><div class="gs-step-title">Thursday — Advance the week &amp; start building next <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;Weekly Menu → 🔜 Building Next</span></div><div class="gs-step-text">After Wednesday's drop is complete, click <strong>⏭ Advance Week</strong>. This archives the old week and promotes next week's menu to Current. Then switch to the <strong>🔜 Building Next</strong> tab and add dishes for the week after: components, portion counts (S1 / S2), Fuel Line, dish photo, "Serves with" description, and attribute tags. Set the week label (e.g. "14 Apr – 20 Apr") and the Sunday/Wednesday drop dates.</div></div></div>
+              <div class="gs-step"><div class="gs-step-num">1</div><div class="gs-step-body"><div class="gs-step-title">Thursday — Advance the week &amp; start building next <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;Weekly Menu → ⏭ Advance, then ⚡ Quick Build</span></div><div class="gs-step-text">After Wednesday's drop is complete, click <strong>⏭ Advance Week</strong> on the Weekly Menu. This archives the old week and promotes next week's menu to Current. Then go to <strong>⚡ Quick Build</strong>, set Push Target to <strong>🔜 Building Next</strong>, and fill in each slot — components, availability, fuel line, sell price, description, photo, and tags all go in the <strong>▾ Details</strong> panel. Check the f+p margin row before pushing each dish. Set the week label and drop dates on the Weekly Menu tab.</div></div></div>
               <div class="gs-step"><div class="gs-step-num">2</div><div class="gs-step-body"><div class="gs-step-title">Friday — Open ordering &amp; schedule labour <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;Weekly Menu portal strip · Labour</span></div><div class="gs-step-text">Click <strong>Open for Orders</strong> in the portal strip. Set Sunday and Wednesday order deadlines (e.g. Sat 20:00 / Tue 20:00). Go to <strong>Labour</strong> and schedule this week's kitchen shifts. Go to <strong>Cost Stack</strong> to verify margins are healthy — adjust sell prices on the menu if needed.</div></div></div>
               <div class="gs-step"><div class="gs-step-num">3</div><div class="gs-step-body"><div class="gs-step-title">Saturday — Confirm orders &amp; check batch sizes <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;Orders page</span></div><div class="gs-step-text">Portal orders arrive with a 🟡 Pending badge. Use <strong>Bulk Confirm</strong> to accept all at once (or review individually). Check the allocation bar — if any dish shows more orders than planned portions, increase S1 or S2 on that dish. Once ordering closes, click <strong>↓ Sync Portions</strong> on the menu to lock portion counts to confirmed order demand.</div></div></div>
               <div class="gs-step"><div class="gs-step-num">4</div><div class="gs-step-body"><div class="gs-step-title">Saturday/Sunday — Purchasing &amp; prep <span style="font-family:var(--mono);font-size:10px;font-weight:400;color:var(--text3)">&nbsp;Purchasing</span></div><div class="gs-step-text">Go to <strong>Purchasing</strong> for the ingredient order list — quantities are calculated from your confirmed S1/S2 portion counts. Place your ingredient orders with suppliers. Add any athlete dish variants manually via <strong>Orders → + Add Order</strong>.</div></div></div>
@@ -2944,6 +3166,73 @@ select.route-confirm-input option { background:var(--surface2); }
             <p class="gs-p">The cooked weight in the recipe list is the sum of all ingredient lines multiplied by their total yield (processing × cook yield). This is the weight that appears on the Packaging sheet — what physically goes in the box. It is <em>not</em> the raw weight and <em>not</em> a target — it is a calculation.</p>
           </div>
 
+          <!-- ═══ QUICK BUILD ═══ -->
+          <div class="guide-section" id="gs-quickbuild">
+            <div class="gs-hero">
+              <div class="gs-title">⚡ Quick Build</div>
+              <div class="gs-sub">The single editing interface for planning and building your menu · Slot structure · Details panel · Push to Weekly Menu</div>
+            </div>
+
+            <div class="gs-h2">What Quick Build Is For</div>
+            <p class="gs-p">Quick Build is the primary place to plan, configure, and finalise every dish before it goes live. It is the single interface for all dish editing — components, scales, availability, fuel line, pricing, packaging, tags, photo, and description are all set here. The Weekly Menu tab is read-only by default and should only be used for post-push corrections via its ✎ Edit override.</p>
+            <div class="gs-callout gold"><b>Rule of thumb:</b> If you're building a new week's menu, stay in Quick Build. Only jump to Weekly Menu to check what's live or to fix a mistake after pushing.</div>
+
+            <div class="gs-h2">Push Target — Current Week vs Building Next</div>
+            <p class="gs-p">At the top of Quick Build is a Push Target selector. This decides where your slots go when you click <strong>→ Menu</strong> or <strong>→ Push All to Menu</strong>. Select the slot you're building for before you start filling in dishes:</p>
+            <table class="gs-table">
+              <thead><tr><th>Target</th><th>When to use</th></tr></thead>
+              <tbody>
+                <tr><td><strong>📦 Current Week</strong></td><td>Replacing or adding to the week already in production. A warning appears if active orders exist — be careful, kitchen may already be working from this slot.</td></tr>
+                <tr><td><strong>🔜 Building Next</strong></td><td>Building the upcoming week in advance while the current week runs. This is the normal mode — push here and the portal automatically shows next week's menu as soon as the first dish lands.</td></tr>
+              </tbody>
+            </table>
+
+            <div class="gs-h2">Slot Structure</div>
+            <p class="gs-p">Each row in the Quick Build table is a dish slot. By default there are 12 slots matching the standard 29 Performance menu format, but you can add more at any time using the <strong>+ Add Slot</strong> button at the bottom of the table. Each slot has:</p>
+            <table class="gs-table">
+              <thead><tr><th>Column</th><th>What it does</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Format</strong></td><td>The dish format (Balanced Bowl, Protein Bowl, Salad, etc.). Sets the default Fuel Line automatically.</td></tr>
+                <tr><td><strong>Flavour</strong></td><td>Assign one of the week's flavour profiles to this slot. Used to auto-suggest matching proteins and condiments (★ = flavour match in the dropdown).</td></tr>
+                <tr><td><strong>Protein / Carb / Veg / Condiment</strong></td><td>Select from your Active recipe components. The flavour assignment biases the sort order so best matches appear first.</td></tr>
+                <tr><td><strong>Dish Name</strong></td><td>Auto-suggested from the flavour + protein combination. Edit freely — override locks it so auto-suggest stops updating it.</td></tr>
+                <tr><td><strong>→ Menu</strong></td><td>Push this single slot to the target menu slot. Once pushed, the button turns to a green ✓ badge. Re-push is blocked to prevent duplicates.</td></tr>
+                <tr><td><strong>▾ Details</strong></td><td>Expand the full configuration panel for this slot (see below).</td></tr>
+              </tbody>
+            </table>
+
+            <div class="gs-h2">The Details Panel</div>
+            <p class="gs-p">Click <strong>▾ Details</strong> on any slot to open its configuration panel. This is where all dish attributes are set before pushing. The panel has seven rows:</p>
+            <table class="gs-table">
+              <thead><tr><th>Row</th><th>Controls</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Scales + Macros</strong></td><td>PRO / CARB / VEG / Overall scale inputs. Live macros (kcal, protein, carb, fat) update as you type.</td></tr>
+                <tr><td><strong>Availability + Sell + Line</strong></td><td>Sunday / Wednesday availability checkboxes. Sell price (£). Fuel line pill toggle — ⚡ FP (Fuel Plus) or ✦ FL (Fuel Lite).</td></tr>
+                <tr><td><strong>Box + Tubs</strong></td><td>Box type (3-Comp or Single) and condiment tub count.</td></tr>
+                <tr><td><strong>Description</strong></td><td>Full-width text field. Describe what the dish is served with, e.g. "Jeera rice, chow chow slaw and a lime wedge." This appears on the portal and packaging.</td></tr>
+                <tr><td><strong>f+p + Margin + Allergens</strong></td><td>Pre-push check row. Shows food + packaging cost, margin % (green ≥50%, amber 35–49%, red &lt;35%), and all allergens auto-compiled from every ingredient across all components. Review this before pushing — it won't change after the dish goes live unless you edit the recipe components.</td></tr>
+                <tr><td><strong>Tags</strong></td><td>Add preset or custom attribute tags (High Protein, Vegan, Gluten Free, etc.). These appear on the portal and filter views.</td></tr>
+                <tr><td><strong>Photo</strong></td><td>Upload, preview, and remove the dish photo. Images are resized to 1200×1200 JPEG automatically. This is the photo shown on the portal.</td></tr>
+              </tbody>
+            </table>
+            <div class="gs-callout green"><b>Check the f+p row before every push.</b> If margin is red, either the sell price is too low, the recipe cost is too high, or your packaging cost assumptions need updating. Fix it here — not after it's already on the menu.</div>
+
+            <div class="gs-h2">Pushing to the Menu</div>
+            <p class="gs-p">Once a slot is configured, push it individually with <strong>→ Menu</strong>, or push all unpushed slots with <strong>→ Push All to Menu</strong> in the top-right toolbar. Both buttons respect the active Push Target. After pushing:</p>
+            <ul style="font-size:12.5px;color:var(--text2);line-height:1.75;padding-left:18px;margin-bottom:12px">
+              <li>The slot's push button turns into a green ✓ badge showing which target it went to</li>
+              <li>The dish appears immediately on the Weekly Menu tab (and on the portal if Building Next is selected)</li>
+              <li>The QB slot stays intact — you can still edit it as a reference, but changes won't sync back to the pushed dish automatically</li>
+            </ul>
+            <div class="gs-callout amber"><b>QB and Weekly Menu are not linked after push.</b> Once pushed, the dish on the menu is independent. If you need to change something after pushing, use the ✎ Edit button on the Weekly Menu card — don't push again or you'll create a duplicate.</div>
+
+            <div class="gs-h2">Templates</div>
+            <p class="gs-p">Save any slot configuration as a template with <strong>💾 Save Template</strong> in the toolbar. Templates capture the format, flavour, components, scales, and all detail panel settings. Load a saved template into any slot to instantly replicate a proven dish. Use the <strong>↺ Reset</strong> button to clear all slots back to the 12-slot default template (pushes and assignments are cleared).</p>
+
+            <div class="gs-h2">Component Reuse Panel</div>
+            <p class="gs-p">Below the slots table, the Component Reuse panel shows how many times each component appears across all slots. Use it to spot accidental repetition (the same protein in multiple slots) or to check that you've balanced the menu across flavour families.</p>
+          </div>
+
           <!-- ═══ WEEKLY MENU ═══ -->
           <div class="guide-section" id="gs-menu">
             <div class="gs-hero">
@@ -2968,7 +3257,7 @@ select.route-confirm-input option { background:var(--surface2); }
               <thead><tr><th>Day</th><th>What to do</th><th>Which slot</th></tr></thead>
               <tbody>
                 <tr><td><strong>Thursday</strong><br><span style="font-size:10px;color:var(--text3)">After Wednesday drop</span></td><td>All current-week orders delivered. Click <strong>⏭ Advance Week</strong>. Next week's menu becomes Current. Start building the week after on Building Next.</td><td>Advance → then switch to <strong>🔜 Building Next</strong></td></tr>
-                <tr><td><strong>Thursday – Friday</strong></td><td>On Building Next: add all dishes for next week. Upload the dish photo for each, fill in "Serves with" (e.g. "Jeera Rice, Chow Chow Slaw"), assign Fuel Line, and toggle any attribute tags (High Protein, Vegan, etc.). Set the week label (e.g. "14 Apr – 20 Apr") and the Sunday / Wednesday drop dates.</td><td><strong>🔜 Building Next</strong></td></tr>
+                <tr><td><strong>Thursday – Friday</strong></td><td>Go to <strong>⚡ Quick Build</strong> and set the Push Target to <strong>🔜 Building Next</strong>. Fill in each slot: select components, open <strong>▾ Details</strong> to set availability, fuel line, price, description, tags, and upload the photo. Check the f+p margin row before pushing. When ready, push slots individually or use <strong>→ Push All to Menu</strong>. Set the week label and Sunday/Wednesday drop dates on the Weekly Menu tab.</td><td><strong>⚡ Quick Build</strong> → push to <strong>🔜 Building Next</strong></td></tr>
                 <tr><td><strong>Friday evening</strong></td><td>Open the portal for orders. Go to the portal strip at the top of the Weekly Menu and click <strong>Open for Orders</strong>. Set a deadline (e.g. Saturday 20:00) so it closes automatically. Customers can now order next week's menu.</td><td><strong>🔜 Building Next</strong></td></tr>
                 <tr><td><strong>Saturday</strong></td><td>Orders come in. Review them on the Orders page. Confirm any you're happy with — or Bulk Confirm all. Check the allocation bar to make sure no dish is over-subscribed vs your planned portions.</td><td><strong>📦 Current Week</strong> (orders tab)</td></tr>
                 <tr><td><strong>Saturday evening</strong></td><td>Portal deadline passes and ordering closes automatically. Check final confirmed order count. Sync portions from orders if needed (Weekly Menu → Sync Portions button).</td><td><strong>📦 Current Week</strong></td></tr>
@@ -3008,22 +3297,26 @@ select.route-confirm-input option { background:var(--surface2); }
             <div class="gs-callout red"><b>Before advancing:</b> Confirm all current-week orders, make sure portions are synced, and ensure the Building Next slot has a week label and at least one dish. The Advance Week button will block if either of those conditions isn't met.</div>
 
             <div class="gs-h2">Card Layout</div>
-            <p class="gs-p">Each dish card has a two-row header: the top row shows the dish number, name input, photo thumbnail, and the total portions pill. The second row is the "Serves with" field spanning the full card width. Below the header, a completeness bar flags missing fields (name, recipe, photo, price, drops) — all must show a ✓ before the dish is considered ready to go live.</p>
-            <p class="gs-p">The card body has two columns. The left column contains the five component selectors — <span style="font-size:11px;background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3);border-radius:3px;padding:1px 5px;font-family:monospace">PRO</span> <span style="font-size:11px;background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3);border-radius:3px;padding:1px 5px;font-family:monospace">CARB</span> <span style="font-size:11px;background:rgba(167,139,250,.15);color:#c4b5fd;border:1px solid rgba(167,139,250,.3);border-radius:3px;padding:1px 5px;font-family:monospace">VEG</span> <span style="font-size:11px;background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.3);border-radius:3px;padding:1px 5px;font-family:monospace">SCE</span> <span style="font-size:11px;background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3);border-radius:3px;padding:1px 5px;font-family:monospace">FULL</span> — with their individual scale inputs, plus an Overall Scale. The right column shows the S1/S2 drop inputs and a horizontal macro strip (kcal · protein · carb · fat). Below both columns are the portal/Fuel Line toggles, attribute tags, and the box/tub packaging row. The sell price band at the bottom of the card shows f+p cost (food + packaging) and the margin %. If the margin is green (≥50%) you're in a healthy position; amber (35–49%) is acceptable; red (&lt;35%) needs attention. The stats bar below the whole dish grid summarises total portions, box types, and tub counts by session.</p>
+            <p class="gs-p">Weekly Menu is a <strong>read-only monitoring view</strong> for dishes that have already been pushed from Quick Build. Each card shows name, photo, portions pill, completeness bar, sell price band with f+p cost and margin, allergens, and a collapsible <strong>▾ Info</strong> panel with the full recipe summary, drop counts, macros, fuel line, availability badges, packaging summary, and tags.</p>
+            <div class="gs-callout amber"><b>Build in Quick Build, not here.</b> All dish configuration — components, scales, availability, pricing, fuel line, packaging, tags, photo, and description — is set in Quick Build's ▾ Details panel before pushing. The Weekly Menu is not the editor.</div>
 
-            <div class="gs-h2">Component Column Reference</div>
+            <div class="gs-h2">Post-Push Corrections — the ✎ Edit Override</div>
+            <p class="gs-p">If you spot a mistake after pushing (wrong component, wrong fuel line, missing description, etc.) and Quick Build has already been cleared or reset, use the <strong>✎ Edit</strong> button on the dish card. This opens an amber-tinted override panel with full editing capability: all five recipe components with scale inputs, availability, fuel line, box type, tubs, description, and tags. Changes save to Firebase immediately.</p>
+            <div class="gs-callout green"><b>When to use ✎ Edit:</b> Post-push corrections only — wrong component selected, price needs adjusting, description was left blank, wrong fuel line. For building a fresh menu, always use Quick Build.</div>
+
+            <div class="gs-h2">What the Card Always Shows (Read-Only)</div>
+            <p class="gs-p">Even without opening any panel, each card's face gives you an operational summary: dish number, name (always editable inline), photo thumbnail, total portions across both sessions, the completeness bar (Name / Recipe / Photo / Price / Drops — all must be ✓), and the sell price band showing f+p cost and margin %. The allergen row appears below the sell band whenever allergens are detected. The stats bar below the full dish grid summarises total portions, box types, and tub counts by session.</p>
+
+            <div class="gs-h2">Session 01 and Session 02 (Drop Counts)</div>
+            <p class="gs-p">Each dish card shows drop counts (S1/S2) in the ▾ Info panel. These are set via Orders (customer orders confirm the portion allocation) or manually via ✎ Edit. S1 = Sunday drop, S2 = Wednesday drop. These numbers drive all batch, production, and purchasing calculations.</p>
             <table class="gs-table">
-              <thead><tr><th>Field</th><th>What to enter</th><th>How it's used</th></tr></thead>
+              <thead><tr><th>Field</th><th>Source</th><th>How it's used</th></tr></thead>
               <tbody>
-                <tr><td><strong>Protein / Carb / Veg</strong></td><td>Select from Active recipe components of that type</td><td>Source of all food cost, macros, and allergens for this slot</td></tr>
-                <tr><td><strong>P / C / V Scale</strong></td><td>Decimal multiplier — default 1.0</td><td>Multiplies that component's raw ingredient quantities. 1.2 = 20% more protein.</td></tr>
-                <tr><td><strong>Condiment</strong></td><td>Select a Condiment recipe</td><td>Always served at 1× scale regardless of overall scale</td></tr>
-                <tr><td><strong>Complete</strong></td><td>Select a Complete recipe (replaces all other slots)</td><td>For one-pot dishes — all macros come from this single recipe</td></tr>
-                <tr><td><strong>Overall Scale</strong></td><td>Decimal multiplier — default 1.0</td><td>Applied to every component simultaneously. 0.8 = 80% of all portions (e.g. lighter plan)</td></tr>
-                <tr><td><strong>Session 01 / Session 02</strong></td><td>Number of portions for each cooking session</td><td>S1 = Sunday drop, S2 = Wednesday drop. Drive all batch calculations in Production and Purchasing.</td></tr>
-                <tr><td><strong>Sell £</strong></td><td>Enter your selling price per portion</td><td>Used in margin calculation, revenue estimates, and shown on the customer portal</td></tr>
-                <tr><td><strong>Margin %</strong></td><td>Auto-calculated</td><td>(Sell − Food Cost − Packaging Cost) ÷ Sell. Green ≥50%, amber 35–50%, red &lt;35%. The full margin including labour and overhead is visible in the Cost Stack tab.</td></tr>
-                <tr><td><strong>Allergens</strong></td><td>Auto-compiled</td><td>All allergens from all ingredient lines across all components for this dish</td></tr>
+                <tr><td><strong>Drop 1 (Sun)</strong></td><td>Set via orders or ✎ Edit</td><td>S1 batch quantities in Production and Purchasing</td></tr>
+                <tr><td><strong>Drop 2 (Wed)</strong></td><td>Set via orders or ✎ Edit</td><td>S2 batch quantities in Production and Purchasing</td></tr>
+                <tr><td><strong>Sell £</strong></td><td>Always editable on card face</td><td>Margin calculation, revenue, portal pricing</td></tr>
+                <tr><td><strong>Margin %</strong></td><td>Auto-calculated</td><td>(Sell − Food − Packaging) ÷ Sell. Green ≥50%, amber 35–49%, red &lt;35%</td></tr>
+                <tr><td><strong>Allergens</strong></td><td>Auto-compiled from all components</td><td>Shown on card face and portal. No manual input.</td></tr>
               </tbody>
             </table>
 
@@ -3864,6 +4157,11 @@ select.route-confirm-input option { background:var(--surface2); }
 
     </div>
 
+    <!-- QUICK BUILD PLANNER -->
+    <div class="page" id="page-quickbuild">
+      <div id="qb-root" style="padding:4px 0"></div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -4115,7 +4413,7 @@ select.route-confirm-input option { background:var(--surface2); }
       <div class="form-grid">
         <div class="form-group"><label>Component Name *</label><input id="rec-name" placeholder="e.g. Chicken Tikka"></div>
         <div class="form-group"><label>Type *</label>
-          <select id="rec-type"><option>Protein</option><option>Carb</option><option>Veg</option><option>Condiment</option><option>Complete</option></select>
+          <select id="rec-type" onchange="onRecTypeChange(this.value)"><option>Protein</option><option>Carb</option><option>Veg</option><option>Condiment</option><option>Complete</option></select>
         </div>
         <div class="form-group"><label>Version</label><input id="rec-version" value="V1"></div>
         <div class="form-group"><label>Status</label><select id="rec-status"><option>Active</option><option>Draft</option><option>Archived</option></select></div>
@@ -4126,6 +4424,16 @@ select.route-confirm-input option { background:var(--surface2); }
         <div class="form-group"><label>Rest/Hold Time (min)</label><input id="rec-rest" type="number" min="0" value="0"></div>
         <div class="form-group"><label>Target Internal Temp (°C)</label><input id="rec-temp" type="number" min="0" placeholder="e.g. 75 for chicken"></div>
         <div class="form-group"><label>Serving Size Note</label><input id="rec-serving-note" placeholder="e.g. 1 portion = 150g cooked chicken"></div>
+        <div class="form-group"><label>Flavour Family</label><input id="rec-flavour-family" placeholder="e.g. Tikka Masala, Teriyaki, Jerk, Honey &amp; Garlic"></div>
+        <div class="form-group" id="rec-veg-cat-group" style="display:none"><label>Veg Category</label>
+          <select id="rec-veg-category">
+            <option value="">— Select —</option>
+            <option>Warm — Sautéed</option>
+            <option>Warm — Steamed</option>
+            <option>Cold Side Salad</option>
+            <option>Main Salad</option>
+          </select>
+        </div>
         <div class="form-group"><label>Storage Instructions</label><input id="rec-storage" placeholder="e.g. Refrigerate ≤4°C, use within 3 days"></div>
         <div class="form-group full"><label>Chef Notes / Tips</label><textarea id="rec-chef-notes" placeholder="Any tips, common mistakes to avoid, texture guidance..." rows="2"></textarea></div>
       </div>
@@ -4371,6 +4679,10 @@ let DB = {
   qcTempHot: 75,
   qcTempCold: 5,
   qcCoolingMinutes: 90,
+  // Quick Build Planner
+  currentBuild: null,
+  flavourHistory: {},
+  menuTemplates: [],
 };
 
 // ═══════════════════════════════════════════
@@ -4660,7 +4972,8 @@ const PAGE_CFG = {
   ingredients:{title:'Ingredient Database',sub:'Master data · Full nutrition · UK allergens'},
   recipes:{title:'Recipe Engine',sub:'Single-serving baseline · Instructions · Complete dish support'},
   components:{title:'Component Database',sub:'Assembled units · Filter by type · RDA highlights'},
-  menu:{title:'Weekly Menu Builder',sub:'Component scaling · Live stats · Margin tracking'},
+  menu:{title:'Weekly Menu',sub:'Drop management · Pricing · Photos · Portal publish'},
+  quickbuild:{title:'Quick Build',sub:'Flavour-first menu planning · Auto-suggest components · Push to menu'},
   inventory:{title:'Inventory Management',sub:'Live stock · PAR control · Transactions · Source of truth for Purchasing'},
   packsheet:{title:'Packaging',sub:'Kitchen staff guide · Exactly what goes in each box'},
   production:{title:'Production Planner',sub:'Batch quantities · Editable labour · Step-by-step instructions'},
@@ -4696,7 +5009,8 @@ function showPage(id) {
   const topActions = {
     ingredients: ()=>`<button class="btn btn-gold" onclick="openIngModal()">+ Add Ingredient</button>`,
     recipes: ()=>`<button class="btn btn-gold" onclick="openRecipeModal()">+ New Recipe</button>`,
-    menu: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="quickArchive()">💾 Archive Week</button><button class="btn btn-ghost btn-sm" onclick="clearMenu()">Clear</button><button class="btn btn-gold" onclick="addDishRow()">+ Add Dish</button></div>`,
+    menu: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="quickArchive()">💾 Archive Week</button></div>`,
+    quickbuild: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="qbResetTemplate()">↺ Reset</button><button class="btn btn-ghost btn-sm" onclick="qbAddSlot()">+ Slot</button><button class="btn btn-ghost btn-sm" onclick="qbSaveTemplate()">💾 Save Template</button><button class="btn btn-gold btn-sm" onclick="qbPushAllToMenu()">→ Push All to Menu</button></div>`,
     orders: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="renderOrdersPanel()">⟳ Refresh</button><button class="btn btn-gold btn-sm" onclick="openOrderModal()">+ Add Order</button></div>`,
     delivery: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-ghost btn-sm" onclick="renderDelivery()">⟳ Refresh</button><button class="btn btn-gold" onclick="openCustomerModal()">+ Add Customer</button></div>`,
     inventory: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-ghost btn-sm" onclick="renderInventory()">⟳ Refresh</button><button class="btn btn-ghost btn-sm" onclick="openInvReceiveModal()">+ Receive Stock</button><button class="btn btn-ghost btn-sm" onclick="openInvCountModal()">📋 Stock Count</button><button class="btn btn-gold" onclick="openInvAdjustModal()">⚡ Quick Adjust</button></div>`,
@@ -4714,7 +5028,7 @@ function showPage(id) {
 
   const renders = {
     dashboard: renderDashboard, ingredients: renderIngredients, recipes: renderRecipes,
-    components: renderComponents, menu: renderMenu, packsheet: renderPackSheet,
+    components: renderComponents, menu: renderMenu, quickbuild: renderQuickBuild, packsheet: renderPackSheet,
     production: renderProduction, purchasing: renderPurchasing, coststack: renderCostStack,
     history: renderHistory, guide: ()=>{ showGuideSection('gs-start'); }, labour: renderLabour,
     athletes: renderAthletes,
@@ -5757,9 +6071,13 @@ function renderRecipes(){
     const allergens=new Set();
     rec.lines?.forEach(l=>{ const ing=DB.ingredients.find(i=>i.id===l.ingId); ing?.allergens?.forEach(a=>allergens.add(a)); });
     const allerStr=[...allergens].map(a=>`<span class="allergen-tag">${a.split(' ')[0]}</span>`).join('')||'<span class="muted small">—</span>';
+    const familyTag = rec.flavourFamily
+      ? `<span style="font-size:9px;background:var(--gold-dim);color:#9a7020;border:1px solid rgba(201,168,76,.3);padding:1px 6px;border-radius:4px;white-space:nowrap">${rec.flavourFamily}</span>`
+      : (rec.vegCategory ? `<span style="font-size:9px;background:var(--surface3);color:var(--text2);border:1px solid var(--border2);padding:1px 6px;border-radius:4px;white-space:nowrap">${rec.vegCategory}</span>` : '<span class="muted small">—</span>');
     return `<tr>
       <td><span class="badge b-${rec.type.toLowerCase()}">${rec.type}</span></td>
       <td><strong>${rec.name}</strong><br><span class="small muted">${rec.cookMethod||''}</span></td>
+      <td>${familyTag}</td>
       <td class="small muted">${rec.lines?.length||0} items</td>
       <td class="mono text-gold">£${t.cost.toFixed(2)}</td>
       <td class="mono">${t.kcal.toFixed(0)}</td>
@@ -5774,7 +6092,12 @@ function renderRecipes(){
         <button class="action-btn r" onclick="deleteRec('${rec.id}')" title="Delete">🗑</button>
       </td>
     </tr>`;
-  }).join('')||`<tr><td colspan="10"><div class="empty-state"><div class="big">📐</div><div class="msg">No recipes yet — build your first component to get started</div><button class="btn btn-gold" onclick="openRecipeModal()">+ New Recipe</button></div></td></tr>`;
+  }).join('')||`<tr><td colspan="11"><div class="empty-state"><div class="big">📐</div><div class="msg">No recipes yet — build your first component to get started</div><button class="btn btn-gold" onclick="openRecipeModal()">+ New Recipe</button></div></td></tr>`;
+}
+
+function onRecTypeChange(type){
+  var vegGroup = document.getElementById('rec-veg-cat-group');
+  if (vegGroup) vegGroup.style.display = (type === 'Veg') ? '' : 'none';
 }
 
 function openRecipeModal(id=null){
@@ -5794,6 +6117,9 @@ function openRecipeModal(id=null){
   document.getElementById('rec-serving-note').value=rec?.servingNote||'';
   document.getElementById('rec-storage').value=rec?.storage||'';
   document.getElementById('rec-chef-notes').value=rec?.chefNotes||'';
+  document.getElementById('rec-flavour-family').value=rec?.flavourFamily||'';
+  document.getElementById('rec-veg-category').value=rec?.vegCategory||'';
+  onRecTypeChange(rec?.type||'Protein');
   recLines=rec?.lines?JSON.parse(JSON.stringify(rec.lines)):[{ingId:'',qty:100}];
   // Load phase steps — fall back: if only legacy steps[], put in cookSteps
   recPrepSteps  = rec?.prepSteps   ? [...rec.prepSteps]   : (rec?.steps&&!rec.cookSteps ? [] : []);
@@ -5936,6 +6262,8 @@ function saveRecipe(){
     prepTime:n(gv('rec-prep')), cookTime:n(gv('rec-cook')), restTime:n(gv('rec-rest')),
     targetTemp:gv('rec-temp')||null, servingNote:gv('rec-serving-note'), storage:gv('rec-storage'),
     chefNotes:gv('rec-chef-notes'),
+    flavourFamily:gv('rec-flavour-family')||null,
+    vegCategory:(gv('rec-type')==='Veg'?gv('rec-veg-category')||null:null),
     lines:recLines.filter(l=>l.ingId&&l.qty>0),
     prepSteps:recPrepSteps.filter(s=>s.trim()),
     cookSteps:recCookSteps.filter(s=>s.trim()),
@@ -6113,9 +6441,13 @@ function renderComponents(){
     const allergens=new Set();
     rec.lines?.forEach(l=>{const ing=DB.ingredients.find(i=>i.id===l.ingId);ing?.allergens?.forEach(a=>allergens.add(a));});
     const allerStr=[...allergens].map(a=>`<span class="allergen-tag">${a.split(' ')[0]}</span>`).join('')||'<span class="muted small">—</span>';
+    const compFamilyTag = rec.flavourFamily
+      ? `<span style="font-size:9px;background:var(--gold-dim);color:#9a7020;border:1px solid rgba(201,168,76,.3);padding:1px 6px;border-radius:4px;white-space:nowrap">${rec.flavourFamily}</span>`
+      : (rec.vegCategory ? `<span style="font-size:9px;background:var(--surface3);color:var(--text2);border:1px solid var(--border2);padding:1px 6px;border-radius:4px;white-space:nowrap">${rec.vegCategory}</span>` : '<span class="muted small">—</span>');
     return `<tr>
       <td><span class="badge b-${rec.type.toLowerCase()}">${rec.type}</span></td>
       <td><strong>${rec.name}</strong></td>
+      <td>${compFamilyTag}</td>
       <td class="mono text-gold">£${t.cost.toFixed(2)}</td>
       <td class="mono">${t.kcal.toFixed(0)}</td>
       <td class="mono">${t.prot.toFixed(1)}</td>
@@ -6126,7 +6458,7 @@ function renderComponents(){
       <td>${hlHtml}</td>
       <td>${allerStr}</td>
     </tr>`;
-  }).join('')||`<tr><td colspan="11"><div class="empty-state"><div class="big">🍱</div><div class="msg">No active components</div></div></td></tr>`;
+  }).join('')||`<tr><td colspan="12"><div class="empty-state"><div class="big">🍱</div><div class="msg">No active components</div></div></td></tr>`;
 }
 
 // ═══════════════════════════════════════════
@@ -6469,12 +6801,30 @@ function renderMenu(){
     const realIdx=slotDishes.indexOf(dish);
     const t=calcDishTotals(dish);
     const packCost=getPackagingCost();
-    const margin=t.sell>0?(t.sell-t.cost-packCost)/t.sell:0;  // food + packaging margin
+    const margin=t.sell>0?(t.sell-t.cost-packCost)/t.sell:0;
     const marginClass=margin>=0.5?'menu-margin-green':margin>=0.35?'menu-margin-amber':'menu-margin-red';
     const allergenHtml=[...t.allergens].map(a=>`<span class="allergen-tag">${a.split(' ')[0]}</span>`).join('');
     const filteredTotal = dishPortions(dish, menuSessionFilter);
 
-    const compRows = [
+    // Read-only component summary badges
+    const compSummary = [
+      {slot:'protein',  label:'PRO',  cls:'b-protein'},
+      {slot:'carb',     label:'CARB', cls:'b-carb'},
+      {slot:'veg',      label:'VEG',  cls:'b-veg'},
+      {slot:'condiment',label:'SCE',  cls:'b-condiment'},
+      {slot:'complete', label:'FULL', cls:'b-complete'},
+    ].map(({slot,label,cls})=>{
+      const val = dish[slot];
+      if (!val) return '';
+      const scaleKey = 'scale'+slot.charAt(0).toUpperCase()+slot.slice(1);
+      const scaleVal = n(dish[scaleKey])||1;
+      const scaleChip = (slot!=='condiment'&&slot!=='complete'&&scaleVal!==1)
+        ? `<span style="font-size:9px;color:var(--text3);font-family:var(--mono)">×${scaleVal}</span>` : '';
+      return `<span class="menu-comp-badge"><span class="badge ${cls}" style="font-size:7px;padding:1px 4px;flex-shrink:0">${label}</span><span style="font-size:11px;color:var(--text1)">${escHtml(val)}</span>${scaleChip}</span>`;
+    }).join('');
+
+    // Edit panel: full component rows for overrides
+    const compRowsEdit = [
       {slot:'protein',  label:'PRO',  type:'Protein',   cls:'b-protein'},
       {slot:'carb',     label:'CARB', type:'Carb',      cls:'b-carb'},
       {slot:'veg',      label:'VEG',  type:'Veg',       cls:'b-veg'},
@@ -6484,97 +6834,144 @@ function renderMenu(){
       <div class="menu-comp-row">
         <span class="badge ${cls}" style="font-size:7px;padding:2px 5px;flex-shrink:0;letter-spacing:.4px;width:34px;text-align:center">${label}</span>
         <input class="menu-comp-select menu-comp-search" type="text" list="comp-dl-${type}"
-          value="${escHtml(dish[slot]||'')}" placeholder="Search ${label.toLowerCase()}…"
+          value="${escHtml(dish[slot]||'')}" placeholder="${type}…"
           data-slot="${slot}" data-realidx="${realIdx}" autocomplete="off" spellcheck="false"
           onchange="udCompValidate(${realIdx},'${slot}',this.value,this)">
-        ${slot!=='condiment'&&slot!=='complete'?`<input class="menu-scale-input" type="number" value="${n(dish['scale'+slot.charAt(0).toUpperCase()+slot.slice(1)])||1}" step="0.05" min="0.1" title="${type} scale" onchange="ud(${realIdx},'scale${slot.charAt(0).toUpperCase()+slot.slice(1)}',this.value)">` : `<span style="width:44px"></span>`}
+        ${slot!=='condiment'&&slot!=='complete'
+          ? `<input class="menu-scale-input" type="number" value="${n(dish['scale'+slot.charAt(0).toUpperCase()+slot.slice(1)])||1}" step="0.05" min="0.1" title="${type} scale" onchange="ud(${realIdx},'scale${slot.charAt(0).toUpperCase()+slot.slice(1)}',this.value)">`
+          : `<span style="width:44px"></span>`}
       </div>`).join('');
+    // Pre-compute avail checkbox strings — avoids template literal nesting issues
+    const _editS1Chk = dish.athleteVariant ? '' : '<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" '+(dish.availSunday?'checked':'')+' onchange="ud('+realIdx+',\'availSunday\',this.checked)" style="width:14px;height:14px"><span style="color:var(--text2)">Sunday</span></label>';
+    const _editS2Chk = dish.athleteVariant ? '' : '<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" '+(dish.availWednesday?'checked':'')+' onchange="ud('+realIdx+',\'availWednesday\',this.checked)" style="width:14px;height:14px"><span style="color:var(--text2)">Wednesday</span></label>';
 
-    const athleteHtml = renderAthleteSection(dish, realIdx);
-    const hasAthleteVariant = !!dish.athleteVariant;
-    // Pre-compute avail checkbox HTML — avoids nested template literals in card body
-    const _s1Checkbox = dish.athleteVariant ? '' : '<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" ' + (dish.availSunday?'checked':'') + ' onchange="ud('+realIdx+',\'availSunday\',this.checked)" style="width:14px;height:14px"><span style="color:var(--text2)">Avail</span></label>';
-    const _s2Checkbox = dish.athleteVariant ? '' : '<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" ' + (dish.availWednesday?'checked':'') + ' onchange="ud('+realIdx+',\'availWednesday\',this.checked)" style="width:14px;height:14px"><span style="color:var(--text2)">Avail</span></label>';
-    // Completeness checks
+    // Completeness checks (athlete variants skip the availability check — use drop counts instead)
     const _compChecks = [
       { label:'Name',   ok: !!(dish.name && dish.name.trim()) },
       { label:'Recipe', ok: !!(dish.protein || dish.carb || dish.veg || dish.complete) },
       { label:'Photo',  ok: !!(dish.photoUrl) },
       { label:'Price',  ok: !!(dish.sellPrice && parseFloat(dish.sellPrice) > 0) },
-      { label:'Drops',  ok: !!(dish.availSunday || dish.availWednesday) },
+      { label:'Drops',  ok: dish.athleteVariant ? (n(dish.drop1)>0 || n(dish.drop2)>0) : !!(dish.availSunday || dish.availWednesday) },
     ];
     const _allComplete = _compChecks.every(c=>c.ok);
     const _missingCount = _compChecks.filter(c=>!c.ok).length;
-    const _completenessBar = `<div class="menu-card-completeness">
-      ${_compChecks.map(c=>`<span class="comp-check ${c.ok?'ok':'missing'}">${c.ok?'✓':'!'} ${c.label}</span>`).join('')}
-      ${_allComplete ? '<span style="margin-left:auto;font-size:9px;color:#30d158;font-family:var(--mono)">✓ Ready</span>' : `<span style="margin-left:auto;font-size:9px;color:#ff453a;font-family:var(--mono)">${_missingCount} missing</span>`}
-    </div>`;
-    // Sell price band
+
+    // Sell price band — price stays editable (operational, changes per drop)
     const _sellPriceSet = !!(dish.sellPrice && parseFloat(dish.sellPrice) > 0);
     const _sellDisplayVal = dish.sellPrice || DB.defaultSellPrice || '';
     const _sellBand = `<div class="menu-sell-band">
       <span class="menu-sell-band-label">£ Sell Price</span>
       <input class="menu-sell-band-input ${_sellPriceSet?'':'unset'}" type="number" value="${_sellDisplayVal}" step="0.01" min="0"
         onchange="ud(${realIdx},'sellPrice',this.value);this.classList.toggle('unset',!(this.value&&parseFloat(this.value)>0))"
-        title="Sell price — must be set per dish" placeholder="0.00">
+        title="Sell price" placeholder="0.00">
       ${!_sellPriceSet ? '<span style="font-size:10px;color:#ff453a;font-family:var(--mono);">← Required</span>' : ''}
       <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
         <span class="menu-sell-band-cost" title="Food £${t.cost.toFixed(2)} + Packaging £${packCost.toFixed(2)}">f+p £${(t.cost+packCost).toFixed(2)}</span>
         <div class="menu-sell-band-margin menu-margin-chip ${marginClass}" title="Margin after food &amp; packaging costs">${pct(margin)}</div>
       </div>
     </div>`;
-    return `<div class="menu-card" id="menu-card-${realIdx}" data-fuel="${dish.fuelLine||'Fuel Plus'}">
+
+    // Read-only tags
+    const _tagsHtml = (Array.isArray(dish.tags)&&dish.tags.length)
+      ? dish.tags.map(k=>{ var p=PRESET_TAGS.find(t=>t.key===k); return '<span class="menu-tag-ro-chip">'+escHtml(p?p.label:k)+'</span>'; }).join('')
+      : '<span style="font-size:9px;color:var(--text3);font-family:var(--mono)">—</span>';
+
+    // Availability badges
+    const _availHtml = (dish.athleteVariant ? '' :
+      '<span class="menu-card-info-chip '+(dish.availSunday?'avail':'unavail')+'">Sun</span>'
+      + '<span class="menu-card-info-chip '+(dish.availWednesday?'avail':'unavail')+'">Wed</span>');
+
+    // Fuel line badge
+    const _fuelHtml = '<span class="menu-card-info-chip '+(dish.fuelLine==='Fuel Lite'?'fuel-lite':'fuel-plus')+'">'
+      + (dish.fuelLine==='Fuel Lite'?'✦ Fuel Lite':'⚡ Fuel Plus')+'</span>';
+
+    // Packaging summary
+    const _pkgHtml = '<span style="font-size:9px;font-family:var(--mono);color:var(--text3)">'
+      + ((!dish.boxType||dish.boxType==='3-compartment')?'▣ 3-Comp':'☐ Single')
+      + ((n(dish.condimentTubs)||0)>0?' · '+(n(dish.condimentTubs))+'× tub':'')
+      + '</span>';
+
+    // Portal visibility
+    const _portalHtml = (function(){
+      var hasNext = DB.nextMenuDishes && DB.nextMenuDishes.length > 0;
+      var isThisSlot = (hasNext && menuActiveSlot==='next') || (!hasNext && menuActiveSlot==='current');
+      if (!isThisSlot) return '<div class="menu-not-live-banner" style="margin-bottom:4px">⚠ NOT VISIBLE ON PORTAL<span style="font-weight:400;font-size:9px;margin-left:4px">Portal shows '+(hasNext?'Building Next':'Current Week')+'</span></div>';
+      return '';
+    })();
+
+    const hasAthleteVariant = !!dish.athleteVariant;
+    const athleteHtml = renderAthleteSection(dish, realIdx);
+
+    return `<div class="menu-card" id="menu-card-${realIdx}" data-fuel="${dish.fuelLine||'Fuel Plus'}" data-athlete="${dish.athleteVariant?'true':'false'}">
+
+      <!-- CARD HEADER -->
       <div class="menu-card-header">
+        <!-- Row 1: index + name + action buttons (photo moved below) -->
         <div class="menu-card-header-row">
           <div class="menu-card-num">${realIdx+1}</div>
           <input class="menu-card-name-input" value="${dish.name}" onchange="ud(${realIdx},'name',this.value)" spellcheck="false" placeholder="Dish name…" style="flex:1;min-width:0">
-          <div style="flex-shrink:0;cursor:pointer" onclick="triggerPhotoUpload(${realIdx})" title="${dish.photoUrl?'Click to change photo':'Click to upload photo'}">
+          <input type="file" accept="image/*" style="display:none" id="photo-file-${realIdx}" onchange="handlePhotoUpload(${realIdx},this)">
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+            <button class="menu-card-toggle-btn" id="menu-card-toggle-btn-${realIdx}" onclick="menuToggleCard(${realIdx})">▾ Info</button>
+            <button class="menu-card-edit-btn" id="menu-card-edit-btn-${realIdx}" onclick="menuToggleCardEdit(${realIdx})">✎ Edit</button>
+            <button class="action-btn r" onclick="removeDish(${realIdx})" style="margin-left:2px">🗑</button>
+          </div>
+        </div>
+        <!-- Row 2: photo thumbnail + description -->
+        <div class="menu-card-header-meta">
+          <div style="cursor:pointer;flex-shrink:0" onclick="triggerPhotoUpload(${realIdx})" title="${dish.photoUrl?'Click to change photo':'Click to upload photo'}">
             ${dish.photoUrl
               ? `<img class="photo-thumb-header" src="${(dish.photoUrl||'').replace(/"/g,'&quot;')}" alt="dish photo">`
               : `<div class="photo-thumb-header-empty">📷</div>`}
           </div>
-          <input type="file" accept="image/*" style="display:none" id="photo-file-${realIdx}" onchange="handlePhotoUpload(${realIdx},this)">
-          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-            <div class="menu-total-pill"><span class="tot-num">${filteredTotal}</span><span style="font-size:8px;color:var(--text3)">portions</span></div>
-            <button class="action-btn r" onclick="removeDish(${realIdx})" style="margin-left:2px">🗑</button>
-          </div>
+          ${dish.serves
+            ? `<span class="menu-card-desc">${escHtml(dish.serves)}</span>`
+            : `<span class="menu-card-desc-empty">No description — add one in ✎ Edit</span>`}
         </div>
-        <input class="menu-card-serves-input" type="text" placeholder="Serves with…" value="${(dish.serves||'').replace(/"/g,'&quot;')}" onchange="ud(${realIdx},'serves',this.value.trim())" spellcheck="false" style="width:100%;padding-left:30px">
       </div>
-      ${_completenessBar}
-      <div class="menu-card-body">
 
-        <!-- RECIPE -->
-        <div>
-          <div class="menu-card-section-label">Recipe</div>
-          ${compRows}
-          <div class="menu-overall-row">
-            <span class="menu-overall-label">Overall ×</span>
-            <input class="menu-scale-input" type="number" value="${n(dish.scaleOverall)||1}" step="0.05" min="0.1" title="Overall scale" onchange="ud(${realIdx},'scaleOverall',this.value)">
-          </div>
+      <!-- SESSIONS STRIP — kitchen-primary info at a glance -->
+      <div class="menu-card-sessions">
+        <div class="menu-card-session-blk sun${s1Active||dish.availSunday?' sun-on':''}">
+          <span class="mcs-label">${dish.athleteVariant?'🏅 Sunday':'☀ Sunday'}</span>
+          <span class="mcs-count${(n(dish.drop1)||0)===0?' zero':''}">${n(dish.drop1)||0}</span>
+          <span class="mcs-unit">portions</span>
+          ${!dish.athleteVariant?`<span class="mcs-avail ${dish.availSunday?'on':'off'}">${dish.availSunday?'✓ avail':'off'}</span>`:''}
         </div>
+        <div class="menu-card-session-blk wed${s2Active||dish.availWednesday?' wed-on':''}">
+          <span class="mcs-label">${dish.athleteVariant?'🏅 Wednesday':'🌙 Wednesday'}</span>
+          <span class="mcs-count${(n(dish.drop2)||0)===0?' zero':''}">${n(dish.drop2)||0}</span>
+          <span class="mcs-unit">portions</span>
+          ${!dish.athleteVariant?`<span class="mcs-avail ${dish.availWednesday?'on':'off'}">${dish.availWednesday?'✓ avail':'off'}</span>`:''}
+        </div>
+      </div>
 
-        <!-- DROPS + MACROS -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start">
+      <!-- ATTRS STRIP — line, packaging, status -->
+      <div class="menu-card-attrs">
+        <span class="menu-attr-chip ${dish.fuelLine==='Fuel Lite'?'fuel-lite':'fuel-plus'}">${dish.fuelLine==='Fuel Lite'?'✦ Fuel Lite':'⚡ Fuel Plus'}</span>
+        <span class="menu-attr-chip box">${(!dish.boxType||dish.boxType==='3-compartment')?'▣ 3-Comp':'☐ Single'}</span>
+        ${(n(dish.condimentTubs)||0)>0?`<span class="menu-attr-chip box">${n(dish.condimentTubs)}× tub</span>`:''}
+        ${dish.athleteVariant?'<span class="menu-attr-chip athlete">🏅 Athlete</span>':''}
+        <span class="menu-attr-chip ${_allComplete?'ready':'incomplete'}" style="margin-left:auto">${_allComplete?'✓ Ready':'⚠ '+_missingCount+' missing'}</span>
+      </div>
+
+      ${allergenHtml?`<div class="menu-allergen-row"><span style="font-size:9px;color:#f87171;font-family:var(--mono);margin-right:2px">⚠</span>${allergenHtml}</div>`:''}
+      ${_sellBand}
+
+      <!-- COLLAPSIBLE INFO PANEL (read-only) -->
+      <div id="menu-card-details-${realIdx}" class="menu-card-details" style="display:none">
+        ${_portalHtml}
+        <div class="menu-card-body">
+
+          <!-- RECIPE -->
           <div>
-            <div class="menu-card-section-label">Drops</div>
-            <div class="menu-session-block">
-              <div class="menu-session-cell ${dish.athleteVariant ? 'athlete-drop-cell' : (s1Active?'s1-active':'')}">
-                <span class="menu-session-label">${dish.athleteVariant ? '🏅 Sun' : 'Sunday'}</span>
-                <div style="display:flex;align-items:center;gap:6px">
-                  <input class="menu-session-input${dish.athleteVariant?' athlete-drop-input':''}" type="number" value="${dish.drop1||0}" min="0" onchange="ud(${realIdx},'drop1',this.value)" ${dish.athleteVariant?'':'readonly'} ${!dish.athleteVariant&&!dish.availSunday?'disabled':''}>
-                  ${_s1Checkbox}
-                </div>
-              </div>
-              <div class="menu-session-cell ${dish.athleteVariant ? 'athlete-drop-cell' : (s2Active?'s2-active':'')}">
-                <span class="menu-session-label">${dish.athleteVariant ? '🏅 Wed' : 'Wednesday'}</span>
-                <div style="display:flex;align-items:center;gap:6px">
-                  <input class="menu-session-input${dish.athleteVariant?' athlete-drop-input':''}" type="number" value="${dish.drop2||0}" min="0" onchange="ud(${realIdx},'drop2',this.value)" ${dish.athleteVariant?'':'readonly'} ${!dish.athleteVariant&&!dish.availWednesday?'disabled':''}>
-                  ${_s2Checkbox}
-                </div>
-              </div>
+            <div class="menu-card-section-label" style="margin-bottom:5px">Recipe</div>
+            <div class="menu-comp-summary">
+              ${compSummary || '<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">No components — configure in ⚡ Quick Build</span>'}
             </div>
           </div>
+
+          <!-- MACROS -->
           <div>
             <div class="menu-card-section-label">Macros / portion</div>
             <div class="menu-macro-row">
@@ -6584,55 +6981,162 @@ function renderMenu(){
               <div class="menu-macro-chip c-fat"><span class="mmv">${t.fat.toFixed(1)}</span><span class="mml">fat</span></div>
             </div>
           </div>
+
+          <!-- TAGS -->
+          <div class="menu-card-info-row">
+            <span class="menu-card-readonly-label">Tags</span>
+            ${_tagsHtml}
+          </div>
+
+        </div><!-- end menu-card-body -->
+
+        <!-- ATHLETES -->
+        ${hasAthleteVariant
+          ? `<div class="menu-athlete-strip">
+               <div class="menu-card-section-label" style="margin-bottom:5px">Athlete Variant</div>
+               ${athleteHtml}
+             </div>`
+          : `<div class="menu-athlete-strip-add">${athleteHtml}</div>`}
+
+      </div><!-- end menu-card-details -->
+
+      <!-- EDIT OVERRIDE PANEL (amber, hidden by default) -->
+      <div id="menu-card-edit-${realIdx}" class="menu-card-edit-panel" style="display:none">
+        <div class="menu-card-edit-panel-header">
+          <span class="menu-card-edit-panel-label">✎ Override Edit</span>
+          <span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:4px">Changes save immediately to Firebase</span>
         </div>
 
-        <!-- PORTAL BADGE + FUEL LINE: single compact row, no extra wrapper -->
-        ${(function(){
-          var hasNext = DB.nextMenuDishes && DB.nextMenuDishes.length > 0;
-          var portalSlot = hasNext ? 'Building Next' : 'Current Week';
-          var isThisSlot = (hasNext && menuActiveSlot === 'next') || (!hasNext && menuActiveSlot === 'current');
-          var notLiveBanner = isThisSlot ? '' : '<div class="menu-not-live-banner" style="margin-bottom:4px">⚠ NOT VISIBLE ON PORTAL<span style="font-weight:400;font-size:9px;margin-left:4px">Portal shows ' + portalSlot + '</span></div>';
-          var liveBadge = isThisSlot ? '<span class="portal-slot-badge portal-slot-live" style="margin-bottom:0">✓ Live</span>' : '<span class="portal-slot-badge portal-slot-off" style="margin-bottom:0">🌐</span>';
-          return notLiveBanner + '<div style="display:flex;align-items:center;gap:5px">' + liveBadge + '<button class="box-type-btn ' + (!dish.fuelLine||dish.fuelLine==='Fuel Plus'?'active':'') + '" onclick="ud(' + realIdx + ',\'fuelLine\',\'Fuel Plus\')" style="flex:1">⚡ Fuel Plus</button><button class="box-type-btn ' + (dish.fuelLine==='Fuel Lite'?'active':'') + '" onclick="ud(' + realIdx + ',\'fuelLine\',\'Fuel Lite\')" style="flex:1">✦ Fuel Lite</button></div>';
-        })()}
-
-        <!-- TAGS -->
-        ${renderTagToggles(dish, realIdx)}
-
-        <!-- BOX + TUBS: single compact row, label inline -->
-        <div style="display:flex;align-items:center;gap:6px">
-          <span class="menu-card-section-label" style="margin-bottom:0;flex-shrink:0">Packaging</span>
-          <div class="box-type-row" style="flex:1;margin:0">
-            <button class="box-type-btn ${(!dish.boxType||dish.boxType==='3-compartment')?'active':''}" onclick="ud(${realIdx},'boxType','3-compartment')">▣ 3-Comp</button>
-            <button class="box-type-btn ${dish.boxType==='single'?'active':''}" onclick="ud(${realIdx},'boxType','single')">☐ Single</button>
+        <!-- Recipe components -->
+        <div class="menu-card-edit-section">
+          <div class="menu-card-edit-section-label">Recipe Components</div>
+          ${compRowsEdit}
+          <div class="menu-comp-row" style="margin-top:4px">
+            <span style="font-size:9px;font-family:var(--mono);color:var(--text3);width:34px;flex-shrink:0">SCALE</span>
+            <input class="menu-scale-input" type="number" value="${n(dish.scaleOverall)||1}" step="0.05" min="0.1" title="Overall scale" style="width:60px" onchange="ud(${realIdx},'scaleOverall',this.value)">
+            <span style="font-size:9px;font-family:var(--mono);color:var(--text3)">Overall ×</span>
           </div>
-          <div style="display:flex;align-items:center;gap:3px;flex-shrink:0">
-            <span style="font-size:8px;color:var(--text3);font-family:var(--mono)">Tubs</span>
-            <div class="tub-counter">
-              <button class="tub-btn" onclick="adjTubs(${realIdx},-1)">−</button>
-              <div class="tub-count">${n(dish.condimentTubs)||0}</div>
-              <button class="tub-btn" onclick="adjTubs(${realIdx},+1)">+</button>
+        </div>
+
+        <!-- Availability + Fuel line -->
+        <div class="menu-card-edit-section">
+          <div class="menu-card-edit-section-label">Availability &amp; Line</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            ${_editS1Chk}
+            ${_editS2Chk}
+            <button class="box-type-btn${(dish.fuelLine!=='Fuel Lite')?' active':''}" id="menu-edit-fp-${realIdx}"
+              onclick="udMenuFuelLine(${realIdx},'Fuel Plus')" style="font-size:10px;padding:3px 9px">⚡ Fuel Plus</button>
+            <button class="box-type-btn${(dish.fuelLine==='Fuel Lite')?' active':''}" id="menu-edit-fl-${realIdx}"
+              onclick="udMenuFuelLine(${realIdx},'Fuel Lite')" style="font-size:10px;padding:3px 9px">✦ Fuel Lite</button>
+          </div>
+        </div>
+
+        <!-- Box type + Tubs -->
+        <div class="menu-card-edit-section">
+          <div class="menu-card-edit-section-label">Packaging</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <button class="box-type-btn${(!dish.boxType||dish.boxType==='3-compartment')?' active':''}" id="menu-edit-box3c-${realIdx}"
+              onclick="udMenuBoxType(${realIdx},'3-compartment')" style="font-size:10px;padding:3px 9px">▣ 3-Comp</button>
+            <button class="box-type-btn${(dish.boxType==='single')?' active':''}" id="menu-edit-boxsg-${realIdx}"
+              onclick="udMenuBoxType(${realIdx},'single')" style="font-size:10px;padding:3px 9px">☐ Single</button>
+            <div class="tub-count" id="menu-edit-tubs-${realIdx}">
+              <button class="tub-btn" onclick="udMenuAdjTubs(${realIdx},-1)">−</button>
+              <span class="tub-num">${n(dish.condimentTubs)||0}</span>
+              <button class="tub-btn" onclick="udMenuAdjTubs(${realIdx},1)">+</button>
+              <span style="font-size:9px;font-family:var(--mono);color:var(--text3)">tubs</span>
             </div>
           </div>
         </div>
 
-      </div><!-- end menu-card-body -->
+        <!-- Serves with -->
+        <div class="menu-card-edit-section">
+          <div class="menu-card-edit-section-label">Serves With</div>
+          <input type="text" value="${escHtml(dish.serves||'')}" placeholder="e.g. Brown rice, mixed salad…"
+            style="width:100%;max-width:340px;font-size:10px;font-family:var(--mono);padding:4px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;color:var(--text1)"
+            onchange="ud(${realIdx},'serves',this.value.trim())">
+        </div>
 
-      <!-- ATHLETES — full width bottom strip -->
-      ${hasAthleteVariant
-        ? `<div class="menu-athlete-strip">
-             <div class="menu-card-section-label" style="margin-bottom:5px">Athlete Variant</div>
-             ${athleteHtml}
-           </div>`
-        : `<div class="menu-athlete-strip-add">${athleteHtml}</div>`}
+        <!-- Tags -->
+        <div class="menu-card-edit-section">
+          ${renderTagToggles(dish, realIdx)}
+        </div>
 
-      ${_sellBand}
+      </div><!-- end menu-card-edit-panel -->
 
-      ${allergenHtml?`<div class="menu-allergen-row"><span style="font-size:9px;color:#f87171;font-family:var(--mono);margin-right:2px">⚠</span>${allergenHtml}</div>`:''}
     </div>`;
-  }).join('') || `<div style="grid-column:1/-1"><div class="empty-state"><div class="big">📋</div><div class="msg">No dishes yet — build your weekly menu by adding dishes below</div><button class="btn btn-gold" onclick="addDishRow()">+ Add First Dish</button></div></div>`;
+  }).join('') || `<div style="grid-column:1/-1"><div class="empty-state"><div class="big">⚡</div><div class="msg">No dishes yet — plan your week in Quick Build, then push dishes here</div><button class="btn btn-gold" onclick="showPage('quickbuild')">→ Go to Quick Build</button></div></div>`;
 
   updateMenuStats();
+}
+
+function menuToggleCard(idx) {
+  var detailEl = document.getElementById('menu-card-details-'+idx);
+  var btnEl    = document.getElementById('menu-card-toggle-btn-'+idx);
+  if (!detailEl) return;
+  var isOpen = detailEl.style.display !== 'none';
+  detailEl.style.display = isOpen ? 'none' : 'block';
+  if (btnEl) { btnEl.textContent = isOpen ? '▾ Info' : '▴ Close'; btnEl.classList.toggle('open', !isOpen); }
+}
+
+function menuToggleCardEdit(idx) {
+  var editEl = document.getElementById('menu-card-edit-'+idx);
+  var btnEl  = document.getElementById('menu-card-edit-btn-'+idx);
+  if (!editEl) return;
+  var isOpen = editEl.style.display !== 'none';
+  editEl.style.display = isOpen ? 'none' : 'block';
+  if (btnEl) { btnEl.textContent = isOpen ? '✎ Edit' : '✕ Close'; btnEl.classList.toggle('open', !isOpen); }
+}
+
+function udMenuFuelLine(idx, val) {
+  var dishes = getSlotDishes();
+  if (!dishes[idx]) return;
+  dishes[idx].fuelLine = val;
+  setSlotDishes(dishes);
+  save();
+  var fpBtn = document.getElementById('menu-edit-fp-'+idx);
+  var flBtn = document.getElementById('menu-edit-fl-'+idx);
+  if (fpBtn) fpBtn.classList.toggle('active', val !== 'Fuel Lite');
+  if (flBtn) flBtn.classList.toggle('active', val === 'Fuel Lite');
+  renderMenu();
+}
+
+function udMenuBoxType(idx, val) {
+  var dishes = getSlotDishes();
+  if (!dishes[idx]) return;
+  dishes[idx].boxType = val;
+  setSlotDishes(dishes);
+  save();
+  var b3 = document.getElementById('menu-edit-box3c-'+idx);
+  var bs = document.getElementById('menu-edit-boxsg-'+idx);
+  if (b3) b3.classList.toggle('active', val !== 'single');
+  if (bs) bs.classList.toggle('active', val === 'single');
+  renderMenu();
+}
+
+function udMenuAdjTubs(idx, delta) {
+  var dishes = getSlotDishes();
+  if (!dishes[idx]) return;
+  var cur = parseInt(dishes[idx].condimentTubs) || 0;
+  dishes[idx].condimentTubs = Math.max(0, cur + delta);
+  setSlotDishes(dishes);
+  save();
+  var el = document.getElementById('menu-edit-tubs-'+idx);
+  if (el) {
+    var numEl = el.querySelector('.tub-num');
+    if (numEl) numEl.textContent = dishes[idx].condimentTubs;
+  }
+  renderMenu();
+}
+
+function menuToggleRecipeEdit(idx) {
+  var editEl = document.getElementById('menu-recipe-edit-'+idx);
+  var summaryEl = document.getElementById('menu-recipe-summary-'+idx);
+  var btnEl = document.getElementById('menu-recipe-btn-'+idx);
+  if (!editEl) return;
+  var isOpen = editEl.style.display !== 'none';
+  editEl.style.display = isOpen ? 'none' : 'block';
+  if (summaryEl) summaryEl.style.display = isOpen ? 'flex' : 'none';
+  if (btnEl) btnEl.textContent = isOpen ? '✎ Edit' : '✕ Done';
 }
 
 function updateMenuKPIs(){
@@ -7306,14 +7810,14 @@ function renderProduction(){
     };
   }).filter(Boolean).sort((a,b)=>a.seq-b.seq||a.station.localeCompare(b.station));
 
-  const totalLabour=prodRows.reduce((s,r)=>s+parseFloat(r.labour||0),0);
+  const totalMins=prodRows.reduce((s,r)=>s+n(r.prepTime)+n(r.cookTime),0);
   const totalPorts=prodRows.reduce((s,r)=>s+r.portions,0);
   const prodSessionLabel = (prodSessionFilter==='s1'||prodSessionFilter==='sunday') ? ' · Sunday' : (prodSessionFilter==='s2'||prodSessionFilter==='wednesday') ? ' · Wednesday' : '';
 
   document.getElementById('prod-kpi-grid').innerHTML=`
     <div class="kpi-card"><div class="kpi-label">Components${prodSessionLabel}</div><div class="kpi-value">${prodRows.length}</div><div class="kpi-sub">${prodDishes.length} dishes · ${prodWeek||'this week'}</div></div>
     <div class="kpi-card b"><div class="kpi-label">Total Portions${prodSessionLabel}</div><div class="kpi-value">${totalPorts}</div></div>
-    <div class="kpi-card"><div class="kpi-label">Total Labour Est.</div><div class="kpi-value">${totalLabour.toFixed(1)}h</div></div>
+    <div class="kpi-card"><div class="kpi-label">Est. Total Time</div><div class="kpi-value">${Math.floor(totalMins/60)}h ${totalMins%60}m</div></div>
     <div class="kpi-card g"><div class="kpi-label">Stations</div><div class="kpi-value">${new Set(prodRows.map(r=>r.station)).size}</div></div>
   `;
 
@@ -7460,10 +7964,11 @@ function renderProdStationView(){
         return rec.lines.map(l=>{
           const ing=DB.ingredients.find(i=>i.id===l.ingId);
           if(!ing) return '';
-          const totalG=(n(l.qty)*r.portions*(r.scale||1)).toFixed(0);
-          return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px">
-            <span style="color:var(--text2)">${ing.name}</span>
-            <span style="font-family:var(--mono);color:var(--gold);font-weight:600">${totalG}g</span>
+          const totalG=Math.round(n(l.qty)*r.portions*(r.scale||1));
+          const displayWt = totalG>=1000 ? (totalG/1000).toFixed(2)+'<span class="prod-ing-qty-unit">kg</span>' : totalG+'<span class="prod-ing-qty-unit">g</span>';
+          return `<div class="prod-ing-row">
+            <span class="prod-ing-name">${ing.name}</span>
+            <span class="prod-ing-qty">${displayWt}</span>
           </div>`;
         }).join('');
       })();
@@ -7472,108 +7977,87 @@ function renderProdStationView(){
       const compCardCls = compStatus === 'complete' ? ' complete' : compStatus === 'in_progress' ? ' in-progress' : '';
       const existingLog = (DB.productionLog || []).find(function(p){ return p.week === (DB.menuWeekLabel||'') && p.component === r.name && p.status === 'complete'; });
       const loggedTemp  = existingLog ? existingLog.coreTemp : '';
+      // Right column: build phase panels (always expanded, no tabs)
+      const mkPhasePanel=(label,icon,color,steps)=>{
+        if(!steps.length) return `<div class="prod-phase-panel"><div class="prod-phase-panel-hdr"><span>${icon}</span>${label}</div><div class="prod-phase-panel-empty">No steps</div></div>`;
+        return `<div class="prod-phase-panel"><div class="prod-phase-panel-hdr"><span>${icon}</span>${label}</div><div class="prod-phase-panel-body">${mkStepRows(steps,color)}</div></div>`;
+      };
+      const rightSteps = anySteps
+        ? mkPhasePanel('Prep','🔪','#7c3aed',prepSteps)+mkPhasePanel('Cook','🔥','#ea580c',cookSteps)+mkPhasePanel('Finish','✨','#059669',finishSteps)
+        : `<div style="padding:14px 10px;font-size:10px;color:var(--text3);font-style:italic">No instructions added — edit recipe to add steps</div>`;
+
       return `<div class="prod-card${compCardCls}" id="prod-card-${safeId}">
+
+        <!-- HEADER: component name — full width, unobstructed -->
         <div class="prod-card-header">
           <div class="prod-card-seq">${r.seq}</div>
-          <div style="flex:1;min-width:0">
-            <div class="prod-card-name">${r.name}</div>
-            <div class="prod-card-meta">
-              <span class="badge b-${typeClass}">${r.type}</span>
-              ${r.targetTemp?`<span class="badge" style="background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2)">🌡 ${r.targetTemp}°C</span>`:''}
-              ${r.staffCount>1?`<span class="badge" style="background:rgba(59,130,246,.1);color:#93c5fd;border:1px solid rgba(59,130,246,.2)">👤×${r.staffCount}</span>`:''}
-            </div>
+          <div class="prod-card-name">${r.name}</div>
+          <div class="prod-card-meta">
+            <span class="badge b-${typeClass}">${r.type}</span>
+            ${r.targetTemp?`<span class="badge" style="background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)">🌡 ${r.targetTemp}°C target</span>`:''}
+            ${r.cookMethod&&r.cookMethod!=='—'?`<span class="badge" style="background:rgba(255,255,255,.06);color:var(--text2);border:1px solid var(--border2)">🔥 ${escHtml(r.cookMethod)}</span>`:''}
+            ${r.staffCount>1?`<span class="badge" style="background:rgba(59,130,246,.1);color:#93c5fd;border:1px solid rgba(59,130,246,.2)">👤×${r.staffCount}</span>`:''}
+            ${compStatus==='complete'?`<span class="badge" style="background:rgba(74,222,128,.2);color:#4ade80;border:1px solid rgba(74,222,128,.3);margin-left:4px">✓ COMPLETE${loggedTemp?' · '+loggedTemp+'°C':''}</span>`:''}
           </div>
-          <div class="comp-status-toggle no-print">
+        </div>
+
+        <!-- STATUS ROW — screen only, hidden on print -->
+        <div class="prod-card-status-row no-print">
+          <div class="comp-status-toggle">
             <button class="comp-status-btn${compStatus==='not_started'?' active not_started':''}" onclick="setComponentStatus('${r.name.replace(/'/g,"\\'")}','not_started')">Not Started</button>
             <button class="comp-status-btn${compStatus==='in_progress'?' active in_progress':''}" onclick="setComponentStatus('${r.name.replace(/'/g,"\\'")}','in_progress')">In Progress</button>
             <button class="comp-status-btn${compStatus==='complete'?' active complete':''}" onclick="promptCompleteComponent('${r.name.replace(/'/g,"\\'")}')">Complete ✓</button>
           </div>
+          ${compStatus==='complete'?`<button class="btn btn-ghost btn-sm" style="font-size:9px;padding:2px 8px;margin-left:auto" onclick="setComponentStatus('${r.name.replace(/'/g,"\\'")}','not_started')">↺ Reset</button>`:''}
         </div>
-        ${compStatus==='complete'?`<div class="prod-temp-row"><span style="font-size:10px;color:#4ade80;font-family:var(--mono)">✓ COMPLETE</span>${loggedTemp?`<span style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-left:8px">Core temp: ${loggedTemp}°C</span>`:''}<button class="btn btn-ghost btn-sm no-print" style="margin-left:auto;font-size:10px" onclick="setComponentStatus('${r.name.replace(/'/g,"\\'")}','not_started')">↺ Reset</button></div>`:''}
+        ${r.notes?`<div style="padding:6px 16px;background:rgba(251,191,36,.05);border-bottom:1px solid rgba(251,191,36,.15);font-size:11px;color:#fbbf24;font-family:var(--mono)">📝 ${escHtml(r.notes)}</div>`:''}
 
-        <div class="prod-batch-grid">
-          <div class="prod-batch-cell highlight">
-            <div class="prod-batch-label">Portions</div>
-            <input class="prod-batch-input" type="number" value="${r.portions}" onchange="updateProdAdj('${r.name}','portions',this.value)">
-          </div>
-          <div class="prod-batch-cell">
-            <div class="prod-batch-label">Raw Weight</div>
-            <div style="display:flex;align-items:baseline;gap:3px">
-              <input class="prod-batch-input" type="number" value="${r.batchRaw}" onchange="updateProdAdj('${r.name}','batchRaw',this.value)">
-              <span class="prod-batch-unit">g</span>
+        <!-- THREE-PANEL BODY -->
+        <div class="prod-card-body">
+
+          <!-- PANEL 1 (left): Batch numbers + timing -->
+          <div class="prod-panel-nums">
+            <div class="prod-panel-nums-cell" style="background:rgba(201,168,76,.06)">
+              <div class="prod-panel-nums-label">Portions</div>
+              <input class="prod-panel-nums-input" type="number" value="${r.portions}" onchange="updateProdAdj('${r.name}','portions',this.value)">
+            </div>
+            <div class="prod-panel-nums-cell">
+              <div class="prod-panel-nums-label">Cooked Weight</div>
+              <div style="display:flex;align-items:baseline;gap:2px">
+                <input class="prod-panel-nums-input" type="number" value="${r.batchCooked}" onchange="updateProdAdj('${r.name}','batchCooked',this.value)">
+                <span class="prod-panel-nums-unit">g</span>
+              </div>
+            </div>
+            <div class="prod-panel-nums-timing">
+              <div class="prod-panel-nums-label" style="margin-bottom:6px">Timing</div>
+              <div class="prod-panel-nums-time-row">
+                <span class="prod-panel-nums-time-label">Prep</span>
+                <span class="prod-panel-nums-time-val">${r.prepTime}<span style="font-size:9px;font-weight:400">m</span></span>
+              </div>
+              <div class="prod-panel-nums-time-row">
+                <span class="prod-panel-nums-time-label">Cook</span>
+                <span class="prod-panel-nums-time-val">${r.cookTime}<span style="font-size:9px;font-weight:400">m</span></span>
+              </div>
+              <div class="prod-panel-nums-time-row" style="margin-top:4px;border-top:1px solid var(--border);padding-top:4px">
+                <span class="prod-panel-nums-time-label" style="font-weight:700;color:var(--text2)">Total</span>
+                <span class="prod-panel-nums-time-val" style="color:var(--gold)">${n(r.prepTime)+n(r.cookTime)}<span style="font-size:9px;font-weight:400">m</span></span>
+              </div>
             </div>
           </div>
-          <div class="prod-batch-cell">
-            <div class="prod-batch-label">Cooked Weight</div>
-            <div style="display:flex;align-items:baseline;gap:3px">
-              <input class="prod-batch-input" type="number" value="${r.batchCooked}" onchange="updateProdAdj('${r.name}','batchCooked',this.value)">
-              <span class="prod-batch-unit">g</span>
-            </div>
-          </div>
-          <div class="prod-batch-cell">
-            <div class="prod-batch-label">Labour</div>
-            <div style="display:flex;align-items:baseline;gap:3px">
-              <input class="prod-batch-input" type="number" value="${r.labour}" onchange="updateProdAdj('${r.name}','labour',this.value)" style="font-size:20px">
-              <span class="prod-batch-unit">hrs</span>
-            </div>
-          </div>
-        </div>
 
-        <div style="padding:8px 14px 4px">
-          <div class="prod-detail-row">
-            <span class="prod-detail-icon">🔥</span>
-            <span class="prod-detail-label">Method</span>
-            <input class="prod-detail-input prod-detail-val" value="${r.cookMethod}" onchange="updateProdAdj('${r.name}','cookMethod',this.value)" placeholder="Cook method...">
+          <!-- PANEL 2 (centre): Ingredient batch — the kitchen's core reference -->
+          <div class="prod-panel-ings">
+            <div class="prod-panel-ings-hdr">Ingredient Batch</div>
+            ${ingredientLines||'<div style="padding:14px 16px;font-size:11px;color:var(--text3);font-style:italic">No components linked — set up recipe</div>'}
+            ${rec?.servingNote?`<div class="prod-serve-note" style="border-top:1px solid var(--border);padding:7px 16px"><span style="margin-right:6px">🍽</span>${escHtml(rec.servingNote)}</div>`:''}
           </div>
-          <div class="prod-detail-row">
-            <span class="prod-detail-icon">📝</span>
-            <span class="prod-detail-label">Notes</span>
-            <input class="prod-detail-input prod-detail-val" value="${r.notes}" onchange="updateProdAdj('${r.name}','notes',this.value)" placeholder="Notes for kitchen staff...">
-          </div>
-        </div>
 
-        ${ingredientLines?`<div style="padding:4px 14px 10px;border-top:1px solid var(--border)">
-          <div style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Ingredient Batch</div>
-          ${ingredientLines}
-        </div>`:''}
+          <!-- PANEL 3 (right): Instructions — all phases always expanded -->
+          <div class="prod-panel-steps">
+            ${rightSteps}
+          </div>
 
-        <div class="prod-timing-bar">
-          <div class="prod-timing-chip">
-            <div class="prod-timing-label">Prep</div>
-            <div class="prod-timing-val">${r.prepTime}<span style="font-size:10px;font-weight:400">m</span></div>
-          </div>
-          <div class="prod-timing-chip">
-            <div class="prod-timing-label">Cook</div>
-            <div class="prod-timing-val">${r.cookTime}<span style="font-size:10px;font-weight:400">m</span></div>
-          </div>
-          <div class="prod-timing-chip">
-            <div class="prod-timing-label">Total</div>
-            <div class="prod-timing-val" style="color:var(--gold)">${n(r.prepTime)+n(r.cookTime)}<span style="font-size:10px;font-weight:400">m</span></div>
-          </div>
-        </div>
-
-        ${anySteps?`
-        <div class="prod-phase-tabs" id="pptabs-${safeId}">
-          <button class="prod-phase-tab ppt-prep active" onclick="switchProdPhase('${safeId}','prep',this)">
-            🔪 Prep <span style="opacity:.7;font-size:7px">(${prepSteps.length})</span>
-          </button>
-          <button class="prod-phase-tab ppt-cook" onclick="switchProdPhase('${safeId}','cook',this)">
-            🔥 Cook <span style="opacity:.7;font-size:7px">(${cookSteps.length})</span>
-          </button>
-          <button class="prod-phase-tab ppt-finish" onclick="switchProdPhase('${safeId}','finish',this)">
-            ✨ Finish <span style="opacity:.7;font-size:7px">(${finishSteps.length})</span>
-          </button>
-        </div>
-        <div class="prod-phase-body active" id="pp-${safeId}-prep" data-label="PREP INSTRUCTIONS">
-          ${mkStepRows(prepSteps,'#7c3aed')}
-        </div>
-        <div class="prod-phase-body" id="pp-${safeId}-cook" data-label="COOKING INSTRUCTIONS">
-          ${mkStepRows(cookSteps,'#ea580c')}
-        </div>
-        <div class="prod-phase-body" id="pp-${safeId}-finish" data-label="FINISHING & GARNISH INSTRUCTIONS">
-          ${mkStepRows(finishSteps,'#059669')}
-        </div>`
-        :`<div style="padding:10px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);font-style:italic">No instructions added — edit recipe to add phase steps</div>`}
+        </div><!-- end prod-card-body -->
       </div>`;
     });  // end cards array
 
@@ -8145,7 +8629,7 @@ function renderPurchasing(){
     const cost=(edibleG/100)*calcEP(ing);  // EP cost × edible qty = true cost
     return {ing, edibleG, rawG, cost};
   }).filter(Boolean).filter(r=>!purchSearch||r.ing.name.toLowerCase().includes(purchSearch.toLowerCase()));
-  orderRows.sort((a,b)=>(a.ing.supplier||'').localeCompare(b.ing.supplier||'')||a.ing.cat.localeCompare(b.ing.cat));
+  orderRows.sort((a,b)=>b.cost-a.cost); // highest cost first within every group
 
   const totalCost=orderRows.reduce((s,r)=>s+r.cost,0);
   const totalRawWt=orderRows.reduce((s,r)=>s+r.rawG,0);
@@ -8238,7 +8722,7 @@ function renderPurchasing(){
     // Group by ingredient category — order by category name, rows by ingredient name
     const byCat={};
     orderRows.forEach(r=>{ const c=r.ing.cat||'General'; if(!byCat[c]) byCat[c]=[]; byCat[c].push(r); });
-    Object.values(byCat).forEach(rows=>rows.sort((a,b)=>a.ing.name.localeCompare(b.ing.name)));
+    Object.values(byCat).forEach(rows=>rows.sort((a,b)=>b.cost-a.cost)); // highest cost first
     const catEntries=Object.entries(byCat).sort((a,b)=>a[0].localeCompare(b[0]));
     blocksHtml=catEntries.map(([cat,rows])=>{
       const catTotal=rows.reduce((s,r)=>s+r.cost,0);
@@ -12092,6 +12576,996 @@ function downloadAllPackedLabels() {
   showPage('delivery');
   showDeliveryTab('labels');
   notify('Switched to Labels — use Print Dymo Labels to print all');
+}
+
+
+// ═══════════════════════════════════════════
+// QUICK BUILD PLANNER
+// ═══════════════════════════════════════════
+
+const QB_FORMATS = [
+  'Grain Bowl (Non-Veg)',
+  'Grain Bowl (Salmon)',
+  'Grain Bowl (Fish)',
+  'Grain Bowl (Vegan)',
+  'Salad (Non-Veg)',
+  'Salad (Fish)',
+  'Salad (Vegan)',
+  'Wrap (Non-Veg)',
+  'Wrap (Vegan)',
+  'Wings',
+  'Flex',
+];
+
+const QB_DEFAULT_TEMPLATE = [
+  'Grain Bowl (Non-Veg)',
+  'Grain Bowl (Non-Veg)',
+  'Grain Bowl (Salmon)',
+  'Grain Bowl (Fish)',
+  'Grain Bowl (Vegan)',
+  'Salad (Non-Veg)',
+  'Salad (Fish)',
+  'Salad (Vegan)',
+  'Wrap (Non-Veg)',
+  'Wrap (Vegan)',
+  'Wings',
+  'Flex',
+];
+
+// Veg category preference per format
+const QB_VEG_PREF = {
+  'Grain Bowl (Non-Veg)': ['Warm — Sautéed', 'Warm — Steamed'],
+  'Grain Bowl (Salmon)':  ['Warm — Sautéed', 'Warm — Steamed'],
+  'Grain Bowl (Fish)':    ['Warm — Sautéed', 'Warm — Steamed'],
+  'Grain Bowl (Vegan)':   ['Warm — Steamed', 'Warm — Sautéed'],
+  'Salad (Non-Veg)':      ['Main Salad'],
+  'Salad (Fish)':         ['Main Salad'],
+  'Salad (Vegan)':        ['Main Salad'],
+  'Wrap (Non-Veg)':       ['Warm — Sautéed', 'Cold Side Salad'],
+  'Wrap (Vegan)':         ['Warm — Sautéed', 'Cold Side Salad'],
+  'Wings':                ['Cold Side Salad', 'Warm — Sautéed'],
+  'Flex':                 [],
+};
+
+// Protein keyword hints per format — used to pick the right protein
+const QB_PROTEIN_HINTS = {
+  'Grain Bowl (Salmon)':  ['salmon'],
+  'Grain Bowl (Fish)':    ['salmon', 'basa', 'fish'],
+  'Grain Bowl (Vegan)':   ['tofu', 'vegan', 'plant'],
+  'Salad (Fish)':         ['salmon', 'basa', 'fish'],
+  'Salad (Vegan)':        ['tofu', 'vegan', 'plant'],
+  'Wrap (Vegan)':         ['tofu', 'vegan', 'plant'],
+};
+
+// Dish name suffix per format
+const QB_NAME_SUFFIX = {
+  'Grain Bowl (Non-Veg)': 'Bowl',
+  'Grain Bowl (Salmon)':  'Salmon Box',
+  'Grain Bowl (Fish)':    'Fish Box',
+  'Grain Bowl (Vegan)':   'Vegan Bowl',
+  'Salad (Non-Veg)':      'Salad',
+  'Salad (Fish)':         'Fish Salad',
+  'Salad (Vegan)':        'Vegan Salad',
+  'Wrap (Non-Veg)':       'Wrap',
+  'Wrap (Vegan)':         'Vegan Wrap',
+  'Wings':                'Wings',
+  'Flex':                 'Special',
+};
+
+// Default fuel line per format
+const QB_FUEL = {
+  'Grain Bowl (Non-Veg)': 'Fuel Plus',
+  'Grain Bowl (Salmon)':  'Fuel Plus',
+  'Grain Bowl (Fish)':    'Fuel Plus',
+  'Grain Bowl (Vegan)':   'Fuel Plus',
+  'Salad (Non-Veg)':      'Fuel Lite',
+  'Salad (Fish)':         'Fuel Lite',
+  'Salad (Vegan)':        'Fuel Lite',
+  'Wrap (Non-Veg)':       'Fuel Plus',
+  'Wrap (Vegan)':         'Fuel Plus',
+  'Wings':                'Fuel Plus',
+  'Flex':                 'Fuel Plus',
+};
+
+function qbEnsureInit() {
+  if (!DB.currentBuild || !DB.currentBuild.slots || !DB.currentBuild.slots.length) {
+    DB.currentBuild = {
+      weekOf: '',
+      targetSlot: (DB.menuDishes && DB.menuDishes.length > 0) ? 'next' : 'current',
+      flavours: [],
+      slots: QB_DEFAULT_TEMPLATE.map(function(fmt, i) {
+        return { id:'qbs-'+(i+1), format:fmt, flavour:'', protein:'', carb:'', veg:'', condiment:'', dishName:'', fuelLine:QB_FUEL[fmt]||'Fuel Plus', pushed:false, scaleProtein:1, scaleCarb:1, scaleVeg:1, scaleOverall:1, availSunday:false, availWednesday:false, drop1:0, drop2:0, sellPrice:DB.defaultSellPrice||9.99, boxType:'', condimentTubs:0, tags:[], serves:'', photoUrl:'' };
+      }),
+    };
+  }
+  // Ensure targetSlot exists on older builds loaded from Firebase
+  if (!DB.currentBuild.targetSlot) {
+    DB.currentBuild.targetSlot = (DB.menuDishes && DB.menuDishes.length > 0) ? 'next' : 'current';
+  }
+  // Migrate older slots — add any fields that didn't exist in earlier versions
+  (DB.currentBuild.slots||[]).forEach(function(s) {
+    if (s.scaleProtein   == null) s.scaleProtein   = 1;
+    if (s.scaleCarb      == null) s.scaleCarb      = 1;
+    if (s.scaleVeg       == null) s.scaleVeg       = 1;
+    if (s.scaleOverall   == null) s.scaleOverall   = 1;
+    if (s.availSunday    == null) s.availSunday    = false;
+    if (s.availWednesday == null) s.availWednesday = false;
+    if (s.drop1          == null) s.drop1          = 0;
+    if (s.drop2          == null) s.drop2          = 0;
+    if (s.sellPrice      == null) s.sellPrice      = DB.defaultSellPrice||9.99;
+    if (s.boxType        == null) s.boxType        = '';
+    if (s.condimentTubs  == null) s.condimentTubs  = 0;
+    if (!Array.isArray(s.tags))   s.tags           = [];
+    if (s.serves         == null) s.serves         = '';
+    if (s.photoUrl       == null) s.photoUrl       = '';
+  });
+  if (!DB.flavourHistory) DB.flavourHistory = {};
+}
+
+function qbGetAllFlavours() {
+  var seen = {}, flavours = [];
+  (DB.recipes||[]).forEach(function(r){ if (r.flavourFamily && !seen[r.flavourFamily]){ seen[r.flavourFamily]=true; flavours.push(r.flavourFamily); } });
+  return flavours.sort();
+}
+
+function qbWeeksAgo(isoDate) {
+  if (!isoDate) return null;
+  var diff = Math.round((new Date() - new Date(isoDate)) / (1000*60*60*24*7));
+  if (diff === 0) return 'this week';
+  if (diff === 1) return '1w ago';
+  return diff + 'w ago';
+}
+
+function qbAddFlavour(name) {
+  name = (name||'').trim();
+  if (!name) return;
+  var build = DB.currentBuild;
+  if (build.flavours.indexOf(name) === -1) build.flavours.push(name);
+  save(); renderQuickBuild();
+}
+
+function qbRemoveFlavour(name) {
+  var build = DB.currentBuild;
+  build.flavours = build.flavours.filter(function(f){ return f !== name; });
+  build.slots.forEach(function(s){
+    if (s.flavour === name) { s.flavour=''; s.protein=''; s.carb=''; s.veg=''; s.condiment=''; s.dishName=''; }
+  });
+  save(); renderQuickBuild();
+}
+
+function qbRemoveFlavourByIdx(i) {
+  qbEnsureInit();
+  var name = (DB.currentBuild.flavours||[])[i];
+  if (name !== undefined) qbRemoveFlavour(name);
+}
+
+function qbGetComps(type) {
+  return (DB.recipes||[]).filter(function(r){ return r.type===type; });
+}
+
+function qbBestProtein(format, flavour) {
+  var proteins = qbGetComps('Protein');
+  var hints = QB_PROTEIN_HINTS[format] || [];
+  var pool = (flavour ? proteins.filter(function(p){ return p.flavourFamily===flavour; }) : proteins);
+  if (!pool.length) pool = proteins;
+  if (hints.length) {
+    var hinted = pool.filter(function(p){ var nm=p.name.toLowerCase(); return hints.some(function(h){ return nm.indexOf(h)!==-1; }); });
+    if (hinted.length) return hinted[0].name;
+  }
+  return pool.length ? pool[0].name : '';
+}
+
+function qbBestCarb(format) {
+  if (format.indexOf('Salad') !== -1) return '';
+  var carbs = qbGetComps('Carb');
+  return carbs.length ? carbs[0].name : '';
+}
+
+function qbBestVeg(format) {
+  var prefs = QB_VEG_PREF[format] || [];
+  var vegs = qbGetComps('Veg');
+  for (var i=0; i<prefs.length; i++) {
+    var match = vegs.find(function(v){ return v.vegCategory===prefs[i]; });
+    if (match) return match.name;
+  }
+  return vegs.length ? vegs[0].name : '';
+}
+
+function qbBestCondiment(flavour) {
+  if (!flavour) return '';
+  var conds = qbGetComps('Condiment');
+  var match = conds.find(function(c){ return c.flavourFamily===flavour; });
+  return match ? match.name : '';
+}
+
+function qbGenName(slot) {
+  var parts = [];
+  if (slot.flavour) parts.push(slot.flavour);
+  if (slot.protein) {
+    var m = slot.protein.match(/\(([^)]+)\)/);
+    if (m) {
+      parts.push(m[1]);
+    } else {
+      var words = slot.protein.split(' ');
+      if (slot.flavour) words = words.filter(function(w){ return slot.flavour.toLowerCase().indexOf(w.toLowerCase())===-1 || w.length<4; });
+      if (words.length && words[0].length > 2) parts.push(words.slice(0,2).join(' '));
+    }
+  }
+  var suffix = QB_NAME_SUFFIX[slot.format];
+  if (suffix === 'Wings') { parts = [slot.flavour||'', 'Wings'].filter(Boolean); }
+  else if (suffix) parts.push(suffix);
+  return parts.join(' ');
+}
+
+function qbAutoSuggest(slotIdx) {
+  var slot = DB.currentBuild.slots[slotIdx];
+  if (!slot) return;
+  slot.protein   = qbBestProtein(slot.format, slot.flavour);
+  slot.carb      = qbBestCarb(slot.format);
+  slot.veg       = qbBestVeg(slot.format);
+  slot.condiment = qbBestCondiment(slot.flavour);
+  if (!slot._nameManual) slot.dishName = qbGenName(slot);
+  slot.fuelLine  = QB_FUEL[slot.format] || 'Fuel Plus';
+}
+
+function qbSetSlotField(slotIdx, field, value) {
+  var slot = DB.currentBuild.slots[slotIdx];
+  if (!slot) return;
+  slot[field] = value;
+  if (field === 'flavour') { qbAutoSuggest(slotIdx); save(); renderQuickBuild(); return; }
+  if (field === 'format') {
+    slot.fuelLine = QB_FUEL[value] || 'Fuel Plus';
+    slot.veg = qbBestVeg(value);
+    if (!slot._nameManual) slot.dishName = qbGenName(slot);
+    save(); renderQuickBuild(); return;
+  }
+  if ((field==='protein'||field==='carb') && !slot._nameManual) slot.dishName = qbGenName(slot);
+  save(); renderQuickBuild();
+}
+
+function qbSetNameManual(slotIdx, value) {
+  var slot = DB.currentBuild.slots[slotIdx];
+  if (slot) { slot.dishName = value; slot._nameManual = value !== ''; }
+}
+
+function qbSaveName(slotIdx) {
+  var inp = document.getElementById('qb-name-'+slotIdx);
+  if (inp && DB.currentBuild.slots[slotIdx]) {
+    DB.currentBuild.slots[slotIdx].dishName = inp.value;
+    DB.currentBuild.slots[slotIdx]._nameManual = inp.value !== '';
+  }
+  save();
+}
+
+function qbAddSlot() {
+  var slots = DB.currentBuild.slots;
+  slots.push({ id:'qbs-'+(slots.length+1), format:'Flex', flavour:'', protein:'', carb:'', veg:'', condiment:'', dishName:'', fuelLine:'Fuel Plus', pushed:false, scaleProtein:1, scaleCarb:1, scaleVeg:1, scaleOverall:1, availSunday:false, availWednesday:false, drop1:0, drop2:0, sellPrice:DB.defaultSellPrice||9.99, boxType:'', condimentTubs:0, tags:[], serves:'', photoUrl:'' });
+  save(); renderQuickBuild();
+}
+
+function qbRemoveSlot(slotIdx) {
+  DB.currentBuild.slots.splice(slotIdx, 1);
+  save(); renderQuickBuild();
+}
+
+function qbResetTemplate() {
+  if (!confirm('Reset all slots to the default 12-slot template? Assignments will be cleared.')) return;
+  DB.currentBuild.slots = QB_DEFAULT_TEMPLATE.map(function(fmt, i){
+    return { id:'qbs-'+(i+1), format:fmt, flavour:'', protein:'', carb:'', veg:'', condiment:'', dishName:'', fuelLine:QB_FUEL[fmt]||'Fuel Plus', pushed:false, scaleProtein:1, scaleCarb:1, scaleVeg:1, scaleOverall:1, availSunday:false, availWednesday:false, drop1:0, drop2:0, sellPrice:DB.defaultSellPrice||9.99, boxType:'', condimentTubs:0, tags:[], serves:'', photoUrl:'' };
+  });
+  qbOpenPanels = {};
+  save(); renderQuickBuild();
+}
+
+function qbGetTargetArray() {
+  return DB.currentBuild.targetSlot === 'next' ? DB.nextMenuDishes : DB.menuDishes;
+}
+
+function qbSetTargetSlot(slot) {
+  DB.currentBuild.targetSlot = slot;
+  // Sync the Weekly Menu tab's active slot so it opens on the right one
+  menuActiveSlot = slot;
+  save(); renderQuickBuild();
+}
+
+function qbPushSlotToMenu(slotIdx) {
+  var slot = DB.currentBuild.slots[slotIdx];
+  if (!slot) return;
+  if (!slot.dishName) { notify('Add a dish name first ✗'); return; }
+
+  var target = DB.currentBuild.targetSlot || 'current';
+  var targetArr = target === 'next' ? DB.nextMenuDishes : DB.menuDishes;
+  var targetLabel = target === 'next'
+    ? ('Next Week' + (DB.nextMenuWeekLabel ? ' — ' + DB.nextMenuWeekLabel : ''))
+    : ('Current Week' + (DB.menuWeekLabel ? ' — ' + DB.menuWeekLabel : ''));
+
+  // Extra safety: warn if pushing to current week that already has confirmed orders
+  if (target === 'current') {
+    var confirmedOrders = (DB.weeklyOrders||[]).filter(function(o){
+      return (!o.slot || o.slot === 'current') && getOrderStatus(o) !== 'cancelled' && getOrderStatus(o) !== 'pending';
+    });
+    if (confirmedOrders.length > 0) {
+      if (!confirm('⚠ Warning: Current Week has ' + confirmedOrders.length + ' confirmed order(s). Pushing a new dish here will affect Production and Packaging.\n\nAre you sure you want to add "' + slot.dishName + '" to Current Week?')) return;
+    }
+  }
+
+  var id = 'DISH' + String(DB.nextDishId++).padStart(3,'0');
+  var dish = {
+    id: id, name: slot.dishName,
+    protein: slot.protein||'', carb: slot.carb||'', veg: slot.veg||'',
+    condiment: slot.condiment||'', complete: '',
+    scaleProtein:    n(slot.scaleProtein)||1,
+    scaleCarb:       n(slot.scaleCarb)||1,
+    scaleVeg:        n(slot.scaleVeg)||1,
+    scaleOverall:    n(slot.scaleOverall)||1,
+    drop1:           n(slot.drop1)||0,
+    drop2:           n(slot.drop2)||0,
+    sellPrice:       n(slot.sellPrice)||DB.defaultSellPrice||9.99,
+    boxType:         slot.boxType || (slot.format.indexOf('Salad')!==-1 ? 'single' : '3-compartment'),
+    condimentTubs:   n(slot.condimentTubs)||0,
+    fuelLine:        slot.fuelLine||'Fuel Plus',
+    photoUrl:        slot.photoUrl||'',
+    tags:            Array.isArray(slot.tags) ? slot.tags.slice() : [],
+    serves:          slot.serves||'',
+    availSunday:     !!slot.availSunday,
+    availWednesday:  !!slot.availWednesday,
+  };
+  targetArr.push(dish);
+
+  slot.pushed = true;
+  slot.pushedTo = target; // record which slot it went to
+
+  if (slot.flavour) {
+    if (!DB.flavourHistory) DB.flavourHistory = {};
+    DB.flavourHistory[slot.flavour] = new Date().toISOString().slice(0,10);
+  }
+
+  // Keep menuActiveSlot in sync
+  menuActiveSlot = target;
+
+  save(); renderQuickBuild();
+  notify('→ ' + slot.dishName + ' → ' + targetLabel + ' ✓');
+}
+
+function qbPushAllToMenu() {
+  qbEnsureInit();
+  var target = DB.currentBuild.targetSlot || 'current';
+  var toPush = DB.currentBuild.slots.filter(function(s){ return !s.pushed && s.dishName; });
+  if (!toPush.length) { notify('No named unpushed slots'); return; }
+
+  var targetLabel = target === 'next'
+    ? ('Next Week' + (DB.nextMenuWeekLabel ? ' — ' + DB.nextMenuWeekLabel : ''))
+    : ('Current Week' + (DB.menuWeekLabel ? ' — ' + DB.menuWeekLabel : ''));
+
+  var warningLine = '';
+  if (target === 'current') {
+    var confirmedOrders = (DB.weeklyOrders||[]).filter(function(o){
+      return (!o.slot || o.slot === 'current') && getOrderStatus(o) !== 'cancelled' && getOrderStatus(o) !== 'pending';
+    });
+    if (confirmedOrders.length > 0) {
+      warningLine = '\n\n⚠ Current Week has ' + confirmedOrders.length + ' confirmed order(s). This will affect Production and Packaging.';
+    }
+  }
+
+  if (!confirm('Push ' + toPush.length + ' dish(es) to ' + targetLabel + '?' + warningLine)) return;
+
+  var slots = DB.currentBuild.slots;
+  toPush.forEach(function(s){ qbPushSlotToMenu(slots.indexOf(s)); });
+}
+
+function qbRenderReuse() {
+  var counts = {};
+  (DB.currentBuild.slots||[]).forEach(function(s){
+    ['protein','carb','veg','condiment'].forEach(function(f){ if (s[f]) counts[s[f]] = (counts[s[f]]||0)+1; });
+  });
+  var entries = Object.entries(counts).filter(function(e){ return e[1]>1; }).sort(function(a,b){ return b[1]-a[1]; });
+  if (!entries.length) return '<span class="muted small">Assign components to slots to see shared components here</span>';
+  return entries.map(function(e){
+    return '<span class="qb-reuse-chip"><span class="qb-reuse-name">'+e[0]+'</span><span class="qb-reuse-count">×'+e[1]+'</span></span>';
+  }).join('');
+}
+
+function renderQuickBuild() {
+  qbEnsureInit();
+  var build = DB.currentBuild;
+  var allFlavours = qbGetAllFlavours();
+
+  // Week selector — current Monday + 7 weeks forward
+  var monday = new Date();
+  monday.setDate(monday.getDate() - ((monday.getDay()+6)%7));
+  var weekOptions = '';
+  for (var wi=0; wi<8; wi++) {
+    var iso = monday.toISOString().slice(0,10);
+    var lbl = monday.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    var sel = (build.weekOf===iso || (!build.weekOf && wi===0)) ? ' selected' : '';
+    weekOptions += '<option value="'+iso+'"'+sel+'>w/c '+lbl+'</option>';
+    monday.setDate(monday.getDate()+7);
+  }
+
+  // Flavour chips — use index to avoid quote-breaking in onclick attribute
+  var flavourChips = (build.flavours||[]).map(function(f, fi){
+    var lu = DB.flavourHistory&&DB.flavourHistory[f] ? qbWeeksAgo(DB.flavourHistory[f]) : 'never used';
+    return '<div class="qb-flavour-chip"><span>'+escHtml(f)+'</span><span class="qb-chip-meta">'+lu+'</span><span class="qb-chip-remove" onclick="qbRemoveFlavourByIdx('+fi+')" title="Remove">×</span></div>';
+  }).join('');
+
+  var datalistOpts = allFlavours.map(function(f){ return '<option value="'+f.replace(/"/g,'&quot;')+'">'; }).join('');
+
+  // Component pools
+  var compsByType = { Protein:qbGetComps('Protein'), Carb:qbGetComps('Carb'), Veg:qbGetComps('Veg'), Condiment:qbGetComps('Condiment') };
+
+  function compOpts(type, sel, format, flavour) {
+    var pool = compsByType[type].slice();
+    if ((type==='Protein'||type==='Condiment') && flavour) {
+      pool.sort(function(a,b){ return (b.flavourFamily===flavour?1:0)-(a.flavourFamily===flavour?1:0); });
+    }
+    if (type==='Veg' && format) {
+      var prefs = QB_VEG_PREF[format]||[];
+      pool.sort(function(a,b){
+        var ai=prefs.indexOf(a.vegCategory); if(ai===-1)ai=99;
+        var bi=prefs.indexOf(b.vegCategory); if(bi===-1)bi=99;
+        return ai-bi;
+      });
+    }
+    var o = '<option value="">—</option>';
+    pool.forEach(function(c){
+      var selected = c.name===sel?' selected':'';
+      var star = (c.flavourFamily&&(type==='Protein'||type==='Condiment')&&c.flavourFamily===flavour)?' ★':'';
+      var cat  = (type==='Veg'&&c.vegCategory)?' ['+c.vegCategory.replace('Warm — ','')+'  ]':'';
+      o += '<option value="'+c.name.replace(/"/g,'&quot;')+'"'+selected+'>'+c.name+star+cat+'</option>';
+    });
+    return o;
+  }
+
+  function fmtOpts(sel){ return QB_FORMATS.map(function(f){ return '<option value="'+f+'"'+(f===sel?' selected':'')+'>'+f+'</option>'; }).join(''); }
+  function flvOpts(sel){
+    var o='<option value="">—</option>';
+    (build.flavours||[]).forEach(function(f){ o+='<option value="'+f.replace(/"/g,'&quot;')+'"'+(f===sel?' selected':'')+'>'+f+'</option>'; });
+    return o;
+  }
+
+  // ── Slot target selector ─────────────────────────────────────────
+  var targetSlot = build.targetSlot || 'current';
+  var curDishes = (DB.menuDishes||[]).length;
+  var nxtDishes = (DB.nextMenuDishes||[]).length;
+  var curLabel  = DB.menuWeekLabel  ? DB.menuWeekLabel  : 'no week label set';
+  var nxtLabel  = DB.nextMenuWeekLabel ? DB.nextMenuWeekLabel : 'no week label set';
+  var curOrders = (DB.weeklyOrders||[]).filter(function(o){ return (!o.slot||o.slot==='current') && getOrderStatus(o)!=='cancelled'; }).length;
+
+  var curActive  = targetSlot === 'current';
+  var nxtActive  = targetSlot === 'next';
+  var curWarning = curActive && curOrders > 0
+    ? '<div class="qb-slot-warning">⚠ '+curOrders+' active order'+(curOrders>1?'s':'')+' — kitchen may already be working from this slot</div>'
+    : '';
+
+  var slotSelector =
+    '<div class="qb-slot-selector">' +
+      '<div class="qb-section-title" style="margin-bottom:10px">Push target — where do these dishes go?</div>' +
+      '<div class="qb-slot-options">' +
+        '<div class="qb-slot-option'+(curActive?' qb-slot-option-active':'')+'" onclick="qbSetTargetSlot(\'current\')">' +
+          '<div class="qb-slot-option-header">' +
+            '<span class="qb-slot-option-icon">📦</span>' +
+            '<span class="qb-slot-option-name">Current Week</span>' +
+            (curActive ? '<span class="qb-slot-option-badge">Selected</span>' : '') +
+          '</div>' +
+          '<div class="qb-slot-option-meta">'+curLabel+'</div>' +
+          '<div class="qb-slot-option-count">'+curDishes+' dish'+(curDishes!==1?'es':'')+' already in this slot</div>' +
+          curWarning +
+        '</div>' +
+        '<div class="qb-slot-option'+(nxtActive?' qb-slot-option-active':'')+'" onclick="qbSetTargetSlot(\'next\')">' +
+          '<div class="qb-slot-option-header">' +
+            '<span class="qb-slot-option-icon">🔜</span>' +
+            '<span class="qb-slot-option-name">Building Next</span>' +
+            (nxtActive ? '<span class="qb-slot-option-badge">Selected</span>' : '') +
+          '</div>' +
+          '<div class="qb-slot-option-meta">'+nxtLabel+'</div>' +
+          '<div class="qb-slot-option-count">'+nxtDishes+' dish'+(nxtDishes!==1?'es':'')+' already in this slot</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  var slotRows = (build.slots||[]).map(function(slot, i){
+    var pushedClass = slot.pushed ? ' class="qb-slot-pushed"' : '';
+    var pushBtn = slot.pushed
+      ? '<span class="qb-push-btn pushed" title="Pushed to '+(slot.pushedTo==='next'?'Next Week':'Current Week')+'">✓ '+(slot.pushedTo==='next'?'Next':'Current')+'</span>'
+      : '<button class="qb-push-btn" onclick="qbPushSlotToMenu('+i+')" title="Push to Weekly Menu">→ Menu</button>';
+
+    // Detail row: all dish configuration controls
+    var spro = n(slot.scaleProtein)||1, scarb = n(slot.scaleCarb)||1;
+    var sveg = n(slot.scaleVeg)||1,     sall  = n(slot.scaleOverall)||1;
+    var m = qbCalcSlotMacros(slot);
+    var sprice = n(slot.sellPrice)||DB.defaultSellPrice||9.99;
+    // Margin + allergens for pre-push check
+    var _packCost  = getPackagingCost();
+    var _fpCost    = m.cost + _packCost;
+    var _marginVal = sprice > 0 ? (sprice - _fpCost) / sprice : 0;
+    var _mCls      = _marginVal>=0.5?'menu-margin-green':_marginVal>=0.35?'menu-margin-amber':'menu-margin-red';
+    var _allerArr  = m.ok ? Array.from(m.allergens||new Set()).sort() : [];
+    var _allerHtml = _allerArr.length
+      ? _allerArr.map(function(a){ return '<span class="allergen-tag">'+a.split(' ')[0]+'</span>'; }).join('')
+      : '<span style="font-size:9px;color:var(--text3);font-family:var(--mono)">'+(m.ok?'No allergens identified':'—')+'</span>';
+    var detailRow =
+      '<tr id="qb-slot-detail-'+i+'" class="qb-slot-detail-row" style="display:none">' +
+        '<td colspan="9"><div class="qb-detail-panel">' +
+
+          // Row 1: Scales + Live Macros
+          '<div class="qb-detail-row">' +
+            '<div class="qb-detail-scales">' +
+              '<span class="qb-detail-label">Scale</span>' +
+              '<label class="qb-scale-field"><span class="badge b-protein" style="font-size:7px;padding:1px 4px">PRO</span>' +
+                '<input type="number" value="'+spro+'" step="0.05" min="0.1" onchange="qbSetSlotScale('+i+',\'scaleProtein\',this.value)"></label>' +
+              '<label class="qb-scale-field"><span class="badge b-carb" style="font-size:7px;padding:1px 4px">CARB</span>' +
+                '<input type="number" value="'+scarb+'" step="0.05" min="0.1" onchange="qbSetSlotScale('+i+',\'scaleCarb\',this.value)"></label>' +
+              '<label class="qb-scale-field"><span class="badge b-veg" style="font-size:7px;padding:1px 4px">VEG</span>' +
+                '<input type="number" value="'+sveg+'" step="0.05" min="0.1" onchange="qbSetSlotScale('+i+',\'scaleVeg\',this.value)"></label>' +
+              '<label class="qb-scale-field"><span style="font-size:9px;color:var(--text3);font-family:var(--mono)">Overall</span>' +
+                '<input type="number" value="'+sall+'" step="0.05" min="0.1" onchange="qbSetSlotScale('+i+',\'scaleOverall\',this.value)"></label>' +
+            '</div>' +
+            '<div class="qb-detail-macros" id="qb-detail-macros-'+i+'">'+qbMacroHtml(m)+'</div>' +
+          '</div>' +
+
+          '<hr class="qb-detail-sep">' +
+
+          // Row 2: Availability + Sell Price + Fuel Pill
+          '<div class="qb-detail-row">' +
+            '<span class="qb-detail-label">Available</span>' +
+            '<label class="qb-avail-check"><input type="checkbox"'+(slot.availSunday?' checked':'')+' onchange="qbSetSlotField('+i+',\'availSunday\',this.checked)"> Sunday</label>' +
+            '<label class="qb-avail-check"><input type="checkbox"'+(slot.availWednesday?' checked':'')+' onchange="qbSetSlotField('+i+',\'availWednesday\',this.checked)"> Wednesday</label>' +
+            '<span class="qb-detail-label" style="margin-left:8px">£ Sell</span>' +
+            '<input class="qb-price-input" type="number" value="'+sprice.toFixed(2)+'" step="0.01" min="0" placeholder="0.00" onchange="qbSetSlotField('+i+',\'sellPrice\',parseFloat(this.value)||0)">' +
+            '<span class="qb-detail-label" style="margin-left:8px">Line</span>' +
+            '<div class="qb-fuel-pill">' +
+              '<button id="qb-fuel-fp-'+i+'" class="qb-fuel-opt fp'+((!slot.fuelLine||slot.fuelLine==='Fuel Plus')?' active':'')+'" onclick="qbSetSlotFuelLine('+i+',\'Fuel Plus\')">⚡ FP</button>' +
+              '<button id="qb-fuel-fl-'+i+'" class="qb-fuel-opt fl'+(slot.fuelLine==='Fuel Lite'?' active':'')+'" onclick="qbSetSlotFuelLine('+i+',\'Fuel Lite\')">✦ FL</button>' +
+            '</div>' +
+          '</div>' +
+
+          // Row 3: Box Type + Tubs
+          '<div class="qb-detail-row">' +
+            '<span class="qb-detail-label">Box</span>' +
+            '<button id="qb-box-3c-'+i+'" class="box-type-btn'+((!slot.boxType||slot.boxType==='3-compartment')?' active':'')+'" onclick="qbSetSlotBoxType('+i+',\'3-compartment\')">▣ 3-Comp</button>' +
+            '<button id="qb-box-sg-'+i+'" class="box-type-btn'+(slot.boxType==='single'?' active':'')+'" onclick="qbSetSlotBoxType('+i+',\'single\')">☐ Single</button>' +
+            '<span class="qb-detail-label" style="margin-left:8px">Tubs</span>' +
+            '<div class="tub-counter" style="margin:0">' +
+              '<button class="tub-btn" onclick="qbAdjSlotTubs('+i+',-1)">−</button>' +
+              '<div class="tub-count" id="qb-detail-tubs-'+i+'">'+(n(slot.condimentTubs)||0)+'</div>' +
+              '<button class="tub-btn" onclick="qbAdjSlotTubs('+i+',+1)">+</button>' +
+            '</div>' +
+          '</div>' +
+
+          // Row 4: Description (serves with)
+          '<div class="qb-detail-row">' +
+            '<span class="qb-detail-label">Description</span>' +
+            '<input class="qb-serves-input" type="text" value="'+(slot.serves||'').replace(/"/g,'&quot;')+'" placeholder="e.g. Served with jeera rice, chow chow slaw and a lime wedge…" onchange="qbSetSlotField('+i+',\'serves\',this.value.trim())">' +
+          '</div>' +
+
+          // Row 5: Margin + Allergens (pre-push check)
+          '<div class="qb-detail-row qb-detail-info-row">' +
+            (m.ok
+              ? '<span class="qb-detail-label">f+p</span>' +
+                '<span style="font-size:10px;font-family:var(--mono);color:var(--text2)">£'+_fpCost.toFixed(2)+'</span>' +
+                '<span class="qb-margin-chip '+_mCls+'" style="font-size:9px;padding:2px 7px">'+pct(_marginVal)+'</span>' +
+                '<span class="qb-detail-label" style="margin-left:6px">Allergens</span>' +
+                _allerHtml
+              : '<span style="font-size:9px;color:var(--text3);font-family:var(--mono)">Assign components to see margin and allergens</span>'
+            ) +
+          '</div>' +
+
+          // Row 6: Tags
+          '<div class="qb-detail-row">' +
+            '<span class="qb-detail-label">Tags</span>' +
+            '<div id="qb-detail-tags-'+i+'" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">'+qbRenderTagSection(slot, i)+'</div>' +
+          '</div>' +
+
+          // Row 7: Photo
+          '<div class="qb-detail-row">' +
+            '<span class="qb-detail-label">Photo</span>' +
+            '<input type="file" accept="image/*" style="display:none" id="qb-photo-file-'+i+'" onchange="qbHandlePhotoUpload('+i+',this)">' +
+            '<div id="qb-detail-photo-'+i+'" style="display:flex;align-items:center;gap:7px">'+qbRenderPhotoSection(slot, i)+'</div>' +
+          '</div>' +
+
+        '</div></td>' +
+      '</tr>';
+
+    return '<tr id="qb-slot-row-'+i+'"'+pushedClass+'>' +
+      '<td class="qb-slot-num">'+(i+1)+'</td>' +
+      '<td class="qb-slot-format"><select onchange="qbSetSlotField('+i+',\'format\',this.value)">'+fmtOpts(slot.format)+'</select></td>' +
+      '<td class="qb-slot-flavour"><select onchange="qbSetSlotField('+i+',\'flavour\',this.value)">'+flvOpts(slot.flavour)+'</select></td>' +
+      '<td class="qb-slot-comp"><select onchange="qbSetSlotField('+i+',\'protein\',this.value)">'+compOpts('Protein',slot.protein,slot.format,slot.flavour)+'</select></td>' +
+      '<td class="qb-slot-comp"><select onchange="qbSetSlotField('+i+',\'carb\',this.value)">'+compOpts('Carb',slot.carb,slot.format,slot.flavour)+'</select></td>' +
+      '<td class="qb-slot-comp"><select onchange="qbSetSlotField('+i+',\'veg\',this.value)">'+compOpts('Veg',slot.veg,slot.format,slot.flavour)+'</select></td>' +
+      '<td class="qb-slot-comp"><select onchange="qbSetSlotField('+i+',\'condiment\',this.value)">'+compOpts('Condiment',slot.condiment,slot.format,slot.flavour)+'</select></td>' +
+      '<td class="qb-slot-name"><input id="qb-name-'+i+'" value="'+(slot.dishName||'').replace(/"/g,'&quot;')+'" placeholder="Dish name…" oninput="qbSetNameManual('+i+',this.value)" onblur="qbSaveName('+i+')"></td>' +
+      '<td style="white-space:nowrap;text-align:right">'+pushBtn+' <button class="qb-remove-btn" onclick="qbRemoveSlot('+i+')" title="Remove slot">×</button> <button class="qb-detail-btn" id="qb-detail-btn-'+i+'" onclick="qbToggleSlotDetail('+i+')" title="Scale &amp; macros">▾ Details</button></td>' +
+    '</tr>' + detailRow;
+  }).join('');
+
+  document.getElementById('qb-root').innerHTML =
+    // Top bar
+    // Slot target selector
+    '<div class="qb-section">' + slotSelector + '</div>' +
+
+    // Flavour picker
+    '<div class="qb-section">' +
+      '<div class="qb-section-title">Flavours this week</div>' +
+      '<div class="qb-flavour-row">' +
+        flavourChips +
+        '<div class="qb-add-flavour">' +
+          '<input id="qb-flavour-input" list="qb-flavour-list" placeholder="Add flavour…" onkeydown="if(event.key===\'Enter\'){qbAddFlavour(this.value);this.value=\'\'}">' +
+          '<datalist id="qb-flavour-list">'+datalistOpts+'</datalist>' +
+          '<button class="btn btn-ghost btn-sm" onclick="var i=document.getElementById(\'qb-flavour-input\');qbAddFlavour(i.value);i.value=\'\'">+ Add</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="qb-flavour-hint">Picks up Flavour Family tags from your components. Assign a flavour to a slot to auto-suggest protein &amp; condiment. ★ = flavour match.</div>' +
+    '</div>' +
+
+    // Slots table
+    '<div class="qb-section">' +
+      '<div class="table-wrap"><table class="qb-slots-table">' +
+        '<thead><tr>' +
+          '<th>#</th><th>Format</th><th>Flavour</th>' +
+          '<th>Protein</th><th>Carb</th><th>Veg</th><th>Condiment</th>' +
+          '<th>Dish Name</th><th></th>' +
+        '</tr></thead>' +
+        '<tbody>'+slotRows+
+          '<tr class="qb-add-slot-row"><td colspan="9"><button class="qb-add-slot-btn" onclick="qbAddSlot()">+ Add Slot</button></td></tr>' +
+        '</tbody>' +
+      '</table></div>' +
+    '</div>' +
+
+    // Reuse panel
+    '<div class="qb-section">' +
+      '<div class="qb-section-title">Component reuse</div>' +
+      '<div class="qb-reuse-grid">'+qbRenderReuse()+'</div>' +
+    '</div>' +
+
+    // Saved templates
+    '<div class="qb-section">' +
+      '<div class="qb-section-title" style="margin-bottom:10px">Saved templates</div>' +
+      qbRenderTemplates() +
+    '</div>';
+
+  // Restore any detail panels that were open before the re-render
+  Object.keys(qbOpenPanels).forEach(function(idx) {
+    if (qbOpenPanels[idx]) {
+      var row = document.getElementById('qb-slot-detail-'+idx);
+      var btn = document.getElementById('qb-detail-btn-'+idx);
+      if (row) row.style.display = 'table-row';
+      if (btn) { btn.textContent = '▴ Close'; btn.classList.add('open'); }
+    }
+  });
+}
+
+function qbSetWeek(iso) {
+  DB.currentBuild.weekOf = iso;
+  save();
+}
+
+// Calculate macros for a QB slot using existing calcDishTotals engine
+function qbCalcSlotMacros(slot) {
+  var fakeDish = {
+    protein: slot.protein||'', carb: slot.carb||'', veg: slot.veg||'',
+    condiment: slot.condiment||'', complete: '',
+    scaleProtein: n(slot.scaleProtein)||1,
+    scaleCarb:    n(slot.scaleCarb)||1,
+    scaleVeg:     n(slot.scaleVeg)||1,
+    scaleOverall: n(slot.scaleOverall)||1,
+    sellPrice: 0, drop1: 0, drop2: 0
+  };
+  var t = calcDishTotals(fakeDish);
+  t.ok = !!(slot.protein || slot.carb || slot.veg || slot.condiment);
+  return t;
+}
+
+function qbMacroHtml(m) {
+  if (!m.ok) return '<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">— assign components to see macros</span>';
+  return '<span class="qb-macro-chip kcal">'+m.kcal.toFixed(0)+' kcal</span>'
+       + '<span class="qb-macro-chip prot">'+m.prot.toFixed(1)+'P</span>'
+       + '<span class="qb-macro-chip carb">'+m.carb.toFixed(1)+'C</span>'
+       + '<span class="qb-macro-chip fat">'+m.fat.toFixed(1)+'F</span>';
+}
+
+var qbOpenPanels = {};
+
+function qbToggleSlotDetail(idx) {
+  var row = document.getElementById('qb-slot-detail-'+idx);
+  var btn = document.getElementById('qb-detail-btn-'+idx);
+  if (!row) return;
+  var open = row.style.display !== 'none';
+  row.style.display = open ? 'none' : 'table-row';
+  qbOpenPanels[idx] = !open;
+  if (btn) { btn.textContent = open ? '▾ Details' : '▴ Close'; btn.classList.toggle('open', !open); }
+}
+
+function qbSetSlotScale(idx, field, value) {
+  var slot = DB.currentBuild && DB.currentBuild.slots && DB.currentBuild.slots[idx];
+  if (!slot) return;
+  slot[field] = parseFloat(value) || 1;
+  save();
+  // Full re-render so margin chip (which depends on cost) updates alongside macros
+  renderQuickBuild();
+}
+
+// ── QB Detail panel helpers ───────────────────────────────────────────
+
+function qbSetSlotFuelLine(idx, val) {
+  var slot = DB.currentBuild && DB.currentBuild.slots && DB.currentBuild.slots[idx];
+  if (!slot) return;
+  slot.fuelLine = val;
+  save();
+  var fpBtn = document.getElementById('qb-fuel-fp-'+idx);
+  var flBtn = document.getElementById('qb-fuel-fl-'+idx);
+  if (fpBtn) fpBtn.classList.toggle('active', !val || val === 'Fuel Plus');
+  if (flBtn) flBtn.classList.toggle('active', val === 'Fuel Lite');
+}
+
+function qbSetSlotBoxType(idx, val) {
+  var slot = DB.currentBuild && DB.currentBuild.slots && DB.currentBuild.slots[idx];
+  if (!slot) return;
+  slot.boxType = val;
+  save();
+  var b3c = document.getElementById('qb-box-3c-'+idx);
+  var bsg = document.getElementById('qb-box-sg-'+idx);
+  if (b3c) b3c.classList.toggle('active', !val || val === '3-compartment');
+  if (bsg) bsg.classList.toggle('active', val === 'single');
+}
+
+function qbAdjSlotTubs(idx, delta) {
+  var slot = DB.currentBuild && DB.currentBuild.slots && DB.currentBuild.slots[idx];
+  if (!slot) return;
+  slot.condimentTubs = Math.max(0, (n(slot.condimentTubs)||0) + delta);
+  save();
+  var el = document.getElementById('qb-detail-tubs-'+idx);
+  if (el) el.textContent = slot.condimentTubs;
+}
+
+function qbRenderTagSection(slot, i) {
+  var current = Array.isArray(slot.tags) ? slot.tags : [];
+  var chips = current.map(function(k) {
+    var preset = PRESET_TAGS.filter(function(p){ return p.key === k; })[0];
+    var label = preset ? preset.label : k;
+    return '<span class="tag-chip active" style="font-size:9px">' + escHtml(label)
+      + '<button class="tag-chip-remove" onclick="qbRemoveTagByBtn(this)" data-slot-idx="'+i+'" data-tag-key="'+k.replace(/"/g,'&quot;')+'" title="Remove">×</button>'
+      + '</span>';
+  }).join('');
+  var inactivePresets = PRESET_TAGS.filter(function(t){ return current.indexOf(t.key) === -1; });
+  var datalist = '<datalist id="qb-tag-dl-'+i+'">'
+    + inactivePresets.map(function(t){ return '<option value="'+t.label.replace(/"/g,'&quot;')+'">'; }).join('')
+    + '</datalist>';
+  return chips
+    + datalist
+    + '<input class="qb-tag-add-input" type="text" id="qb-tag-input-'+i+'" list="qb-tag-dl-'+i+'" placeholder="Add tag…" onkeydown="qbAddCustomTag('+i+',event)">'
+    + '<button class="qb-tag-add-btn" onclick="qbAddCustomTag('+i+',null)">+ Tag</button>';
+}
+
+function qbRemoveTagByBtn(btn) {
+  var idx = parseInt(btn.getAttribute('data-slot-idx'));
+  var tagKey = btn.getAttribute('data-tag-key');
+  var slot = DB.currentBuild && DB.currentBuild.slots && DB.currentBuild.slots[idx];
+  if (!slot || !Array.isArray(slot.tags)) return;
+  var pos = slot.tags.indexOf(tagKey);
+  if (pos !== -1) {
+    slot.tags.splice(pos, 1);
+    save();
+    var el = document.getElementById('qb-detail-tags-'+idx);
+    if (el) el.innerHTML = qbRenderTagSection(slot, idx);
+  }
+}
+
+function qbAddCustomTag(slotIdx, e) {
+  if (e && e.type === 'keydown' && e.key !== 'Enter') return;
+  if (e && e.key === 'Enter') e.preventDefault();
+  var input = document.getElementById('qb-tag-input-' + slotIdx);
+  if (!input) return;
+  var typed = input.value.trim();
+  if (!typed) return;
+  var slot = DB.currentBuild && DB.currentBuild.slots && DB.currentBuild.slots[slotIdx];
+  if (!slot) return;
+  if (!Array.isArray(slot.tags)) slot.tags = [];
+  var presetMatch = PRESET_TAGS.filter(function(t){ return t.label.toLowerCase() === typed.toLowerCase(); })[0];
+  var tag = presetMatch ? presetMatch.key : typed;
+  if (slot.tags.indexOf(tag) === -1) {
+    slot.tags.push(tag);
+    input.value = '';
+    save();
+    var el = document.getElementById('qb-detail-tags-'+slotIdx);
+    if (el) el.innerHTML = qbRenderTagSection(slot, slotIdx);
+  } else {
+    input.value = '';
+  }
+}
+
+function qbRenderPhotoSection(slot, i) {
+  if (slot.photoUrl) {
+    return '<img class="qb-detail-photo-thumb" src="'+slot.photoUrl.replace(/"/g,'&quot;')+'" alt="dish photo" onclick="qbTriggerPhotoUpload('+i+')" title="Click to replace">'
+      + '<button class="qb-photo-btn" id="qb-photo-btn-'+i+'" onclick="qbTriggerPhotoUpload('+i+')">↑ Replace</button>'
+      + '<button class="qb-photo-btn" onclick="qbClearSlotPhoto('+i+')" style="color:#ff453a;border-color:rgba(255,69,58,.25)">× Remove</button>';
+  }
+  return '<div class="qb-detail-photo-empty" onclick="qbTriggerPhotoUpload('+i+')" title="Upload photo">📷</div>'
+    + '<button class="qb-photo-btn" id="qb-photo-btn-'+i+'" onclick="qbTriggerPhotoUpload('+i+')">↑ Upload Photo</button>';
+}
+
+function qbTriggerPhotoUpload(idx) {
+  var fileInput = document.getElementById('qb-photo-file-' + idx);
+  if (fileInput) fileInput.click();
+}
+
+function qbClearSlotPhoto(idx) {
+  var slot = DB.currentBuild && DB.currentBuild.slots && DB.currentBuild.slots[idx];
+  if (!slot) return;
+  slot.photoUrl = '';
+  save();
+  var el = document.getElementById('qb-detail-photo-'+idx);
+  if (el) el.innerHTML = qbRenderPhotoSection(slot, idx);
+}
+
+function qbHandlePhotoUpload(idx, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 8 * 1024 * 1024) { notify('⚠ Image must be under 8 MB'); input.value = ''; return; }
+  var slot = DB.currentBuild && DB.currentBuild.slots && DB.currentBuild.slots[idx];
+  if (!slot) return;
+  var btn = document.getElementById('qb-photo-btn-' + idx);
+  if (btn) { btn.textContent = '↑ Processing…'; btn.disabled = true; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = new Image();
+    img.onload = function() {
+      var maxW = 1200, maxH = 1200, w = img.width, h = img.height;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      slot.photoUrl = canvas.toDataURL('image/jpeg', 0.9);
+      save();
+      var el = document.getElementById('qb-detail-photo-'+idx);
+      if (el) el.innerHTML = qbRenderPhotoSection(slot, idx);
+      notify('📷 Photo saved ✓');
+      input.value = '';
+    };
+    img.onerror = function() { notify('⚠ Could not read image'); if (btn) { btn.textContent = '↑ Upload Photo'; btn.disabled = false; } input.value = ''; };
+    img.src = e.target.result;
+  };
+  reader.onerror = function() { notify('⚠ Failed to read file'); if (btn) { btn.textContent = '↑ Upload Photo'; btn.disabled = false; } input.value = ''; };
+  reader.readAsDataURL(file);
+}
+
+// ── Menu Templates ────────────────────────────────────────────────────
+
+function qbCalcTemplateSummary(tpl) {
+  var total = {kcal:0, prot:0, carb:0, fat:0, count:0};
+  (tpl.slots||[]).forEach(function(slot) {
+    var m = qbCalcSlotMacros(slot);
+    if (!m.ok) return;
+    total.kcal += m.kcal; total.prot += m.prot;
+    total.carb += m.carb; total.fat  += m.fat;
+    total.count++;
+  });
+  if (!total.count) return null;
+  return { kcal:total.kcal/total.count, prot:total.prot/total.count, carb:total.carb/total.count, fat:total.fat/total.count, count:total.count };
+}
+
+function qbRenderTemplates() {
+  var templates = DB.menuTemplates || [];
+  if (!templates.length) {
+    return '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);padding:8px 2px">No saved templates yet. Build a menu and click <strong>💾 Save Template</strong> to store it here.</div>';
+  }
+  return '<div class="qb-tpl-grid">' + templates.map(function(tpl, i) {
+    var slotCount  = (tpl.slots||[]).length;
+    var dishCount  = (tpl.slots||[]).filter(function(s){ return s.dishName; }).length;
+    var summary    = qbCalcTemplateSummary(tpl);
+    var macroLine  = summary
+      ? '<span class="qb-macro-chip kcal">'+summary.kcal.toFixed(0)+' kcal</span>'
+        + '<span class="qb-macro-chip prot">'+summary.prot.toFixed(1)+'P</span>'
+        + '<span class="qb-macro-chip carb">'+summary.carb.toFixed(1)+'C</span>'
+        + '<span class="qb-macro-chip fat">'+summary.fat.toFixed(1)+'F</span>'
+        + '<span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:2px">avg/dish</span>'
+      : '<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">—</span>';
+    return '<div class="qb-tpl-card">'
+      + '<div class="qb-tpl-header">'
+        + '<span class="qb-tpl-name">'+escHtml(tpl.name)+'</span>'
+        + '<button class="qb-remove-btn" onclick="qbDeleteTemplate('+i+')" title="Delete template">×</button>'
+      + '</div>'
+      + '<div class="qb-tpl-meta">'
+        + '<span>'+dishCount+' / '+slotCount+' slots named</span>'
+        + '<span>saved '+escHtml(tpl.savedAt||'—')+'</span>'
+      + '</div>'
+      + '<div class="qb-tpl-macros">'+macroLine+'</div>'
+      + '<div class="qb-tpl-actions">'
+        + '<button class="btn btn-ghost btn-sm" onclick="qbLoadTemplate('+i+')" title="Load into current build — edit then push">📂 Load</button>'
+        + '<button class="btn btn-gold btn-sm" onclick="qbDeployTemplate('+i+')" title="Push all dishes directly to a menu slot">🚀 Deploy</button>'
+      + '</div>'
+    + '</div>';
+  }).join('') + '</div>';
+}
+
+function qbSaveTemplate() {
+  qbEnsureInit();
+  var build = DB.currentBuild;
+  var filled = (build.slots||[]).filter(function(s){ return s.dishName||s.protein||s.carb; });
+  if (!filled.length) { notify('Fill in at least one slot before saving ✗'); return; }
+  var defaultName = 'Menu ' + (build.weekOf ? new Date(build.weekOf+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));
+  var name = prompt('Name this template:', defaultName);
+  if (!name || !name.trim()) return;
+  if (!DB.menuTemplates) DB.menuTemplates = [];
+  DB.menuTemplates.push({
+    id: 'tpl-' + Date.now(),
+    name: name.trim(),
+    savedAt: new Date().toISOString().slice(0,10),
+    slots: JSON.parse(JSON.stringify(build.slots)),
+  });
+  save(); renderQuickBuild();
+  notify('Template "'+name.trim()+'" saved ✓');
+}
+
+function qbLoadTemplate(i) {
+  var tpl = (DB.menuTemplates||[])[i];
+  if (!tpl) return;
+  qbEnsureInit();
+  var hasWork = (DB.currentBuild.slots||[]).some(function(s){ return s.dishName||s.protein||s.carb||s.veg; });
+  if (hasWork && !confirm('Load "'+tpl.name+'"?\n\nThis replaces your current build. Any unsaved work will be lost.')) return;
+  DB.currentBuild.slots = JSON.parse(JSON.stringify(tpl.slots));
+  // Reset pushed state — this is a fresh build from the template
+  DB.currentBuild.slots.forEach(function(s){ s.pushed = false; delete s.pushedTo; });
+  DB.currentBuild.weekOf = '';
+  save(); renderQuickBuild();
+  notify('Loaded "'+tpl.name+'" ✓');
+}
+
+function qbDeployTemplate(i) {
+  var tpl = (DB.menuTemplates||[])[i];
+  if (!tpl) return;
+  qbEnsureInit();
+  var target     = DB.currentBuild.targetSlot || 'next';
+  var targetArr  = target === 'next' ? (DB.nextMenuDishes||(DB.nextMenuDishes=[])) : (DB.menuDishes||(DB.menuDishes=[]));
+  var targetLabel = target === 'next'
+    ? ('Building Next'   + (DB.nextMenuWeekLabel ? ' — '+DB.nextMenuWeekLabel : ''))
+    : ('Current Week'    + (DB.menuWeekLabel     ? ' — '+DB.menuWeekLabel     : ''));
+  var toDeploy = (tpl.slots||[]).filter(function(s){ return s.dishName; });
+  if (!toDeploy.length) { notify('No named dishes in this template — add dish names first ✗'); return; }
+  // Warn if current week has confirmed orders
+  if (target === 'current') {
+    var confirmed = (DB.weeklyOrders||[]).filter(function(o){
+      return (!o.slot||o.slot==='current') && getOrderStatus(o)!=='cancelled' && getOrderStatus(o)!=='pending';
+    });
+    if (confirmed.length > 0) {
+      if (!confirm('⚠ Current Week has '+confirmed.length+' confirmed order(s). Deploying here will affect Production and Packaging.\n\nContinue?')) return;
+    }
+  }
+  var existing = targetArr.length;
+  if (!confirm('Deploy "'+tpl.name+'" to '+targetLabel+'?\n\n'+toDeploy.length+' dishes will be added'+(existing>0?' ('+existing+' dish'+(existing!==1?'es':'')+' already in this slot)':'')+'.\n\nExisting dishes are NOT removed — they will remain alongside the deployed dishes.')) return;
+  toDeploy.forEach(function(slot) {
+    var id = 'DISH'+String(DB.nextDishId++).padStart(3,'0');
+    targetArr.push({
+      id:id, name:slot.dishName,
+      protein:slot.protein||'', carb:slot.carb||'', veg:slot.veg||'',
+      condiment:slot.condiment||'', complete:'',
+      scaleProtein:n(slot.scaleProtein)||1, scaleCarb:n(slot.scaleCarb)||1,
+      scaleVeg:n(slot.scaleVeg)||1, scaleOverall:n(slot.scaleOverall)||1,
+      drop1:0, drop2:0,
+      sellPrice:DB.defaultSellPrice||9.99,
+      boxType:(slot.format||'').indexOf('Salad')!==-1?'single':'3-compartment',
+      condimentTubs:slot.condiment?1:0,
+      fuelLine:slot.fuelLine||'Fuel Plus',
+      photoUrl:'',
+    });
+    if (slot.flavour) {
+      if (!DB.flavourHistory) DB.flavourHistory = {};
+      DB.flavourHistory[slot.flavour] = new Date().toISOString().slice(0,10);
+    }
+  });
+  menuActiveSlot = target;
+  save(); renderQuickBuild();
+  notify('🚀 '+toDeploy.length+' dishes deployed to '+targetLabel+' ✓');
+}
+
+function qbDeleteTemplate(i) {
+  var tpl = (DB.menuTemplates||[])[i];
+  if (!tpl) return;
+  if (!confirm('Delete template "'+tpl.name+'"? This cannot be undone.')) return;
+  DB.menuTemplates.splice(i,1);
+  save(); renderQuickBuild();
+  notify('Template deleted');
 }
 
 
