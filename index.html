@@ -6990,15 +6990,15 @@ function renderMenu(){
 
         </div><!-- end menu-card-body -->
 
-        <!-- ATHLETES -->
-        ${hasAthleteVariant
-          ? `<div class="menu-athlete-strip">
-               <div class="menu-card-section-label" style="margin-bottom:5px">Athlete Variant</div>
-               ${athleteHtml}
-             </div>`
-          : `<div class="menu-athlete-strip-add">${athleteHtml}</div>`}
-
       </div><!-- end menu-card-details -->
+
+      <!-- ATHLETES (always visible) -->
+      ${hasAthleteVariant
+        ? `<div class="menu-athlete-strip">
+             <div class="menu-card-section-label" style="margin-bottom:5px">Athlete Variant</div>
+             ${athleteHtml}
+           </div>`
+        : `<div class="menu-athlete-strip-add">${athleteHtml}</div>`}
 
       <!-- EDIT OVERRIDE PANEL (amber, hidden by default) -->
       <div id="menu-card-edit-${realIdx}" class="menu-card-edit-panel" style="display:none">
