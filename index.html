@@ -12995,6 +12995,8 @@ function renderQuickBuild() {
 
   function compOpts(type, sel, format, flavour) {
     var pool = compsByType[type].slice();
+    // Always alphabetical as the base — stable sort means group promotions below preserve A-Z within each group
+    pool.sort(function(a,b){ return a.name.localeCompare(b.name); });
     if ((type==='Protein'||type==='Condiment') && flavour) {
       pool.sort(function(a,b){ return (b.flavourFamily===flavour?1:0)-(a.flavourFamily===flavour?1:0); });
     }
