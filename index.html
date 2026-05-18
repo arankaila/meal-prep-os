@@ -10330,11 +10330,32 @@ function _startFbListener() {
       // Preserve local menuTemplates if the remote has fewer — prevents race condition
       // where the 1.5s debounce hasn't flushed a just-saved template yet
       var localTemplates = DB.menuTemplates;
+      // Snapshot next-slot state before merge — older clients (mobile app) may not
+      // include nextMenuDishes in their saves, which would wipe the building-next menu.
+      var _snapNextDishes  = Array.isArray(DB.nextMenuDishes) ? DB.nextMenuDishes.slice() : [];
+      var _snapNextPub     = DB.nextMenuPublished;
+      var _snapNextLabel   = DB.nextMenuWeekLabel;
+      var _snapNextDD      = DB.nextDropDates ? JSON.parse(JSON.stringify(DB.nextDropDates)) : null;
+      var _snapNextS1      = DB.nextS1Deadline;
+      var _snapNextS2      = DB.nextS2Deadline;
       Object.assign(DB, remote);
       if (Array.isArray(localTemplates) && localTemplates.length > (Array.isArray(DB.menuTemplates) ? DB.menuTemplates.length : 0)) {
         DB.menuTemplates = localTemplates;
       }
       if (!Array.isArray(DB.menuTemplates)) DB.menuTemplates = [];
+      // If the remote wiped nextMenuDishes but we had dishes, restore them and write back.
+      // This protects against older mobile app clients that save without the next-slot fields.
+      var remoteHasNext = Array.isArray(DB.nextMenuDishes) && DB.nextMenuDishes.length > 0;
+      if (_snapNextDishes.length > 0 && !remoteHasNext) {
+        DB.nextMenuDishes    = _snapNextDishes;
+        DB.nextMenuPublished = _snapNextPub;
+        DB.nextMenuWeekLabel = _snapNextLabel;
+        if (_snapNextDD)  DB.nextDropDates   = _snapNextDD;
+        if (_snapNextS1)  DB.nextS1Deadline  = _snapNextS1;
+        if (_snapNextS2)  DB.nextS2Deadline  = _snapNextS2;
+        // Write back to Firebase so all clients (including customer portal) get correct data
+        setTimeout(saveToFirebaseNow, 150);
+      }
       // Check auto-publish on every incoming sync (another device may have built the next menu)
       checkAndAutoPublish();
       // Refresh the currently visible page
@@ -10402,9 +10423,29 @@ function loadFromFirebase(callback) {
   _fbRef.once('value').then(function(snap) {
     var remote = snap.val();
     if (remote) {
+      // Snapshot next-slot state from localStorage before overwriting with Firebase.
+      // If Firebase was wiped by an older client, we restore from the local copy.
+      var _localNextDishes  = Array.isArray(DB.nextMenuDishes) ? DB.nextMenuDishes.slice() : [];
+      var _localNextPub     = DB.nextMenuPublished;
+      var _localNextLabel   = DB.nextMenuWeekLabel;
+      var _localNextDD      = DB.nextDropDates ? JSON.parse(JSON.stringify(DB.nextDropDates)) : null;
+      var _localNextS1      = DB.nextS1Deadline;
+      var _localNextS2      = DB.nextS2Deadline;
       delete remote._ts;
       Object.assign(DB, remote);
       migrateData(); // backfill any fields added since this data was last saved
+      // Restore next-slot data if Firebase doesn't have it but local cache does
+      var remoteHasNext = Array.isArray(DB.nextMenuDishes) && DB.nextMenuDishes.length > 0;
+      if (_localNextDishes.length > 0 && !remoteHasNext) {
+        DB.nextMenuDishes    = _localNextDishes;
+        DB.nextMenuPublished = _localNextPub;
+        DB.nextMenuWeekLabel = _localNextLabel;
+        if (_localNextDD)  DB.nextDropDates  = _localNextDD;
+        if (_localNextS1)  DB.nextS1Deadline = _localNextS1;
+        if (_localNextS2)  DB.nextS2Deadline = _localNextS2;
+        // Immediately restore to Firebase so other clients (portal) see the data
+        setTimeout(saveToFirebaseNow, 300);
+      }
       callback(true);
     } else {
       callback(false);
@@ -10446,6 +10487,15 @@ function migrateData() {
     if (!Array.isArray(d.tags)) d.tags = [];
     if (!d.photoUrl) d.photoUrl = '';
   });
+  // Clear stale next-slot deadlines that belong to a week in the past —
+  // these can linger when an old week's "Building Next" was never properly advanced.
+  // Only clear if nextMenuDishes is also empty (slot was never populated this cycle).
+  var _now = new Date();
+  var _nextEmpty = !DB.nextMenuDishes || DB.nextMenuDishes.length === 0;
+  if (_nextEmpty) {
+    if (DB.nextS1Deadline && new Date(DB.nextS1Deadline) < _now) DB.nextS1Deadline = null;
+    if (DB.nextS2Deadline && new Date(DB.nextS2Deadline) < _now) DB.nextS2Deadline = null;
+  }
 }
 
 function load() {
