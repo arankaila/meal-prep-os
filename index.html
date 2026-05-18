@@ -4187,6 +4187,37 @@ select.route-confirm-input option { background:var(--surface2); }
   </div>
 </div>
 
+<!-- Portal Deadline Settings Modal -->
+<div class="modal-overlay" id="portal-deadline-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">⚙ Ordering Deadlines</div>
+      <button class="modal-close" onclick="closeModal('portal-deadline-modal')">×</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <p style="font-size:11px;color:var(--text3);font-family:var(--mono);margin:0">Set the cut-off times for each session. Leave blank for no deadline (portal stays open until manually closed).</p>
+      <div>
+        <label style="font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.5px;display:block;margin-bottom:5px" id="pdl-s1-label">☀ SUNDAY ORDERING DEADLINE</label>
+        <input id="pdl-s1" type="datetime-local"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;box-sizing:border-box"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        <div id="pdl-s1-hint" style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px"></div>
+      </div>
+      <div>
+        <label style="font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.5px;display:block;margin-bottom:5px" id="pdl-s2-label">🌙 WEDNESDAY ORDERING DEADLINE</label>
+        <input id="pdl-s2" type="datetime-local"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;box-sizing:border-box"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        <div id="pdl-s2-hint" style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:3px"></div>
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:8px">
+      <button class="btn btn-ghost" onclick="closeModal('portal-deadline-modal')">Cancel</button>
+      <button class="btn btn-gold" onclick="savePortalDeadlines()">Save Deadlines</button>
+    </div>
+  </div>
+</div>
+
 <!-- Save QB Template Modal -->
 <div class="modal-overlay" id="save-tpl-modal">
   <div class="modal" style="max-width:420px">
@@ -11183,8 +11214,19 @@ function renderPortalPublishStrip() {
     '<button class="btn btn-ghost btn-sm" onclick="showPortalSettings()">⚙ Deadlines</button>';
 }
 
+// Determines which slot the Open/Close button should control.
+// Next slot is targeted if: it has dishes AND (it's already live, OR current week is closed).
+// This correctly handles the Monday 18:00 hand-off even when auto-publish hasn't fired.
+function _toggleTargetIsNext() {
+  var hasNextDishes = !!(DB.nextMenuDishes && DB.nextMenuDishes.length > 0);
+  if (!hasNextDishes) return false;
+  if (DB.nextMenuPublished) return true;   // already live — keep controlling next
+  if (!DB.menuPublished)    return true;   // current closed, next has dishes — open next
+  return false;                             // current still live, next is being prepped
+}
+
 function togglePortal() {
-  var hasNext   = _portalUsesNextSlot();
+  var hasNext   = _toggleTargetIsNext();
   var weekLabel = hasNext ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
   var hasDishes = hasNext ? (DB.nextMenuDishes||[]).length > 0 : (DB.menuDishes||[]).length > 0;
   var currentlyOpen = hasNext ? DB.nextMenuPublished : DB.menuPublished;
@@ -11209,31 +11251,49 @@ function togglePortal() {
     DB.menuPublished = !DB.menuPublished;
     open = DB.menuPublished;
   }
-  save();
+  saveToFirebaseNow(); // immediate — portal state must not be overwritten by debounce race
   renderPortalPublishStrip();
   notify(open ? '🟢 Portal opened — customers can now order' : '⚫ Portal closed');
 }
 
 function showPortalSettings() {
-  var hasNext = _portalUsesNextSlot();
+  var hasNext = _toggleTargetIsNext();
   var s1key   = hasNext ? 'nextS1Deadline' : 's1Deadline';
   var s2key   = hasNext ? 'nextS2Deadline' : 's2Deadline';
   var dd      = hasNext ? (DB.nextDropDates || {}) : (DB.dropDates || {});
-  var s1 = DB[s1key] ? DB[s1key].substring(0,16) : '';
-  var s2 = DB[s2key] ? DB[s2key].substring(0,16) : '';
+  var slotLabel = hasNext ? 'Building Next' : 'Current Week';
 
-  var s1hint = dd.sunday    ? ' (auto: Fri 6pm before ' + dd.sunday    + ')' : ' (set Sunday drop date to auto-calc)';
-  var s2hint = dd.wednesday ? ' (auto: Mon 6pm before ' + dd.wednesday + ')' : ' (set Wednesday drop date to auto-calc)';
+  var s1El = document.getElementById('pdl-s1');
+  var s2El = document.getElementById('pdl-s2');
+  var s1H  = document.getElementById('pdl-s1-hint');
+  var s2H  = document.getElementById('pdl-s2-hint');
+  var s1L  = document.getElementById('pdl-s1-label');
+  var s2L  = document.getElementById('pdl-s2-label');
 
-  var v1 = prompt('Sunday ordering deadline — YYYY-MM-DDTHH:MM\n' + s1hint + '\nLeave blank to remove.', s1);
-  if (v1 === null) return;
+  if (s1El) s1El.value = DB[s1key] ? DB[s1key].substring(0,16) : '';
+  if (s2El) s2El.value = DB[s2key] ? DB[s2key].substring(0,16) : '';
+  if (s1L)  s1L.textContent = '☀ SUNDAY DEADLINE — ' + slotLabel.toUpperCase();
+  if (s2L)  s2L.textContent = '🌙 WEDNESDAY DEADLINE — ' + slotLabel.toUpperCase();
+  if (s1H)  s1H.textContent = dd.sunday    ? 'Auto-calc: Thu 18:00 before ' + dd.sunday    : 'Tip: set drop dates in Weekly Menu to auto-calc';
+  if (s2H)  s2H.textContent = dd.wednesday ? 'Auto-calc: Mon 18:00 before ' + dd.wednesday : 'Tip: set drop dates in Weekly Menu to auto-calc';
 
-  var v2 = prompt('Wednesday ordering deadline — YYYY-MM-DDTHH:MM\n' + s2hint + '\nLeave blank to remove.', s2);
-  if (v2 === null) return;
+  // Store which keys to save against
+  document.getElementById('portal-deadline-modal').dataset.s1key = s1key;
+  document.getElementById('portal-deadline-modal').dataset.s2key = s2key;
 
-  DB[s1key] = v1.trim() || null;
-  DB[s2key] = v2.trim() || null;
-  save();
+  openModal('portal-deadline-modal');
+}
+
+function savePortalDeadlines() {
+  var modal = document.getElementById('portal-deadline-modal');
+  var s1key = modal.dataset.s1key || 's1Deadline';
+  var s2key = modal.dataset.s2key || 's2Deadline';
+  var v1 = (document.getElementById('pdl-s1').value || '').trim();
+  var v2 = (document.getElementById('pdl-s2').value || '').trim();
+  DB[s1key] = v1 || null;
+  DB[s2key] = v2 || null;
+  closeModal('portal-deadline-modal');
+  saveToFirebaseNow();
   renderPortalPublishStrip();
   updateDropDateDeadlineDisplay();
   notify('Deadlines updated ✓');
@@ -13484,8 +13544,33 @@ function qbCalcTemplateSummary(tpl) {
   return { kcal:total.kcal/total.count, prot:total.prot/total.count, carb:total.carb/total.count, fat:total.fat/total.count, count:total.count };
 }
 
+// ── QB Template storage — isolated localStorage key, never touched by Firebase sync ──
+var QB_TPL_KEY = '29perf_qb_templates';
+
+function qbTplRead() {
+  try {
+    var raw = localStorage.getItem(QB_TPL_KEY);
+    if (!raw) {
+      // One-time migration: if old DB.menuTemplates has data, adopt it
+      var legacy = DB.menuTemplates;
+      if (Array.isArray(legacy) && legacy.length) {
+        qbTplWrite(legacy);
+        DB.menuTemplates = [];
+        return legacy;
+      }
+      return [];
+    }
+    var parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e) { return []; }
+}
+
+function qbTplWrite(templates) {
+  try { localStorage.setItem(QB_TPL_KEY, JSON.stringify(templates)); } catch(e) {}
+}
+
 function qbRenderTemplates() {
-  var templates = DB.menuTemplates || [];
+  var templates = qbTplRead();
   if (!templates.length) {
     return '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);padding:8px 2px">No saved templates yet. Build a menu and click <strong>💾 Save Template</strong> to store it here.</div>';
   }
@@ -13523,9 +13608,11 @@ function qbSaveTemplate() {
   var build = DB.currentBuild;
   var filled = (build.slots||[]).filter(function(s){ return s.dishName||s.protein||s.carb||s.veg; });
   if (!filled.length) { notify('Fill in at least one slot before saving ✗'); return; }
-  var defaultName = 'Menu ' + (build.weekOf ? new Date(build.weekOf+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));
+  var defaultName = 'Menu ' + (build.weekOf
+    ? new Date(build.weekOf+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+    : new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));
   var inp = document.getElementById('save-tpl-name');
-  if (inp) { inp.value = defaultName; }
+  if (inp) inp.value = defaultName;
   openModal('save-tpl-modal');
   setTimeout(function(){ if (inp) inp.select(); }, 80);
 }
@@ -13536,30 +13623,25 @@ function qbConfirmSaveTemplate() {
   if (!name) { if (inp) inp.focus(); return; }
   closeModal('save-tpl-modal');
   qbEnsureInit();
-  var build = DB.currentBuild;
-  if (!DB.menuTemplates) DB.menuTemplates = [];
-  DB.menuTemplates.push({
+  var templates = qbTplRead();
+  templates.push({
     id: 'tpl-' + Date.now(),
     name: name,
     savedAt: new Date().toISOString().slice(0,10),
-    slots: JSON.parse(JSON.stringify(build.slots)),
+    slots: JSON.parse(JSON.stringify(DB.currentBuild.slots)),
   });
-  // Write to localStorage immediately, then flush Firebase now (not debounced)
-  // so _localWrite=true before any listener fires and overwrites DB.menuTemplates
-  try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
-  saveToFirebaseNow();
+  qbTplWrite(templates);   // writes straight to its own localStorage key — Firebase never touches this
   renderQuickBuild();
   notify('Template "'+name+'" saved ✓');
 }
 
 function qbLoadTemplate(i) {
-  var tpl = (DB.menuTemplates||[])[i];
+  var tpl = qbTplRead()[i];
   if (!tpl) return;
   qbEnsureInit();
   var hasWork = (DB.currentBuild.slots||[]).some(function(s){ return s.dishName||s.protein||s.carb||s.veg; });
   if (hasWork && !confirm('Load "'+tpl.name+'"?\n\nThis replaces your current build. Any unsaved work will be lost.')) return;
   DB.currentBuild.slots = JSON.parse(JSON.stringify(tpl.slots));
-  // Reset pushed state — this is a fresh build from the template
   DB.currentBuild.slots.forEach(function(s){ s.pushed = false; delete s.pushedTo; });
   DB.currentBuild.weekOf = '';
   save(); renderQuickBuild();
@@ -13567,7 +13649,7 @@ function qbLoadTemplate(i) {
 }
 
 function qbDeployTemplate(i) {
-  var tpl = (DB.menuTemplates||[])[i];
+  var tpl = qbTplRead()[i];
   if (!tpl) return;
   qbEnsureInit();
   var target     = DB.currentBuild.targetSlot || 'next';
@@ -13577,7 +13659,6 @@ function qbDeployTemplate(i) {
     : ('Current Week'    + (DB.menuWeekLabel     ? ' — '+DB.menuWeekLabel     : ''));
   var toDeploy = (tpl.slots||[]).filter(function(s){ return s.dishName; });
   if (!toDeploy.length) { notify('No named dishes in this template — add dish names first ✗'); return; }
-  // Warn if current week has confirmed orders
   if (target === 'current') {
     var confirmed = (DB.weeklyOrders||[]).filter(function(o){
       return (!o.slot||o.slot==='current') && getOrderStatus(o)!=='cancelled' && getOrderStatus(o)!=='pending';
@@ -13614,12 +13695,14 @@ function qbDeployTemplate(i) {
 }
 
 function qbDeleteTemplate(i) {
-  var tpl = (DB.menuTemplates||[])[i];
-  if (!tpl) return;
-  if (!confirm('Delete template "'+tpl.name+'"? This cannot be undone.')) return;
-  DB.menuTemplates.splice(i,1);
-  save(); renderQuickBuild();
-  notify('Template deleted');
+  var templates = qbTplRead();
+  if (!templates[i]) return;
+  var name = templates[i].name;
+  if (!confirm('Delete template "'+name+'"? This cannot be undone.')) return;
+  templates.splice(i, 1);
+  qbTplWrite(templates);
+  renderQuickBuild();
+  notify('Template "'+name+'" deleted');
 }
 
 
