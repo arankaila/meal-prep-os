@@ -13020,7 +13020,8 @@ function qbPushSlotToMenu(slotIdx) {
   // Keep menuActiveSlot in sync
   menuActiveSlot = target;
 
-  save(); renderQuickBuild();
+  // Use immediate save — dish data must reach Firebase before the portal can be opened
+  saveToFirebaseNow(); renderQuickBuild();
   notify('→ ' + slot.dishName + ' → ' + targetLabel + ' ✓');
 }
 
