@@ -10296,7 +10296,14 @@ function _startFbListener() {
     var remoteTs = remote._ts || 0;
     if (remoteTs > _lastSaved + 500) {
       delete remote._ts;
+      // Preserve local menuTemplates if the remote has fewer — prevents race condition
+      // where the 1.5s debounce hasn't flushed a just-saved template yet
+      var localTemplates = DB.menuTemplates;
       Object.assign(DB, remote);
+      if (Array.isArray(localTemplates) && localTemplates.length > (Array.isArray(DB.menuTemplates) ? DB.menuTemplates.length : 0)) {
+        DB.menuTemplates = localTemplates;
+      }
+      if (!Array.isArray(DB.menuTemplates)) DB.menuTemplates = [];
       // Check auto-publish on every incoming sync (another device may have built the next menu)
       checkAndAutoPublish();
       // Refresh the currently visible page
@@ -10390,8 +10397,17 @@ function migrateData() {
     if (o.session === 'S1') o.session = 'Sunday';
     else if (o.session === 'S2') o.session = 'Wednesday';
   });
-  // Ensure discountCodes array exists
+  // Ensure critical arrays always exist and are proper arrays
+  // (Firebase can return null or objects for arrays — guard against both)
   if (!Array.isArray(DB.discountCodes)) DB.discountCodes = [];
+  if (!Array.isArray(DB.menuTemplates)) {
+    // Firebase may return an object with integer keys instead of an array — convert it
+    if (DB.menuTemplates && typeof DB.menuTemplates === 'object') {
+      DB.menuTemplates = Object.values(DB.menuTemplates);
+    } else {
+      DB.menuTemplates = [];
+    }
+  }
   // Backfill serves/tags fields onto dishes created before these fields were added
   var allDishes = (DB.menuDishes || []).concat(DB.nextMenuDishes || []);
   allDishes.forEach(function(d) {
@@ -13528,7 +13544,11 @@ function qbConfirmSaveTemplate() {
     savedAt: new Date().toISOString().slice(0,10),
     slots: JSON.parse(JSON.stringify(build.slots)),
   });
-  save(); renderQuickBuild();
+  // Write to localStorage immediately, then flush Firebase now (not debounced)
+  // so _localWrite=true before any listener fires and overwrites DB.menuTemplates
+  try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
+  saveToFirebaseNow();
+  renderQuickBuild();
   notify('Template "'+name+'" saved ✓');
 }
 
