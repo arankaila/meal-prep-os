@@ -4187,6 +4187,27 @@ select.route-confirm-input option { background:var(--surface2); }
   </div>
 </div>
 
+<!-- Save QB Template Modal -->
+<div class="modal-overlay" id="save-tpl-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">💾 Save Template</div>
+      <button class="modal-close" onclick="closeModal('save-tpl-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <label style="font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:.5px;display:block;margin-bottom:6px">TEMPLATE NAME</label>
+      <input id="save-tpl-name" type="text" placeholder="e.g. Summer Menu Week 1…"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--text);font-family:var(--sans);outline:none;box-sizing:border-box"
+        onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')qbConfirmSaveTemplate()">
+    </div>
+    <div class="modal-footer" style="gap:8px">
+      <button class="btn btn-ghost" onclick="closeModal('save-tpl-modal')">Cancel</button>
+      <button class="btn btn-gold" onclick="qbConfirmSaveTemplate()">Save Template</button>
+    </div>
+  </div>
+</div>
+
 <!-- PRE-ARCHIVE CHECKLIST MODAL -->
 <div class="modal-overlay" id="archive-check-modal">
   <div class="modal" style="max-width:540px">
@@ -13484,20 +13505,31 @@ function qbRenderTemplates() {
 function qbSaveTemplate() {
   qbEnsureInit();
   var build = DB.currentBuild;
-  var filled = (build.slots||[]).filter(function(s){ return s.dishName||s.protein||s.carb; });
+  var filled = (build.slots||[]).filter(function(s){ return s.dishName||s.protein||s.carb||s.veg; });
   if (!filled.length) { notify('Fill in at least one slot before saving ✗'); return; }
   var defaultName = 'Menu ' + (build.weekOf ? new Date(build.weekOf+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}));
-  var name = prompt('Name this template:', defaultName);
-  if (!name || !name.trim()) return;
+  var inp = document.getElementById('save-tpl-name');
+  if (inp) { inp.value = defaultName; }
+  openModal('save-tpl-modal');
+  setTimeout(function(){ if (inp) inp.select(); }, 80);
+}
+
+function qbConfirmSaveTemplate() {
+  var inp = document.getElementById('save-tpl-name');
+  var name = inp ? inp.value.trim() : '';
+  if (!name) { if (inp) inp.focus(); return; }
+  closeModal('save-tpl-modal');
+  qbEnsureInit();
+  var build = DB.currentBuild;
   if (!DB.menuTemplates) DB.menuTemplates = [];
   DB.menuTemplates.push({
     id: 'tpl-' + Date.now(),
-    name: name.trim(),
+    name: name,
     savedAt: new Date().toISOString().slice(0,10),
     slots: JSON.parse(JSON.stringify(build.slots)),
   });
   save(); renderQuickBuild();
-  notify('Template "'+name.trim()+'" saved ✓');
+  notify('Template "'+name+'" saved ✓');
 }
 
 function qbLoadTemplate(i) {
