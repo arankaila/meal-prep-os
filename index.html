@@ -10404,11 +10404,30 @@ function loadFromFirebase(callback) {
   _fbRef.once('value').then(function(snap) {
     var remote = snap.val();
     if (remote) {
+      // Check whether Firebase actually has nextMenuDishes BEFORE merging.
+      // If it doesn't (mobile app wiped it), we need to write back after loading.
+      var remoteHasNext = !!(remote.nextMenuDishes && (
+        Array.isArray(remote.nextMenuDishes)
+          ? remote.nextMenuDishes.length > 0
+          : Object.keys(remote.nextMenuDishes).length > 0
+      ));
+      // Also snapshot local nextMenuPublished — mobile app defaults it to false,
+      // which would wipe a deliberately-opened portal state.
+      var localNextPub = DB.nextMenuPublished;
       delete remote._ts;
       Object.assign(DB, remote);
+      // Restore nextMenuPublished if remote wiped it (ops app is the authority on this)
+      if (localNextPub === true && !DB.nextMenuPublished) {
+        DB.nextMenuPublished = true;
+      }
       migrateData(); // backfill any fields added since this data was last saved
       // Restore nextMenuDishes from isolated localStorage key if Firebase was wiped by mobile app
       nextMenuGuard();
+      // Critical: if Firebase was missing nextMenuDishes but our local state has them,
+      // write back immediately so the customer portal sees the correct (open) state.
+      if (!remoteHasNext && Array.isArray(DB.nextMenuDishes) && DB.nextMenuDishes.length > 0) {
+        setTimeout(saveToFirebaseNow, 300);
+      }
       callback(true);
     } else {
       callback(false);
@@ -10673,6 +10692,11 @@ function initTheme() {
   // 1. Load from localStorage immediately so the app renders fast
   const hasLocal = load();
   if (!hasLocal) { seedData(); save(); }
+  // Restore which menu slot the user was on — QB pushes set targetSlot to 'next',
+  // so after a refresh the Weekly Menu tab opens on the same slot automatically.
+  if (DB.currentBuild && (DB.currentBuild.targetSlot === 'next' || DB.currentBuild.targetSlot === 'current')) {
+    menuActiveSlot = DB.currentBuild.targetSlot;
+  }
   initTheme();
   ensureCategories();
   migrateMenuHistory();
@@ -12985,7 +13009,10 @@ function qbPushSlotToMenu(slotIdx) {
   if (!slot.dishName) { notify('Add a dish name first ✗'); return; }
 
   var target = DB.currentBuild.targetSlot || 'current';
-  var targetArr = target === 'next' ? DB.nextMenuDishes : DB.menuDishes;
+  // Null-safe: initialise the array if Firebase returned null/undefined for it
+  var targetArr = target === 'next'
+    ? (DB.nextMenuDishes || (DB.nextMenuDishes = []))
+    : (DB.menuDishes    || (DB.menuDishes = []));
   var targetLabel = target === 'next'
     ? ('Next Week' + (DB.nextMenuWeekLabel ? ' — ' + DB.nextMenuWeekLabel : ''))
     : ('Current Week' + (DB.menuWeekLabel ? ' — ' + DB.menuWeekLabel : ''));
@@ -13745,7 +13772,9 @@ function qbDeployTemplate(i) {
     }
   });
   menuActiveSlot = target;
-  save(); renderQuickBuild();
+  try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
+  if (target === 'next') nextMenuWrite(DB.nextMenuDishes);
+  saveToFirebaseNow(); renderQuickBuild();
   notify('🚀 '+toDeploy.length+' dishes deployed to '+targetLabel+' ✓');
 }
 
