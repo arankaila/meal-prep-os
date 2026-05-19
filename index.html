@@ -7485,7 +7485,7 @@ function clearMenu(){
   var slotName = menuActiveSlot === 'next' ? 'next week\'s menu (Building Next)' : 'current week\'s menu';
   confirmAction(
     'This will permanently remove all dishes from the ' + slotName + '. This cannot be undone.<br><br>Make sure you have archived first if you want to keep a record.',
-    function(){ if(menuActiveSlot==='next') DB.nextMenuDishes=[]; else DB.menuDishes=[]; save();renderMenu();notify('Menu cleared'); },
+    function(){ if(menuActiveSlot==='next'){ DB.nextMenuDishes=[]; nextMenuWrite([]); } else DB.menuDishes=[]; save();renderMenu();notify('Menu cleared'); },
     {title:'Clear Weekly Menu',danger:true,confirmLabel:'Yes, Clear Menu'}
   );
 }
@@ -10330,32 +10330,13 @@ function _startFbListener() {
       // Preserve local menuTemplates if the remote has fewer — prevents race condition
       // where the 1.5s debounce hasn't flushed a just-saved template yet
       var localTemplates = DB.menuTemplates;
-      // Snapshot next-slot state before merge — older clients (mobile app) may not
-      // include nextMenuDishes in their saves, which would wipe the building-next menu.
-      var _snapNextDishes  = Array.isArray(DB.nextMenuDishes) ? DB.nextMenuDishes.slice() : [];
-      var _snapNextPub     = DB.nextMenuPublished;
-      var _snapNextLabel   = DB.nextMenuWeekLabel;
-      var _snapNextDD      = DB.nextDropDates ? JSON.parse(JSON.stringify(DB.nextDropDates)) : null;
-      var _snapNextS1      = DB.nextS1Deadline;
-      var _snapNextS2      = DB.nextS2Deadline;
       Object.assign(DB, remote);
       if (Array.isArray(localTemplates) && localTemplates.length > (Array.isArray(DB.menuTemplates) ? DB.menuTemplates.length : 0)) {
         DB.menuTemplates = localTemplates;
       }
       if (!Array.isArray(DB.menuTemplates)) DB.menuTemplates = [];
-      // If the remote wiped nextMenuDishes but we had dishes, restore them and write back.
-      // This protects against older mobile app clients that save without the next-slot fields.
-      var remoteHasNext = Array.isArray(DB.nextMenuDishes) && DB.nextMenuDishes.length > 0;
-      if (_snapNextDishes.length > 0 && !remoteHasNext) {
-        DB.nextMenuDishes    = _snapNextDishes;
-        DB.nextMenuPublished = _snapNextPub;
-        DB.nextMenuWeekLabel = _snapNextLabel;
-        if (_snapNextDD)  DB.nextDropDates   = _snapNextDD;
-        if (_snapNextS1)  DB.nextS1Deadline  = _snapNextS1;
-        if (_snapNextS2)  DB.nextS2Deadline  = _snapNextS2;
-        // Write back to Firebase so all clients (including customer portal) get correct data
-        setTimeout(saveToFirebaseNow, 150);
-      }
+      // Restore nextMenuDishes from isolated localStorage key if mobile app wiped it
+      nextMenuGuard();
       // Check auto-publish on every incoming sync (another device may have built the next menu)
       checkAndAutoPublish();
       // Refresh the currently visible page
@@ -10423,29 +10404,11 @@ function loadFromFirebase(callback) {
   _fbRef.once('value').then(function(snap) {
     var remote = snap.val();
     if (remote) {
-      // Snapshot next-slot state from localStorage before overwriting with Firebase.
-      // If Firebase was wiped by an older client, we restore from the local copy.
-      var _localNextDishes  = Array.isArray(DB.nextMenuDishes) ? DB.nextMenuDishes.slice() : [];
-      var _localNextPub     = DB.nextMenuPublished;
-      var _localNextLabel   = DB.nextMenuWeekLabel;
-      var _localNextDD      = DB.nextDropDates ? JSON.parse(JSON.stringify(DB.nextDropDates)) : null;
-      var _localNextS1      = DB.nextS1Deadline;
-      var _localNextS2      = DB.nextS2Deadline;
       delete remote._ts;
       Object.assign(DB, remote);
       migrateData(); // backfill any fields added since this data was last saved
-      // Restore next-slot data if Firebase doesn't have it but local cache does
-      var remoteHasNext = Array.isArray(DB.nextMenuDishes) && DB.nextMenuDishes.length > 0;
-      if (_localNextDishes.length > 0 && !remoteHasNext) {
-        DB.nextMenuDishes    = _localNextDishes;
-        DB.nextMenuPublished = _localNextPub;
-        DB.nextMenuWeekLabel = _localNextLabel;
-        if (_localNextDD)  DB.nextDropDates  = _localNextDD;
-        if (_localNextS1)  DB.nextS1Deadline = _localNextS1;
-        if (_localNextS2)  DB.nextS2Deadline = _localNextS2;
-        // Immediately restore to Firebase so other clients (portal) see the data
-        setTimeout(saveToFirebaseNow, 300);
-      }
+      // Restore nextMenuDishes from isolated localStorage key if Firebase was wiped by mobile app
+      nextMenuGuard();
       callback(true);
     } else {
       callback(false);
@@ -11409,6 +11372,7 @@ function advanceWeek() {
 
   // 3. Clear next slot
   DB.nextMenuDishes      = [];
+  nextMenuWrite([]);  // wipe isolated localStorage key — week has advanced
   DB.nextMenuWeekLabel   = '';
   DB.nextMenuPublished   = false;
   DB.nextS1Deadline      = null;
@@ -13070,7 +13034,10 @@ function qbPushSlotToMenu(slotIdx) {
   // Keep menuActiveSlot in sync
   menuActiveSlot = target;
 
-  // Use immediate save — dish data must reach Firebase before the portal can be opened
+  // Write to localStorage immediately (so page refresh can restore) AND to Firebase
+  try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
+  // Also write nextMenuDishes to its isolated key so it survives mobile-app wipes
+  if (target === 'next') nextMenuWrite(DB.nextMenuDishes);
   saveToFirebaseNow(); renderQuickBuild();
   notify('→ ' + slot.dishName + ' → ' + targetLabel + ' ✓');
 }
@@ -13593,6 +13560,43 @@ function qbCalcTemplateSummary(tpl) {
   });
   if (!total.count) return null;
   return { kcal:total.kcal/total.count, prot:total.prot/total.count, carb:total.carb/total.count, fat:total.fat/total.count, count:total.count };
+}
+
+// ── Building-Next menu — isolated localStorage key ────────────────────────────────
+// Storing nextMenuDishes in its own key means the mobile app's Firebase overwrites
+// can never silently wipe a menu the user is building for next week.
+// The ops app always recovers from this key if Firebase/main localStorage is empty.
+var NEXT_MENU_KEY = '29perf_next_menu';
+
+function nextMenuRead() {
+  try {
+    var raw = localStorage.getItem(NEXT_MENU_KEY);
+    if (!raw) return null; // null = "no isolated copy" — don't restore over intentional clear
+    var parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch(e) { return null; }
+}
+
+function nextMenuWrite(dishes) {
+  try {
+    if (Array.isArray(dishes) && dishes.length > 0) {
+      localStorage.setItem(NEXT_MENU_KEY, JSON.stringify(dishes));
+    } else {
+      localStorage.removeItem(NEXT_MENU_KEY); // intentional clear — wipe the backup too
+    }
+  } catch(e) {}
+}
+
+// Call whenever nextMenuDishes may have been wiped from Firebase by another client.
+// Restores from isolated localStorage and immediately re-writes to Firebase.
+function nextMenuGuard() {
+  if (Array.isArray(DB.nextMenuDishes) && DB.nextMenuDishes.length > 0) return; // already fine
+  var backup = nextMenuRead();
+  if (!backup || !backup.length) return; // no backup to restore
+  DB.nextMenuDishes = backup;
+  // Also restore associated metadata that may have been wiped
+  // (weekLabel, published flag, deadlines are preserved in main localStorage by save())
+  saveToFirebaseNow(); // write back to Firebase so customer portal and other clients see it
 }
 
 // ── QB Template storage — isolated localStorage key, never touched by Firebase sync ──
