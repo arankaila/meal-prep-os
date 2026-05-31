@@ -1878,6 +1878,7 @@ select.route-confirm-input option { background:var(--surface2); }
         ⬆ Import<input type="file" accept=".json" onchange="importData(event)" style="display:none">
       </label>
     </div>
+    <button class="btn btn-ghost btn-sm" onclick="cleanupFirebasePayload()" style="justify-content:center;font-size:11px;width:100%;margin-top:4px;" title="Move archives to separate path, strip photos, archive old orders — reduces Firebase bandwidth">🧹 Optimise Firebase</button>
   </div>
 </aside>
 
@@ -3226,8 +3227,9 @@ select.route-confirm-input option { background:var(--surface2); }
             </ul>
             <div class="gs-callout amber"><b>QB and Weekly Menu are not linked after push.</b> Once pushed, the dish on the menu is independent. If you need to change something after pushing, use the ✎ Edit button on the Weekly Menu card — don't push again or you'll create a duplicate.</div>
 
-            <div class="gs-h2">Templates</div>
-            <p class="gs-p">Save any slot configuration as a template with <strong>💾 Save Template</strong> in the toolbar. Templates capture the format, flavour, components, scales, and all detail panel settings. Load a saved template into any slot to instantly replicate a proven dish. Use the <strong>↺ Reset</strong> button to clear all slots back to the 12-slot default template (pushes and assignments are cleared).</p>
+            <div class="gs-h2">Menu Library</div>
+            <p class="gs-p">The <strong>Menu Library</strong> (right panel in Quick Build) lets you save entire week builds as reusable menus. Click <strong>💾 Save as Menu</strong> in the toolbar to snapshot all current slots into a named entry. Each saved menu shows the dish list with portion counts, Sun/Wed totals, and average macros. Reload a saved menu into QB with <strong>Load</strong>, or deploy it directly to the active Push Target with <strong>Deploy</strong> — carrying over portions, fuel line, pricing, packaging, and tags. Use the ✏ rename and ⎘ duplicate buttons to manage your library. Menus sync to Firebase so they're available on all devices. Use the <strong>↺ Reset</strong> button to clear all slots back to the 12-slot default (pushes and assignments are cleared, but your saved menus are untouched).</p>
+            <div class="gs-callout gold"><b>Reuse workflow:</b> Build a strong week in QB, save it as a menu, then in future weeks click Deploy to load that exact menu — tweak one or two dishes if needed, then push. Faster than building from scratch every week and ensures consistent macros across repeat dishes.</div>
 
             <div class="gs-h2">Component Reuse Panel</div>
             <p class="gs-p">Below the slots table, the Component Reuse panel shows how many times each component appears across all slots. Use it to spot accidental repetition (the same protein in multiple slots) or to check that you've balanced the menu across flavour families.</p>
@@ -4222,7 +4224,7 @@ select.route-confirm-input option { background:var(--surface2); }
 <div class="modal-overlay" id="save-tpl-modal">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
-      <div class="modal-title">💾 Save Template</div>
+      <div class="modal-title">💾 Save to Menu Library</div>
       <button class="modal-close" onclick="closeModal('save-tpl-modal')">×</button>
     </div>
     <div class="modal-body">
@@ -4726,11 +4728,11 @@ let DB = {
   nextS1Deadline: null,
   nextS2Deadline: null,
   nextDropDates: { sunday: '', wednesday: '' },
-  kitchenPassword: '',
-  minOrderQty: 3,
-  qcTempHot: 75,
-  qcTempCold: 5,
-  qcCoolingMinutes: 90,
+  kitchenPassword: '',      // reserved — not yet used in this app
+  minOrderQty: 3,           // reserved — used by the customer portal
+  qcTempHot: 75,            // QC target: hot core temp (°C)
+  qcTempCold: 5,            // QC target: cold storage temp (°C)
+  qcCoolingMinutes: 90,     // QC target: max time to reach cold temp
   // Quick Build Planner
   currentBuild: null,
   flavourHistory: {},
@@ -5062,7 +5064,7 @@ function showPage(id) {
     ingredients: ()=>`<button class="btn btn-gold" onclick="openIngModal()">+ Add Ingredient</button>`,
     recipes: ()=>`<button class="btn btn-gold" onclick="openRecipeModal()">+ New Recipe</button>`,
     menu: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="quickArchive()">💾 Archive Week</button></div>`,
-    quickbuild: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="qbResetTemplate()">↺ Reset</button><button class="btn btn-ghost btn-sm" onclick="qbAddSlot()">+ Slot</button><button class="btn btn-ghost btn-sm" onclick="qbSaveTemplate()">💾 Save Template</button><button class="btn btn-gold btn-sm" onclick="qbPushAllToMenu()">→ Push All to Menu</button></div>`,
+    quickbuild: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="qbResetTemplate()">↺ Reset</button><button class="btn btn-ghost btn-sm" onclick="qbAddSlot()">+ Slot</button><button class="btn btn-ghost btn-sm" onclick="qbSaveTemplate()">💾 Save as Menu</button><button class="btn btn-gold btn-sm" onclick="qbPushAllToMenu()">→ Push All to Menu</button></div>`,
     orders: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="renderOrdersPanel()">⟳ Refresh</button><button class="btn btn-gold btn-sm" onclick="openOrderModal()">+ Add Order</button></div>`,
     delivery: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-ghost btn-sm" onclick="renderDelivery()">⟳ Refresh</button><button class="btn btn-gold" onclick="openCustomerModal()">+ Add Customer</button></div>`,
     inventory: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-ghost btn-sm" onclick="renderInventory()">⟳ Refresh</button><button class="btn btn-ghost btn-sm" onclick="openInvReceiveModal()">+ Receive Stock</button><button class="btn btn-ghost btn-sm" onclick="openInvCountModal()">📋 Stock Count</button><button class="btn btn-gold" onclick="openInvAdjustModal()">⚡ Quick Adjust</button></div>`,
@@ -5188,7 +5190,12 @@ function renderDashboard() {
     const prodSlot = getProductionSlot();
     const prodWeek = getProductionWeekLabel();
     const allOrders = (DB.weeklyOrders || []).filter(function(o) {
-      return o.slot ? (o.slot === prodSlot) : (prodWeek && o.week === prodWeek);
+      if (o.slot) {
+        if (o.slot !== prodSlot) return false;
+        if (prodWeek && o.week && o.week !== prodWeek) return false;
+        return true;
+      }
+      return !!(prodWeek && o.week === prodWeek);
     });
     const pendingOrds  = allOrders.filter(function(o) { return getOrderStatus(o) === 'pending'; }).length;
     const confirmedOrds = allOrders.filter(function(o) { return getOrderStatus(o) === 'confirmed' || getOrderStatus(o) === 'in_production'; }).length;
@@ -5426,8 +5433,13 @@ function renderDashboard() {
   const prodSlotForTable = getProductionSlot();
   const prodWeekForTable = getProductionWeekLabel();
   const confirmedOrdersForTable = (DB.weeklyOrders || []).filter(function(o) {
-    var inSlot = o.slot ? (o.slot === prodSlotForTable) : (prodWeekForTable && o.week === prodWeekForTable);
-    return inSlot && getOrderStatus(o) !== 'cancelled' && getOrderStatus(o) !== 'pending';
+    if (o.slot) {
+      if (o.slot !== prodSlotForTable) return false;
+      if (prodWeekForTable && o.week && o.week !== prodWeekForTable) return false;
+    } else {
+      if (!prodWeekForTable || o.week !== prodWeekForTable) return false;
+    }
+    return getOrderStatus(o) !== 'cancelled' && getOrderStatus(o) !== 'pending';
   });
   var ordersPerDish = {};
   confirmedOrdersForTable.forEach(function(o) {
@@ -6259,9 +6271,7 @@ function addPhaseStep(phase){
 }
 
 // Legacy shims (keep working if anything calls them)
-function addStep(){ addPhaseStep('cook'); }
-function updateStep(idx,v){ updatePhaseStep('cook',idx,v); }
-function removeStep(idx){ removePhaseStep('cook',idx); }
+
 
 function updateRL(idx,f,v){recLines[idx][f]=f==='qty'?n(v):v;updateRecPreview();}
 function removeRL(idx){recLines.splice(idx,1);renderRecIngLines();updateRecPreview();}
@@ -6593,8 +6603,14 @@ function getProductionOrders(includeStatuses) {
   var slot  = getProductionSlot();
   var week  = getProductionWeekLabel();
   return (DB.weeklyOrders || []).filter(function(o) {
-    var inSlot = o.slot ? (o.slot === slot) : (week && o.week === week);
-    if (!inSlot) return false;
+    if (o.slot) {
+      if (o.slot !== slot) return false;
+      // Also require week label match (when known) to prevent stale orders from past weeks
+      // showing up in production, packaging, and delivery once the week has advanced.
+      if (week && o.week && o.week !== week) return false;
+    } else {
+      if (!week || o.week !== week) return false;
+    }
     if (includeStatuses) return includeStatuses.indexOf(getOrderStatus(o)) !== -1;
     return getOrderStatus(o) !== 'cancelled';
   });
@@ -6628,30 +6644,7 @@ function switchMenuSlot(slot) {
   renderMenu();
 }
 
-function updateMenuPortalBtn() {
-  var statusEl = document.getElementById('menu-portal-status');
-  var btnEl    = document.getElementById('menu-portal-btn');
-  if (!statusEl || !btnEl) return;
-  var published = DB.menuPublished;
-  statusEl.textContent = published ? '🟢 Portal Open' : '⚫ Portal Closed';
-  statusEl.style.color = published ? '#4ade80' : 'var(--text3)';
-  btnEl.textContent  = published ? 'Close Orders' : 'Publish & Open Portal';
-  btnEl.className    = 'btn btn-sm ' + (published ? 'btn-ghost' : 'btn-gold');
-}
 
-function toggleMenuPortal() {
-  DB.menuPublished = !DB.menuPublished;
-  if (!DB.menuPublished) DB.orderDeadline = null;
-  else {
-    var dl = prompt('Order deadline — YYYY-MM-DDTHH:MM (optional, leave blank for manual close only):','');
-    if (dl && dl.trim()) DB.orderDeadline = dl.trim();
-  }
-  save();
-  saveToFirebaseNow(); // flush immediately so portal open/closed state is committed at once
-  updateMenuPortalBtn();
-  renderPortalPublishStrip();
-  notify(DB.menuPublished ? '🟢 Portal open — customers can now place orders' : '⚫ Portal closed');
-}
 
 // ── Sync S1/S2 portion counts from confirmed orders ───────────
 // Run this after closing orders and confirming everything.
@@ -6663,9 +6656,13 @@ function syncPortionsFromOrders() {
   var dishes = getSlotDishes();
 
   var activeOrders = (DB.weeklyOrders || []).filter(function(o) {
-    // Slot-based (reliable) or week-label fallback
-    var matchesSlot = o.slot ? (o.slot === menuActiveSlot) : (week && o.week === week);
-    return matchesSlot && getOrderStatus(o) !== 'cancelled';
+    if (o.slot) {
+      if (o.slot !== menuActiveSlot) return false;
+      if (week && o.week && o.week !== week) return false;
+    } else {
+      if (!week || o.week !== week) return false;
+    }
+    return getOrderStatus(o) !== 'cancelled';
   });
   var pending = activeOrders.filter(function(o) { return getOrderStatus(o) === 'pending'; });
   var confirmed = activeOrders.filter(function(o) { return getOrderStatus(o) !== 'pending'; });
@@ -6728,9 +6725,13 @@ function recalcDishPortions(slotOrLabel) {
   var dishes = slot === 'next' ? (DB.nextMenuDishes||[]) : (DB.menuDishes||[]);
   var orders = (DB.weeklyOrders||[]).filter(function(o){
     // Match by slot+week to prevent old orders from previous weeks bleeding into
-    // current production counts. Mirrors getProductionOrders() matching logic.
-    var inSlot = o.slot ? (o.slot === slot) : (week && o.week === week);
-    if (!inSlot) return false;
+    // current production counts.
+    if (o.slot) {
+      if (o.slot !== slot) return false;
+      if (week && o.week && o.week !== week) return false;
+    } else {
+      if (!week || o.week !== week) return false;
+    }
     return getOrderStatus(o) !== 'cancelled' &&
            getOrderStatus(o) !== 'pending';
   });
@@ -6797,7 +6798,7 @@ function renderMenu(){
   // Auto-sync portion counts from confirmed orders for the active slot
   // This ensures drop1/drop2 always reflect the current order state
   recalcDishPortions(menuActiveSlot);
-  updateMenuPortalBtn();
+  renderPortalPublishStrip();
   updateMenuKPIs();
   // Restore slot switcher state
   document.querySelectorAll('.menu-slot-tab').forEach(function(b) {
@@ -7920,7 +7921,12 @@ function setComponentStatus(compName, status) {
   if (status === 'in_progress') {
     // Auto-set confirmed orders to in_production for the production slot
     (DB.weeklyOrders || []).forEach(function(o) {
-      var inProdSlot = o.slot ? (o.slot === prodSlot) : (week && o.week === week);
+      var inProdSlot;
+      if (o.slot) {
+        inProdSlot = o.slot === prodSlot && (!week || !o.week || o.week === week);
+      } else {
+        inProdSlot = !!(week && o.week === week);
+      }
       if (inProdSlot && getOrderStatus(o) === 'confirmed') {
         o.status = 'in_production';
       }
@@ -9213,12 +9219,23 @@ function _doArchive(label) {
 
   if (DB.weeklyArchives.length > 104) DB.weeklyArchives = DB.weeklyArchives.slice(0, 104);
   save();
+  // Also write this archive entry to the separate Firebase path (29perfOS/hist/)
+  // so it's not bundled into the live sync blob. Photos are stripped to save bandwidth.
+  if (_fbDb) {
+    var _arcEntry = Object.assign({}, DB.weeklyArchives[0]);
+    if (Array.isArray(_arcEntry.dishes)) {
+      _arcEntry.dishes = _arcEntry.dishes.map(function(d) {
+        if (d && d.photoUrl && d.photoUrl.indexOf('data:') === 0) return Object.assign({}, d, { photoUrl: '' });
+        return d;
+      });
+    }
+    _fbDb.ref('29perfOS/hist/' + _arcEntry.id).set(_arcEntry).catch(function(e) {
+      console.warn('Archive Firebase write error:', e);
+    });
+  }
   notify('Week archived ✓ — ' + label);
   if (document.getElementById('page-history').classList.contains('active')) renderHistory();
 }
-
-/* Legacy shim */
-function saveWeekToHistory() { archiveWeek('menu'); }
 
 /* Quick archive — no checklist modal, uses week label directly */
 function quickArchive() {
@@ -9289,7 +9306,38 @@ function destroyArcCharts() {
   arcCharts = {};
 }
 
+/* Load weeklyArchives from the separate Firebase /hist/ path (lazy — only on first visit) */
+function _loadArchivesFromFirebase(callback) {
+  if (!_fbDb) { if (callback) callback(); return; }
+  _fbDb.ref('29perfOS/hist').once('value').then(function(snap) {
+    var data = snap.val();
+    if (data && typeof data === 'object') {
+      var incoming = Object.values(data);
+      var existing = new Set((DB.weeklyArchives || []).map(function(a) { return a.id; }));
+      incoming.forEach(function(e) {
+        if (e && e.id && !existing.has(e.id)) {
+          if (!DB.weeklyArchives) DB.weeklyArchives = [];
+          DB.weeklyArchives.push(e);
+        }
+      });
+      DB.weeklyArchives.sort(function(a, b) {
+        return new Date(b.date || 0) - new Date(a.date || 0);
+      });
+    }
+    _archivesLoaded = true;
+    if (callback) callback();
+  }).catch(function() { _archivesLoaded = true; if (callback) callback(); });
+}
+
 function renderHistory() {
+  // Lazy-load archives from Firebase /hist/ path on first visit
+  if (!_archivesLoaded) {
+    if (_fbDb) {
+      _loadArchivesFromFirebase(renderHistory);
+      return;
+    }
+    _archivesLoaded = true; // No Firebase — use whatever is in memory
+  }
   migrateMenuHistory();
   const hist = DB.weeklyArchives || [];
 
@@ -10261,6 +10309,7 @@ var _fbSaveTimer= null;
 var _fbListening= false;
 var _localWrite = false;   // flag: we triggered the next onValue, skip re-applying
 var _lastSaved  = (function(){ try { return parseInt(localStorage.getItem('29perf_lastSaved')||'0',10)||0; } catch(e){ return 0; } })();
+var _archivesLoaded = false; // flag: weeklyArchives loaded from /hist/ Firebase path
 
 // ── Sync UI helpers ─────────────────────────────────────
 function setSyncUI(state, msg) {
@@ -10325,16 +10374,36 @@ function _startFbListener() {
     if (!remote) return;
     // Only apply if remote is newer than last local save
     var remoteTs = remote._ts || 0;
+
+    // ── Mobile-app wipe guard (runs regardless of timestamp) ──────────────────
+    // The mobile app writes without nextMenuDishes/_ts, so remoteTs=0 never
+    // passes the timestamp check below — but Firebase still has the wiped version,
+    // which means the customer portal shows closed. Detect and fix every time.
+    var fbMissingNext = !(remote.nextMenuDishes && (
+      Array.isArray(remote.nextMenuDishes)
+        ? remote.nextMenuDishes.length > 0
+        : Object.keys(remote.nextMenuDishes).length > 0
+    ));
+    if (fbMissingNext && Array.isArray(DB.nextMenuDishes) && DB.nextMenuDishes.length > 0) {
+      // Write our local dishes back to Firebase so the portal stays open
+      setTimeout(saveToFirebaseNow, 150);
+    }
+
     if (remoteTs > _lastSaved + 500) {
       delete remote._ts;
       // Preserve local menuTemplates if the remote has fewer — prevents race condition
       // where the 1.5s debounce hasn't flushed a just-saved template yet
       var localTemplates = DB.menuTemplates;
+      // Preserve weeklyArchives — they live in /hist/ and are not in the live blob
+      var localArchives = (DB.weeklyArchives && DB.weeklyArchives.length) ? DB.weeklyArchives : null;
       Object.assign(DB, remote);
       if (Array.isArray(localTemplates) && localTemplates.length > (Array.isArray(DB.menuTemplates) ? DB.menuTemplates.length : 0)) {
         DB.menuTemplates = localTemplates;
       }
       if (!Array.isArray(DB.menuTemplates)) DB.menuTemplates = [];
+      if (localArchives && (!DB.weeklyArchives || !DB.weeklyArchives.length)) {
+        DB.weeklyArchives = localArchives;
+      }
       // Restore nextMenuDishes from isolated localStorage key if mobile app wiped it
       nextMenuGuard();
       // Check auto-publish on every incoming sync (another device may have built the next menu)
@@ -10384,7 +10453,44 @@ function saveToFirebaseNow() {
 
 function _flushToFirebase() {
   var ts = Date.now();
-  var payload = Object.assign({}, DB, { _ts: ts });
+
+  // ── LEAN PAYLOAD ─────────────────────────────────────────────────────────────
+  // Excluded from the live sync blob to keep the Firebase payload small:
+  //   weeklyArchives → written to 29perfOS/hist/ (separate path, loaded lazily)
+  //   menuHistory    → legacy field, always empty after migration
+  // Photos stored as base64 data: URLs are excluded from Firebase but kept in
+  // localStorage so images appear on the device that uploaded them.
+  // ─────────────────────────────────────────────────────────────────────────────
+  var EXCLUDE = ['weeklyArchives', 'menuHistory'];
+
+  function _stripPhotos(arr) {
+    if (!Array.isArray(arr)) return arr;
+    return arr.map(function(d) {
+      if (d && d.photoUrl && typeof d.photoUrl === 'string' && d.photoUrl.indexOf('data:') === 0) {
+        var copy = Object.assign({}, d); copy.photoUrl = ''; return copy;
+      }
+      return d;
+    });
+  }
+
+  var payload = {};
+  Object.keys(DB).forEach(function(k) {
+    if (EXCLUDE.indexOf(k) !== -1) return;
+    var v = DB[k];
+    if (k === 'menuDishes' || k === 'nextMenuDishes') {
+      v = _stripPhotos(v);
+    } else if (k === 'currentBuild' && v && Array.isArray(v.slots)) {
+      v = Object.assign({}, v, { slots: _stripPhotos(v.slots) });
+    } else if (k === 'menuTemplates' && Array.isArray(v)) {
+      v = v.map(function(t) {
+        if (!t || !Array.isArray(t.slots)) return t;
+        return Object.assign({}, t, { slots: _stripPhotos(t.slots) });
+      });
+    }
+    payload[k] = v;
+  });
+  payload._ts = ts;
+
   _localWrite = true;
   _lastSaved  = ts;
   // Persist _lastSaved so page reloads don't reset it to 0
@@ -10404,6 +10510,21 @@ function loadFromFirebase(callback) {
   _fbRef.once('value').then(function(snap) {
     var remote = snap.val();
     if (remote) {
+      // ── STALE-WRITE GUARD ──────────────────────────────────────────────────────
+      // If we saved locally more recently than Firebase knows about, skip the merge.
+      // This protects against the race condition where the user pushes dishes /
+      // toggles the portal and then refreshes before the Firebase write completes —
+      // without this check, the one-time pull would overwrite newer localStorage data
+      // with the old Firebase snapshot, causing dishes and portal state to disappear.
+      var remoteTs = remote._ts || 0;
+      if (remoteTs > 0 && remoteTs < _lastSaved) {
+        // Our local data is newer.  Write it back so Firebase catches up, then proceed.
+        setTimeout(saveToFirebaseNow, 300);
+        callback(true);
+        return;
+      }
+      // ── END GUARD ─────────────────────────────────────────────────────────────
+
       // Check whether Firebase actually has nextMenuDishes BEFORE merging.
       // If it doesn't (mobile app wiped it), we need to write back after loading.
       var remoteHasNext = !!(remote.nextMenuDishes && (
@@ -10414,11 +10535,16 @@ function loadFromFirebase(callback) {
       // Also snapshot local nextMenuPublished — mobile app defaults it to false,
       // which would wipe a deliberately-opened portal state.
       var localNextPub = DB.nextMenuPublished;
+      // Preserve weeklyArchives — they live in /hist/ and are not in the live blob
+      var localArchives = (DB.weeklyArchives && DB.weeklyArchives.length) ? DB.weeklyArchives : null;
       delete remote._ts;
       Object.assign(DB, remote);
       // Restore nextMenuPublished if remote wiped it (ops app is the authority on this)
       if (localNextPub === true && !DB.nextMenuPublished) {
         DB.nextMenuPublished = true;
+      }
+      if (localArchives && (!DB.weeklyArchives || !DB.weeklyArchives.length)) {
+        DB.weeklyArchives = localArchives;
       }
       migrateData(); // backfill any fields added since this data was last saved
       // Restore nextMenuDishes from isolated localStorage key if Firebase was wiped by mobile app
@@ -10483,9 +10609,86 @@ function migrateData() {
 function load() {
   try {
     var s = localStorage.getItem('29perfOS');
-    if (s) { Object.assign(DB, JSON.parse(s)); migrateData(); return true; }
+    if (s) {
+      Object.assign(DB, JSON.parse(s));
+      migrateData();
+      // Immediately restore nextMenuDishes from isolated key if main localStorage
+      // is missing it (e.g. the push failed silently, or storage was partially cleared).
+      // saveToFirebaseNow() inside the guard is a no-op here — Firebase not init yet.
+      nextMenuGuard();
+      return true;
+    }
   } catch(e) {}
   return false;
+}
+
+/* ── Firebase payload cleanup ───────────────────────────────────────────────
+   One-time migration that:
+   1. Moves weeklyArchives out of the main sync blob → 29perfOS/hist/
+   2. Archives old orders (not current/next week) → 29perfOS/archive/orders/
+   3. Strips base64 photos from Firebase (photos stay in your browser's localStorage)
+   Run once from the sidebar after connecting Firebase. Safe to run multiple times.
+   ─────────────────────────────────────────────────────────────────────────── */
+function cleanupFirebasePayload() {
+  if (!_fbDb) { notify('⚠ Firebase not connected'); return; }
+  var archiveCount = (DB.weeklyArchives || []).length;
+  var allOrders = (DB.weeklyOrders || []);
+  var currLabel = (DB.menuWeekLabel || '').trim();
+  var nextLabel = (DB.nextMenuWeekLabel || '').trim();
+  var toArchive = allOrders.filter(function(o) {
+    var slot = o.slot || 'current';
+    var week = o.week || '';
+    var isCurr = slot === 'current' && (!currLabel || !week || week === currLabel);
+    var isNext = slot === 'next'    && (!nextLabel || !week || week === nextLabel);
+    return !isCurr && !isNext;
+  });
+  var msg = 'Optimise Firebase payload:\n\n'
+    + '• Move ' + archiveCount + ' archive entr' + (archiveCount !== 1 ? 'ies' : 'y') + ' to separate path\n'
+    + '• Strip base64 dish photos from Firebase (photos stay on this device)\n'
+    + '• Archive ' + toArchive.length + ' old order' + (toArchive.length !== 1 ? 's' : '') + ' from previous weeks\n\n'
+    + 'This is safe and recommended — it will significantly reduce Firebase bandwidth.\nContinue?';
+  if (!confirm(msg)) return;
+  notify('🧹 Optimising Firebase…');
+
+  // 1. Write archives to 29perfOS/hist/
+  var histPayload = {};
+  (DB.weeklyArchives || []).forEach(function(entry) {
+    var e = Object.assign({}, entry);
+    if (Array.isArray(e.dishes)) {
+      e.dishes = e.dishes.map(function(d) {
+        if (d && d.photoUrl && d.photoUrl.indexOf('data:') === 0) return Object.assign({}, d, { photoUrl: '' });
+        return d;
+      });
+    }
+    histPayload[e.id] = e;
+  });
+
+  // 2. Write old orders to 29perfOS/archive/orders/
+  var archiveOrderPayload = {};
+  toArchive.forEach(function(o) { archiveOrderPayload[o.id] = o; });
+
+  var writes = [];
+  if (Object.keys(histPayload).length) {
+    writes.push(_fbDb.ref('29perfOS/hist').set(histPayload));
+  }
+  if (Object.keys(archiveOrderPayload).length) {
+    writes.push(_fbDb.ref('29perfOS/archive/orders').update(archiveOrderPayload));
+  }
+
+  Promise.all(writes).then(function() {
+    // 3. Clean up main DB: remove archives + old orders
+    DB.weeklyArchives = [];          // now lives in /hist/ — loaded lazily
+    DB.menuHistory    = [];          // legacy, fully migrated
+    _archivesLoaded   = false;       // force reload from /hist/ on next history visit
+    DB.weeklyOrders   = (DB.weeklyOrders || []).filter(function(o) {
+      return toArchive.indexOf(o) === -1;
+    });
+    saveToFirebaseNow();
+    notify('✅ Firebase optimised · ' + archiveCount + ' archives moved · ' + toArchive.length + ' old orders archived · Photos stripped from Firebase');
+  }).catch(function(e) {
+    notify('⚠ Cleanup error — check console');
+    console.warn('cleanupFirebasePayload error:', e);
+  });
 }
 
 function exportData() {
@@ -10858,7 +11061,12 @@ function custOrdersThisWeek(custId) {
   var week     = getProductionWeekLabel();
   return (DB.weeklyOrders || []).filter(function(o) {
     if (o.customerId !== custId) return false;
-    return o.slot ? (o.slot === prodSlot) : (week && o.week === week);
+    if (o.slot) {
+      if (o.slot !== prodSlot) return false;
+      if (week && o.week && o.week !== week) return false;
+      return true;
+    }
+    return !!(week && o.week === week);
   });
 }
 
@@ -11284,10 +11492,18 @@ function togglePortal() {
   if (hasNext) {
     DB.nextMenuPublished = !DB.nextMenuPublished;
     open = DB.nextMenuPublished;
+    // If manually closing the next slot, suppress auto-publish so it doesn't immediately re-open.
+    // This handles the case where s2Deadline is in the past but the user wants it closed.
+    if (!open) DB.autoPublishFired = true;
+    // If manually opening, clear the suppression flag so auto-publish can fire in future if needed.
+    else DB.autoPublishFired = false;
   } else {
     DB.menuPublished = !DB.menuPublished;
     open = DB.menuPublished;
   }
+  // Write to localStorage immediately so a page refresh restores the correct state
+  // (saveToFirebaseNow only writes to Firebase; without this, localStorage stays stale).
+  try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
   saveToFirebaseNow(); // immediate — portal state must not be overwritten by debounce race
   renderPortalPublishStrip();
   notify(open ? '🟢 Portal opened — customers can now order' : '⚫ Portal closed');
@@ -11329,7 +11545,11 @@ function savePortalDeadlines() {
   var v2 = (document.getElementById('pdl-s2').value || '').trim();
   DB[s1key] = v1 || null;
   DB[s2key] = v2 || null;
+  // If a new s2 deadline is set in the future, clear the auto-publish suppression flag
+  // so the auto-switch can fire at the correct time for this updated deadline.
+  if (v2 && new Date(v2) > new Date()) DB.autoPublishFired = false;
   closeModal('portal-deadline-modal');
+  try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
   saveToFirebaseNow();
   renderPortalPublishStrip();
   updateDropDateDeadlineDisplay();
@@ -11348,10 +11568,15 @@ function checkAndAutoPublish() {
   var notPublished   = !DB.nextMenuPublished;
   var deadlinePassed = !!(DB.s2Deadline && new Date(DB.s2Deadline) <= now);
 
+  // Guard: if auto-publish already fired this cycle (or was suppressed by a manual close),
+  // do not re-open the portal. This flag is cleared by advanceWeek() when the week rolls over.
+  if (DB.autoPublishFired) return false;
+
   if (!hasNextReady || !notPublished || !deadlinePassed) return false;
 
   DB.nextMenuPublished = true;
   DB.menuPublished     = false;  // close current week's ordering window
+  DB.autoPublishFired  = true;   // mark as fired so manual closes are respected
   saveToFirebaseNow();           // immediate — can't risk the 1.5s debounce
   renderPortalPublishStrip();
   notify('🔄 Portal auto-switched to ' + DB.nextMenuWeekLabel + ' — next week is now live for orders');
@@ -11402,6 +11627,7 @@ function advanceWeek() {
   DB.nextS1Deadline      = null;
   DB.nextS2Deadline      = null;
   DB.nextDropDates       = { sunday: '', wednesday: '' };
+  DB.autoPublishFired    = false; // reset so auto-publish can fire for the next menu cycle
 
   // 4. Switch view to current slot
   menuActiveSlot = 'current';
@@ -11421,11 +11647,16 @@ function advanceWeek() {
 }
 
 function bulkConfirmOrders() {
-  var week = DB.menuWeekLabel || '';
   var slotFilter = window._orderSlotFilter || 'current';
+  var week = slotFilter === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
   var count = 0;
   (DB.weeklyOrders || []).forEach(function(o) {
-    var matchesSlot = o.slot ? (o.slot === slotFilter) : (week && o.week === week);
+    var matchesSlot;
+    if (o.slot) {
+      matchesSlot = o.slot === slotFilter && (!week || !o.week || o.week === week);
+    } else {
+      matchesSlot = !!(week && o.week === week);
+    }
     if (matchesSlot && getOrderStatus(o) === 'pending') {
       o.status = 'confirmed';
       o.confirmedAt = new Date().toISOString();
@@ -11484,11 +11715,16 @@ function permanentlyRemoveOrder(id) {
 }
 
 function exportOrdersCSV() {
-  var week   = DB.menuWeekLabel || '';
-  var dishes = DB.menuDishes || [];
   var slotFilter = window._orderSlotFilter || 'current';
+  var week   = slotFilter === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
+  var dishes = slotFilter === 'next' ? (DB.nextMenuDishes || []) : (DB.menuDishes || []);
   var orders = (DB.weeklyOrders || []).filter(function(o) {
-    return o.slot ? (o.slot === slotFilter) : (week && o.week === week);
+    if (o.slot) {
+      if (o.slot !== slotFilter) return false;
+      if (week && o.week && o.week !== week) return false;
+      return true;
+    }
+    return !!(week && o.week === week);
   });
   if (!orders.length) { notify('No orders to export'); return; }
 
@@ -11576,7 +11812,16 @@ function renderOrdersPanel() {
   var slotDishes = slotFilter === 'next' ? (DB.nextMenuDishes||[]) : (DB.menuDishes||[]);
   var slotLabel  = slotFilter === 'next' ? (DB.nextMenuWeekLabel||'Next Week') : (DB.menuWeekLabel||'Current Week');
 
-  var allSlotOrders = (DB.weeklyOrders||[]).filter(function(o){ return (o.slot||'current') === slotFilter; });
+  // Filter by slot AND week label (when a label is set).
+  // This prevents orders from previous weeks (same slot, different label) bleeding into the current view.
+  var expectedLabel = slotFilter === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
+  var allSlotOrders = (DB.weeklyOrders||[]).filter(function(o){
+    if ((o.slot||'current') !== slotFilter) return false;
+    // If the expected label is known, only include orders that match it OR have no week label
+    // (orders without a week field are always shown for backward compatibility).
+    if (expectedLabel && o.week && o.week !== expectedLabel) return false;
+    return true;
+  });
 
   // Apply filters — "all" excludes cancelled; use the explicit "cancelled" tab to see them
   var orders = allSlotOrders.filter(function(o){ return statusFilter === 'cancelled' ? getOrderStatus(o) === 'cancelled' : getOrderStatus(o) !== 'cancelled'; });
@@ -12595,7 +12840,12 @@ function packDishAll(dishId) {
   var prodSlot = getProductionSlot();
   var week     = getProductionWeekLabel();
   (DB.weeklyOrders||[]).forEach(function(o) {
-    var isCurrentWeek = o.slot ? (o.slot === prodSlot) : (week && o.week === week);
+    var isCurrentWeek;
+    if (o.slot) {
+      isCurrentWeek = o.slot === prodSlot && (!week || !o.week || o.week === week);
+    } else {
+      isCurrentWeek = !!(week && o.week === week);
+    }
     if (!isCurrentWeek) return;
     if (!(o.allocation||{})[dishId]) return;
     if (!o.packProgress) o.packProgress = {};
@@ -13019,8 +13269,15 @@ function qbPushSlotToMenu(slotIdx) {
 
   // Extra safety: warn if pushing to current week that already has confirmed orders
   if (target === 'current') {
+    var _curWeek = DB.menuWeekLabel || '';
     var confirmedOrders = (DB.weeklyOrders||[]).filter(function(o){
-      return (!o.slot || o.slot === 'current') && getOrderStatus(o) !== 'cancelled' && getOrderStatus(o) !== 'pending';
+      if (o.slot) {
+        if (o.slot !== 'current') return false;
+        if (_curWeek && o.week && o.week !== _curWeek) return false;
+      } else {
+        if (!_curWeek || o.week !== _curWeek) return false;
+      }
+      return getOrderStatus(o) !== 'cancelled' && getOrderStatus(o) !== 'pending';
     });
     if (confirmedOrders.length > 0) {
       if (!confirm('⚠ Warning: Current Week has ' + confirmedOrders.length + ' confirmed order(s). Pushing a new dish here will affect Production and Packaging.\n\nAre you sure you want to add "' + slot.dishName + '" to Current Week?')) return;
@@ -13039,7 +13296,7 @@ function qbPushSlotToMenu(slotIdx) {
     drop1:           n(slot.drop1)||0,
     drop2:           n(slot.drop2)||0,
     sellPrice:       n(slot.sellPrice)||DB.defaultSellPrice||9.99,
-    boxType:         slot.boxType || (slot.format.indexOf('Salad')!==-1 ? 'single' : '3-compartment'),
+    boxType:         slot.boxType || ((slot.format||'').indexOf('Salad')!==-1 ? 'single' : '3-compartment'),
     condimentTubs:   n(slot.condimentTubs)||0,
     fuelLine:        slot.fuelLine||'Fuel Plus',
     photoUrl:        slot.photoUrl||'',
@@ -13081,8 +13338,15 @@ function qbPushAllToMenu() {
 
   var warningLine = '';
   if (target === 'current') {
+    var _curWk = DB.menuWeekLabel || '';
     var confirmedOrders = (DB.weeklyOrders||[]).filter(function(o){
-      return (!o.slot || o.slot === 'current') && getOrderStatus(o) !== 'cancelled' && getOrderStatus(o) !== 'pending';
+      if (o.slot) {
+        if (o.slot !== 'current') return false;
+        if (_curWk && o.week && o.week !== _curWk) return false;
+      } else {
+        if (!_curWk || o.week !== _curWk) return false;
+      }
+      return getOrderStatus(o) !== 'cancelled' && getOrderStatus(o) !== 'pending';
     });
     if (confirmedOrders.length > 0) {
       warningLine = '\n\n⚠ Current Week has ' + confirmedOrders.length + ' confirmed order(s). This will affect Production and Packaging.';
@@ -13173,7 +13437,16 @@ function renderQuickBuild() {
   var nxtDishes = (DB.nextMenuDishes||[]).length;
   var curLabel  = DB.menuWeekLabel  ? DB.menuWeekLabel  : 'no week label set';
   var nxtLabel  = DB.nextMenuWeekLabel ? DB.nextMenuWeekLabel : 'no week label set';
-  var curOrders = (DB.weeklyOrders||[]).filter(function(o){ return (!o.slot||o.slot==='current') && getOrderStatus(o)!=='cancelled'; }).length;
+  var _qbCurWk = DB.menuWeekLabel || '';
+  var curOrders = (DB.weeklyOrders||[]).filter(function(o){
+    if (o.slot) {
+      if (o.slot !== 'current') return false;
+      if (_qbCurWk && o.week && o.week !== _qbCurWk) return false;
+    } else {
+      if (!_qbCurWk || o.week !== _qbCurWk) return false;
+    }
+    return getOrderStatus(o) !== 'cancelled';
+  }).length;
 
   var curActive  = targetSlot === 'current';
   var nxtActive  = targetSlot === 'next';
@@ -13323,8 +13596,27 @@ function renderQuickBuild() {
     '</tr>' + detailRow;
   }).join('');
 
+  // Quick-start banner: show saved menu chips when QB is empty (no named slots)
+  var _noNamedSlots = !(build.slots||[]).some(function(s){ return s.dishName; });
+  var _savedMenus = qbTplRead();
+  var _quickStartBanner = (_noNamedSlots && _savedMenus.length)
+    ? '<div class="qb-section" style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.25);border-radius:8px;padding:12px 14px">'
+        + '<div style="font-size:9px;font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Start from a saved menu</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:6px">'
+        + _savedMenus.map(function(tpl, i) {
+            var named = (tpl.slots||[]).filter(function(s){ return s.dishName; }).length;
+            return '<button class="btn btn-ghost btn-sm" onclick="qbLoadTemplate('+i+')" style="font-size:11px">'
+              + escHtml(tpl.name) + ' <span style="color:var(--text3);font-family:var(--mono)">'+named+'d</span>'
+              + '</button>';
+          }).join('')
+        + '</div>'
+        + '<div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:6px">Load a saved menu into the slots below, tweak it, then push to the weekly menu. Or build from scratch by filling the slots directly.</div>'
+      + '</div>'
+    : '';
+
   document.getElementById('qb-root').innerHTML =
-    // Top bar
+    _quickStartBanner +
+
     // Slot target selector
     '<div class="qb-section">' + slotSelector + '</div>' +
 
@@ -13362,9 +13654,14 @@ function renderQuickBuild() {
       '<div class="qb-reuse-grid">'+qbRenderReuse()+'</div>' +
     '</div>' +
 
-    // Saved templates
+    // Menu Library
     '<div class="qb-section">' +
-      '<div class="qb-section-title" style="margin-bottom:10px">Saved templates</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+        '<div class="qb-section-title" style="margin-bottom:0">Menu Library</div>' +
+        '<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">' +
+          (qbTplRead().length ? qbTplRead().length + ' saved' : 'no saved menus') +
+        '</span>' +
+      '</div>' +
       qbRenderTemplates() +
     '</div>';
 
@@ -13631,58 +13928,123 @@ var QB_TPL_KEY = '29perf_qb_templates';
 
 function qbTplRead() {
   try {
-    var raw = localStorage.getItem(QB_TPL_KEY);
-    if (!raw) {
-      // One-time migration: if old DB.menuTemplates has data, adopt it
-      var legacy = DB.menuTemplates;
-      if (Array.isArray(legacy) && legacy.length) {
-        qbTplWrite(legacy);
-        DB.menuTemplates = [];
-        return legacy;
-      }
-      return [];
+    // Primary: DB.menuTemplates (synced to Firebase — available on all devices)
+    if (Array.isArray(DB.menuTemplates) && DB.menuTemplates.length) {
+      return DB.menuTemplates;
     }
-    var parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    // Fallback: isolated localStorage key (pre-Firebase-sync data)
+    var raw = localStorage.getItem(QB_TPL_KEY);
+    if (raw) {
+      var parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length) {
+        // Migrate: promote to DB.menuTemplates so Firebase picks them up
+        DB.menuTemplates = parsed;
+        save();
+        try { localStorage.removeItem(QB_TPL_KEY); } catch(e) {}
+        return parsed;
+      }
+    }
+    return [];
   } catch(e) { return []; }
 }
 
 function qbTplWrite(templates) {
-  try { localStorage.setItem(QB_TPL_KEY, JSON.stringify(templates)); } catch(e) {}
+  // Write to DB.menuTemplates — this gets saved to Firebase via save()
+  DB.menuTemplates = templates;
+  save(); // writes localStorage + Firebase
 }
 
 function qbRenderTemplates() {
   var templates = qbTplRead();
   if (!templates.length) {
-    return '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);padding:8px 2px">No saved templates yet. Build a menu and click <strong>💾 Save Template</strong> to store it here.</div>';
+    return '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);padding:10px 2px">'
+      + 'No saved menus yet — build a week in the slots above then click <strong>💾 Save as Menu</strong> to store it here.'
+      + '</div>';
   }
   return '<div class="qb-tpl-grid">' + templates.map(function(tpl, i) {
-    var slotCount  = (tpl.slots||[]).length;
-    var dishCount  = (tpl.slots||[]).filter(function(s){ return s.dishName; }).length;
+    var slots      = tpl.slots || [];
+    var named      = slots.filter(function(s){ return s.dishName; });
+    var partial    = slots.filter(function(s){ return !s.dishName && (s.protein||s.carb||s.veg); });
+    var totalD1    = slots.reduce(function(s,sl){ return s + (n(sl.drop1)||0); }, 0);
+    var totalD2    = slots.reduce(function(s,sl){ return s + (n(sl.drop2)||0); }, 0);
     var summary    = qbCalcTemplateSummary(tpl);
-    var macroLine  = summary
+
+    // Dish list — show up to 8, then "+N more"
+    var SHOW = 8;
+    var dishListHtml = named.length
+      ? '<div style="margin:5px 0 2px;display:flex;flex-direction:column;gap:2px">'
+          + named.slice(0, SHOW).map(function(s){
+              return '<div style="font-size:10px;color:var(--text2);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+escHtml(s.dishName)+'">'
+                + '<span style="color:var(--text3)">'+escHtml(s.format||'Flex')+' · </span>'
+                + escHtml(s.dishName)
+                + '</div>';
+            }).join('')
+          + (named.length > SHOW ? '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">+' + (named.length - SHOW) + ' more</div>' : '')
+        + '</div>'
+      : '';
+
+    var macroLine = summary
       ? '<span class="qb-macro-chip kcal">'+summary.kcal.toFixed(0)+' kcal</span>'
         + '<span class="qb-macro-chip prot">'+summary.prot.toFixed(1)+'P</span>'
         + '<span class="qb-macro-chip carb">'+summary.carb.toFixed(1)+'C</span>'
         + '<span class="qb-macro-chip fat">'+summary.fat.toFixed(1)+'F</span>'
-        + '<span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:2px">avg/dish</span>'
-      : '<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">—</span>';
+        + '<span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:2px">avg</span>'
+      : '';
+
+    var portionLine = (totalD1 + totalD2) > 0
+      ? '<div style="font-size:10px;font-family:var(--mono);color:var(--gold);margin-top:2px">⚖ '
+          + totalD1 + ' Sun / ' + totalD2 + ' Wed portions</div>'
+      : '';
+
     return '<div class="qb-tpl-card">'
       + '<div class="qb-tpl-header">'
-        + '<span class="qb-tpl-name">'+escHtml(tpl.name)+'</span>'
-        + '<button class="qb-remove-btn" onclick="qbDeleteTemplate('+i+')" title="Delete template">×</button>'
+          + '<span class="qb-tpl-name">'+escHtml(tpl.name)+'</span>'
+          + '<div style="display:flex;gap:3px;flex-shrink:0;align-items:center">'
+              + '<button class="qb-remove-btn" onclick="qbRenameTemplate('+i+')" title="Rename" style="font-size:11px">✏</button>'
+              + '<button class="qb-remove-btn" onclick="qbDuplicateTemplate('+i+')" title="Duplicate as variation" style="font-size:11px">⎘</button>'
+              + '<button class="qb-remove-btn" onclick="qbDeleteTemplate('+i+')" title="Delete">×</button>'
+          + '</div>'
       + '</div>'
       + '<div class="qb-tpl-meta">'
-        + '<span>'+dishCount+' / '+slotCount+' slots named</span>'
-        + '<span>saved '+escHtml(tpl.savedAt||'—')+'</span>'
+          + '<span>'+named.length+' dish'+(named.length!==1?'es':'')+(partial.length?' · '+partial.length+' partial':'')+' / '+slots.length+' slots</span>'
+          + '<span>'+escHtml(tpl.savedAt||'—')+'</span>'
       + '</div>'
-      + '<div class="qb-tpl-macros">'+macroLine+'</div>'
-      + '<div class="qb-tpl-actions">'
-        + '<button class="btn btn-ghost btn-sm" onclick="qbLoadTemplate('+i+')" title="Load into current build — edit then push">📂 Load</button>'
-        + '<button class="btn btn-gold btn-sm" onclick="qbDeployTemplate('+i+')" title="Push all dishes directly to a menu slot">🚀 Deploy</button>'
+      + dishListHtml
+      + (macroLine ? '<div class="qb-tpl-macros" style="margin-top:4px">'+macroLine+'</div>' : '')
+      + portionLine
+      + '<div class="qb-tpl-actions" style="margin-top:6px">'
+          + '<button class="btn btn-ghost btn-sm" onclick="qbLoadTemplate('+i+')" title="Load into QB to edit and adjust, then push to menu">📂 Load &amp; Edit</button>'
+          + '<button class="btn btn-gold btn-sm" onclick="qbDeployTemplate('+i+')" title="Add dishes directly to target slot">🚀 Deploy</button>'
       + '</div>'
     + '</div>';
   }).join('') + '</div>';
+}
+
+function qbRenameTemplate(i) {
+  var templates = qbTplRead();
+  if (!templates[i]) return;
+  var newName = prompt('Rename menu:', templates[i].name);
+  if (newName === null) return;
+  newName = newName.trim();
+  if (!newName) { notify('Name cannot be empty ✗'); return; }
+  var old = templates[i].name;
+  templates[i].name = newName;
+  qbTplWrite(templates);
+  renderQuickBuild();
+  notify('Renamed "' + old + '" → "' + newName + '" ✓');
+}
+
+function qbDuplicateTemplate(i) {
+  var templates = qbTplRead();
+  if (!templates[i]) return;
+  var copy = JSON.parse(JSON.stringify(templates[i]));
+  copy.id      = 'tpl-' + Date.now();
+  copy.name    = templates[i].name + ' (copy)';
+  copy.savedAt = new Date().toISOString().slice(0,10);
+  templates.push(copy);
+  qbTplWrite(templates);
+  renderQuickBuild();
+  notify('Duplicated "' + templates[i].name + '" — edit the copy and rename it ✓');
 }
 
 function qbSaveTemplate() {
@@ -13742,8 +14104,15 @@ function qbDeployTemplate(i) {
   var toDeploy = (tpl.slots||[]).filter(function(s){ return s.dishName; });
   if (!toDeploy.length) { notify('No named dishes in this template — add dish names first ✗'); return; }
   if (target === 'current') {
+    var _depWk = DB.menuWeekLabel || '';
     var confirmed = (DB.weeklyOrders||[]).filter(function(o){
-      return (!o.slot||o.slot==='current') && getOrderStatus(o)!=='cancelled' && getOrderStatus(o)!=='pending';
+      if (o.slot) {
+        if (o.slot !== 'current') return false;
+        if (_depWk && o.week && o.week !== _depWk) return false;
+      } else {
+        if (!_depWk || o.week !== _depWk) return false;
+      }
+      return getOrderStatus(o)!=='cancelled' && getOrderStatus(o)!=='pending';
     });
     if (confirmed.length > 0) {
       if (!confirm('⚠ Current Week has '+confirmed.length+' confirmed order(s). Deploying here will affect Production and Packaging.\n\nContinue?')) return;
@@ -13759,11 +14128,12 @@ function qbDeployTemplate(i) {
       condiment:slot.condiment||'', complete:'',
       scaleProtein:n(slot.scaleProtein)||1, scaleCarb:n(slot.scaleCarb)||1,
       scaleVeg:n(slot.scaleVeg)||1, scaleOverall:n(slot.scaleOverall)||1,
-      drop1:0, drop2:0,
-      sellPrice:DB.defaultSellPrice||9.99,
-      boxType:(slot.format||'').indexOf('Salad')!==-1?'single':'3-compartment',
-      condimentTubs:slot.condiment?1:0,
+      drop1:n(slot.drop1)||0, drop2:n(slot.drop2)||0, // carry over saved portions
+      sellPrice:n(slot.sellPrice)||DB.defaultSellPrice||9.99,
+      boxType:slot.boxType||((slot.format||'').indexOf('Salad')!==-1?'single':'3-compartment'),
+      condimentTubs:n(slot.condimentTubs)||0,
       fuelLine:slot.fuelLine||'Fuel Plus',
+      serves:slot.serves||'', tags:Array.isArray(slot.tags)?slot.tags:[],
       photoUrl:'',
     });
     if (slot.flavour) {
