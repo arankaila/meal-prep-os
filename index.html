@@ -10477,9 +10477,11 @@ function _flushToFirebase() {
   Object.keys(DB).forEach(function(k) {
     if (EXCLUDE.indexOf(k) !== -1) return;
     var v = DB[k];
-    if (k === 'menuDishes' || k === 'nextMenuDishes') {
-      v = _stripPhotos(v);
-    } else if (k === 'currentBuild' && v && Array.isArray(v.slots)) {
+    // menuDishes / nextMenuDishes: keep photos — the customer portal reads these
+    // from Firebase and needs photoUrl to display dish images to customers.
+    // currentBuild / menuTemplates: strip photos — these are internal build-time
+    // data never shown on the portal. Keeping them out of Firebase saves bandwidth.
+    if (k === 'currentBuild' && v && Array.isArray(v.slots)) {
       v = Object.assign({}, v, { slots: _stripPhotos(v.slots) });
     } else if (k === 'menuTemplates' && Array.isArray(v)) {
       v = v.map(function(t) {
@@ -10626,7 +10628,9 @@ function load() {
    One-time migration that:
    1. Moves weeklyArchives out of the main sync blob → 29perfOS/hist/
    2. Archives old orders (not current/next week) → 29perfOS/archive/orders/
-   3. Strips base64 photos from Firebase (photos stay in your browser's localStorage)
+   3. Strips photos from archived weeks (past photos no longer needed in Firebase)
+   Current week's dish photos (menuDishes / nextMenuDishes) are KEPT — the
+   customer portal reads them from Firebase to display images to customers.
    Run once from the sidebar after connecting Firebase. Safe to run multiple times.
    ─────────────────────────────────────────────────────────────────────────── */
 function cleanupFirebasePayload() {
@@ -10644,8 +10648,9 @@ function cleanupFirebasePayload() {
   });
   var msg = 'Optimise Firebase payload:\n\n'
     + '• Move ' + archiveCount + ' archive entr' + (archiveCount !== 1 ? 'ies' : 'y') + ' to separate path\n'
-    + '• Strip base64 dish photos from Firebase (photos stay on this device)\n'
-    + '• Archive ' + toArchive.length + ' old order' + (toArchive.length !== 1 ? 's' : '') + ' from previous weeks\n\n'
+    + '• Strip photos from archived weeks (past photos no longer needed)\n'
+    + '• Archive ' + toArchive.length + ' old order' + (toArchive.length !== 1 ? 's' : '') + ' from previous weeks\n'
+    + '• Current week dish photos are KEPT so customers see images on the portal\n\n'
     + 'This is safe and recommended — it will significantly reduce Firebase bandwidth.\nContinue?';
   if (!confirm(msg)) return;
   notify('🧹 Optimising Firebase…');
@@ -10684,7 +10689,7 @@ function cleanupFirebasePayload() {
       return toArchive.indexOf(o) === -1;
     });
     saveToFirebaseNow();
-    notify('✅ Firebase optimised · ' + archiveCount + ' archives moved · ' + toArchive.length + ' old orders archived · Photos stripped from Firebase');
+    notify('✅ Firebase optimised · ' + archiveCount + ' archives moved · ' + toArchive.length + ' old orders archived · Archive photos stripped');
   }).catch(function(e) {
     notify('⚠ Cleanup error — check console');
     console.warn('cleanupFirebasePayload error:', e);
