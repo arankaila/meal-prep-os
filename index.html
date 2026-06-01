@@ -7314,14 +7314,16 @@ function createAthleteVariant(idx) {
 
 // Renders toggleable attribute tag buttons for the Portal section
 var PRESET_TAGS = [
-  { key: 'high-protein', label: 'High Protein' },
-  { key: 'low-fat',      label: '↓ Low Fat'    },
-  { key: 'low-carb',     label: '↓ Low Carb'   },
-  { key: 'chefs-choice', label: "Chef's Choice" },
-  { key: 'vegan',        label: 'Vegan'         },
-  { key: 'high-fibre',   label: 'High Fibre'    },
-  { key: '9-amino',      label: '9 Amino Acids' },
-  { key: 'omega3',       label: 'High Omega-3'  }
+  { key: 'high-protein',  label: 'High Protein'  },
+  { key: 'low-fat',       label: '↓ Low Fat'     },
+  { key: 'low-carb',      label: '↓ Low Carb'    },
+  { key: 'chefs-choice',  label: "Chef's Choice" },
+  { key: 'vegan',         label: 'Vegan'          },
+  { key: 'vegetarian',    label: 'Vegetarian'     },
+  { key: 'pescatarian',   label: 'Pescatarian'    },
+  { key: 'high-fibre',    label: 'High Fibre'     },
+  { key: '9-amino',       label: '9 Amino Acids'  },
+  { key: 'omega3',        label: 'High Omega-3'   }
 ];
 var PRESET_TAG_KEYS = PRESET_TAGS.map(function(t) { return t.key; });
 
@@ -13313,7 +13315,8 @@ function qbPushSlotToMenu(slotIdx) {
   targetArr.push(dish);
 
   slot.pushed = true;
-  slot.pushedTo = target; // record which slot it went to
+  slot.pushedTo = target;   // record which slot it went to
+  slot.pushedDishId = id;   // record dish ID so we can verify it still exists on render
 
   if (slot.flavour) {
     if (!DB.flavourHistory) DB.flavourHistory = {};
@@ -13335,7 +13338,16 @@ function qbPushAllToMenu() {
   qbEnsureInit();
   var target = DB.currentBuild.targetSlot || 'current';
   var toPush = DB.currentBuild.slots.filter(function(s){ return !s.pushed && s.dishName; });
-  if (!toPush.length) { notify('No named unpushed slots'); return; }
+  if (!toPush.length) {
+    // All slots already pushed — surface a helpful next-step message
+    var allPushed = (DB.currentBuild.slots||[]).every(function(s){ return !s.dishName || s.pushed; });
+    if (allPushed) {
+      notify('All slots already pushed ✓  — save this build to the Menu Library (💾 Save as Menu) or ↺ Reset to start a new week');
+    } else {
+      notify('No named unpushed slots — fill in a dish name on any unpushed slot first');
+    }
+    return;
+  }
 
   var targetLabel = target === 'next'
     ? ('Next Week' + (DB.nextMenuWeekLabel ? ' — ' + DB.nextMenuWeekLabel : ''))
@@ -13378,6 +13390,28 @@ function qbRenderReuse() {
 
 function renderQuickBuild() {
   qbEnsureInit();
+
+  // ── Validate pushed flags ─────────────────────────────────────────────────
+  // A slot may have pushed=true from a previous session, but the dish it created
+  // might no longer exist (e.g. week was advanced, menu was cleared, or the build
+  // was reloaded on a different device). Cross-check using the stored pushedDishId.
+  // If the dish is gone, reset the slot so → Menu reappears and the user can re-push.
+  var currIds = new Set((DB.menuDishes     || []).map(function(d){ return d.id; }));
+  var nextIds = new Set((DB.nextMenuDishes || []).map(function(d){ return d.id; }));
+  var staleFound = false;
+  (DB.currentBuild.slots || []).forEach(function(s) {
+    if (!s.pushed || !s.pushedDishId) return;
+    var idSet = s.pushedTo === 'next' ? nextIds : currIds;
+    if (!idSet.has(s.pushedDishId)) {
+      s.pushed = false;
+      delete s.pushedTo;
+      delete s.pushedDishId;
+      staleFound = true;
+    }
+  });
+  if (staleFound) save(); // persist the corrected flags
+  // ─────────────────────────────────────────────────────────────────────────
+
   var build = DB.currentBuild;
   var allFlavours = qbGetAllFlavours();
 
