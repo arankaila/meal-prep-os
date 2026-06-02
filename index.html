@@ -1798,6 +1798,7 @@ select.route-confirm-input option { background:var(--surface2); }
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 </head>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <body>
@@ -1879,6 +1880,7 @@ select.route-confirm-input option { background:var(--surface2); }
       </label>
     </div>
     <button class="btn btn-ghost btn-sm" onclick="cleanupFirebasePayload()" style="justify-content:center;font-size:11px;width:100%;margin-top:4px;" title="Move archives to separate path, strip photos, archive old orders — reduces Firebase bandwidth">🧹 Optimise Firebase</button>
+    <button class="btn btn-ghost btn-sm" id="erp-signout-btn" onclick="erpSignOut()" style="justify-content:center;font-size:11px;width:100%;margin-top:4px;display:none" title="Sign out of Firebase">🔐 Sign Out</button>
   </div>
 </aside>
 
@@ -4190,6 +4192,32 @@ select.route-confirm-input option { background:var(--surface2); }
 </div>
 
 <!-- Portal Deadline Settings Modal -->
+<!-- ── ERP Login Modal ─────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="erp-login-modal" style="z-index:9999">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">🔐 Sign in to Meal Prep OS</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono)">Email &amp; password set in Firebase Console</div>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:20px 22px">
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Email</label>
+        <input type="email" id="erp-login-email" placeholder="your@email.com" autocomplete="email" style="font-size:14px">
+      </div>
+      <div class="form-group" style="margin-bottom:6px">
+        <label>Password</label>
+        <input type="password" id="erp-login-password" placeholder="Password" autocomplete="current-password" style="font-size:14px">
+      </div>
+      <div id="erp-login-err" style="display:none;font-size:11px;color:var(--red);font-family:var(--mono);margin-bottom:10px;padding:6px 10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:4px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gold" style="width:100%;justify-content:center;font-size:13px" onclick="erpSignIn()">Sign In</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="portal-deadline-modal">
   <div class="modal" style="max-width:480px">
     <div class="modal-header">
@@ -10334,20 +10362,36 @@ function initFirebase() {
   try {
     var cfg = JSON.parse(raw);
     if (!cfg.databaseURL) throw new Error('Missing databaseURL');
-    // Avoid re-initialising if already done
     if (!firebase.apps.length) {
       _fbApp = firebase.initializeApp(cfg);
     } else {
       _fbApp = firebase.apps[0];
     }
-    _fbDb      = firebase.database(_fbApp);
-    _fbRef     = _fbDb.ref('29perfOS/data');
-    // Initialise Storage if the SDK is loaded and storageBucket is configured
+    _fbDb  = firebase.database(_fbApp);
+    _fbRef = _fbDb.ref('29perfOS/data');
     if (typeof firebase.storage === 'function' && cfg.storageBucket) {
       window._fbStorage = firebase.storage(_fbApp);
     }
     setSyncUI('syncing', '<strong>Sync</strong> · connecting…');
-    _startFbListener();
+
+    // Check if already signed in (Firebase Auth persists sessions automatically)
+    var currentUser = firebase.auth(_fbApp).currentUser;
+    if (currentUser && currentUser.email) {
+      // Already authenticated — proceed straight to data sync
+      _startFbListener();
+    } else {
+      // Listen for auth state changes (handles page reload with persisted session)
+      firebase.auth(_fbApp).onAuthStateChanged(function(user) {
+        if (user && user.email) {
+          // Valid email-auth session — start syncing
+          if (!_fbListening) _startFbListener();
+        } else {
+          // Not signed in — show login modal
+          document.getElementById('erp-login-modal').classList.add('open');
+          setSyncUI('offline', '<strong>Sync</strong> · sign in required');
+        }
+      });
+    }
     return true;
   } catch(e) {
     setSyncUI('offline', '<strong>Sync</strong> · config error');
@@ -10355,6 +10399,66 @@ function initFirebase() {
     return false;
   }
 }
+
+// ── ERP sign-in ──────────────────────────────────────────────────────────────
+function erpSignIn() {
+  var email = (document.getElementById('erp-login-email').value || '').trim();
+  var pass  = (document.getElementById('erp-login-password').value || '');
+  var errEl = document.getElementById('erp-login-err');
+  if (!email || !pass) {
+    errEl.textContent = 'Enter your email and password.';
+    errEl.style.display = '';
+    return;
+  }
+  errEl.style.display = 'none';
+  var btn = document.querySelector('#erp-login-modal .btn-gold');
+  if (btn) { btn.disabled = true; btn.textContent = 'Signing in…'; }
+
+  firebase.auth(_fbApp).signInWithEmailAndPassword(email, pass)
+    .then(function() {
+      document.getElementById('erp-login-modal').classList.remove('open');
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+      if (!_fbListening) _startFbListener();
+      loadFromFirebase(function(ok) {
+        if (ok) { migrateData(); notify('🔐 Signed in ✓'); }
+        renderDashboard();
+      });
+    })
+    .catch(function(e) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign In'; }
+      var msg = e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential'
+        ? 'Incorrect email or password.'
+        : 'Sign in failed: ' + (e.message || e.code);
+      errEl.textContent = msg;
+      errEl.style.display = '';
+    });
+}
+
+function erpSignOut() {
+  if (!_fbApp) return;
+  firebase.auth(_fbApp).signOut().then(function() {
+    notify('Signed out ✓');
+    var sb = document.getElementById('erp-signout-btn');
+    if (sb) sb.style.display = 'none';
+    document.getElementById('erp-login-modal').classList.add('open');
+  });
+}
+
+// Show sign-out button once authenticated, hide it when not
+if (typeof firebase !== 'undefined' && _fbApp) {
+  firebase.auth(_fbApp).onAuthStateChanged(function(user) {
+    var sb = document.getElementById('erp-signout-btn');
+    if (sb) sb.style.display = (user && user.email) ? '' : 'none';
+  });
+}
+
+// Allow pressing Enter in login fields
+document.addEventListener('DOMContentLoaded', function() {
+  ['erp-login-email', 'erp-login-password'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', function(e) { if (e.key === 'Enter') erpSignIn(); });
+  });
+});
 
 // ── Real-time listener ───────────────────────────────────
 function _startFbListener() {
@@ -10372,9 +10476,46 @@ function _startFbListener() {
 
   // Data changes from other devices
   _fbRef.on('value', function(snap) {
-    if (_localWrite) { _localWrite = false; return; }
     var remote = snap.val();
     if (!remote) return;
+
+    // ── Always merge new orders ───────────────────────────────────────────────
+    // Portal writes orders via targeted update() — these don't change _ts, so
+    // they can arrive as part of an echo we'd normally skip, or as an update
+    // that fails the timestamp guard. We must ALWAYS check for new orders and
+    // merge them in, regardless of _localWrite or timestamp, or orders are lost.
+    if (remote.weeklyOrders) {
+      var incomingOrders = Array.isArray(remote.weeklyOrders)
+        ? remote.weeklyOrders
+        : Object.values(remote.weeklyOrders).filter(Boolean);
+      var localIds = new Set((DB.weeklyOrders || []).map(function(o) { return o.id; }));
+      var newOrders = incomingOrders.filter(function(o) { return o && o.id && !localIds.has(o.id); });
+      if (newOrders.length) {
+        if (!Array.isArray(DB.weeklyOrders)) DB.weeklyOrders = [];
+        DB.weeklyOrders = DB.weeklyOrders.concat(newOrders);
+        try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
+        // Live-refresh the orders panel if it's open
+        var _ap = document.querySelector('.page.active');
+        if (_ap && _ap.id === 'page-orders') try { renderOrdersPanel(); } catch(e) {}
+        notify('🛒 ' + newOrders.length + ' new order' + (newOrders.length > 1 ? 's' : '') + ' received ✓');
+      }
+    }
+    // Also merge new customers written by portal
+    if (remote.customers) {
+      var incomingCusts = Array.isArray(remote.customers)
+        ? remote.customers
+        : Object.values(remote.customers).filter(Boolean);
+      var localCustIds = new Set((DB.customers || []).map(function(c) { return c.id; }));
+      var newCusts = incomingCusts.filter(function(c) { return c && c.id && !localCustIds.has(c.id); });
+      if (newCusts.length) {
+        if (!Array.isArray(DB.customers)) DB.customers = [];
+        DB.customers = DB.customers.concat(newCusts);
+        try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    if (_localWrite) { _localWrite = false; return; }
     // Only apply if remote is newer than last local save
     var remoteTs = remote._ts || 0;
 
@@ -10604,6 +10745,17 @@ function save() {
 }
 
 function migrateData() {
+  // Normalise weeklyOrders and customers from Firebase keyed objects to arrays.
+  // The portal writes orders/customers via keyed update() paths, so Firebase
+  // returns them as objects (not integer-indexed arrays). Convert both to arrays
+  // so the ERP's array-based functions (filter, find, forEach) work correctly.
+  if (DB.weeklyOrders && !Array.isArray(DB.weeklyOrders)) {
+    DB.weeklyOrders = Object.values(DB.weeklyOrders).filter(Boolean);
+  }
+  if (DB.customers && !Array.isArray(DB.customers)) {
+    DB.customers = Object.values(DB.customers).filter(Boolean);
+  }
+
   // Migrate legacy S1/S2 session values to Sunday/Wednesday
   (DB.weeklyOrders || []).forEach(function(o) {
     if (o.session === 'S1') o.session = 'Sunday';
