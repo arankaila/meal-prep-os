@@ -7314,7 +7314,14 @@ function addDishRow(){
   save();renderMenu();
 }
 
-function removeDish(idx){getSlotDishes().splice(idx,1);save();renderMenu();}
+function removeDish(idx){
+  getSlotDishes().splice(idx,1);
+  // Keep the isolated backup key in sync — without this, nextMenuGuard() sees the
+  // empty nextMenuDishes array and restores the deleted dishes from the stale backup.
+  if (menuActiveSlot === 'next') nextMenuWrite(DB.nextMenuDishes);
+  save();
+  renderMenu();
+}
 
 function createAthleteVariant(idx) {
   var slotDishes = getSlotDishes();
