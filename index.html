@@ -8203,7 +8203,8 @@ function invGetStatus(onHand, par){
 /* Returns RAW (AP) grams needed — what you actually need to have in stock / purchase */
 function calcIngDemand(){
   const demand={};
-  DB.menuDishes.forEach(dish=>{
+  // Use the production slot's dishes so demand is correct whether building current or next week
+  getProductionDishes().forEach(dish=>{
     const slots=[{slot:'protein',scale:n(dish.scaleProtein)||1},{slot:'carb',scale:n(dish.scaleCarb)||1},{slot:'veg',scale:n(dish.scaleVeg)||1},{slot:'condiment',scale:1},{slot:'complete',scale:1}];
     const overall=n(dish.scaleOverall)||1;
     const totalPorts=n(dish.drop1)+n(dish.drop2);
@@ -10398,6 +10399,14 @@ function _startFbListener() {
       var localTemplates = DB.menuTemplates;
       // Preserve weeklyArchives — they live in /hist/ and are not in the live blob
       var localArchives = (DB.weeklyArchives && DB.weeklyArchives.length) ? DB.weeklyArchives : null;
+      // Preserve menuDishes / nextMenuDishes only when the incoming remote snapshot
+      // looks like a failed/stale write (remoteTs is zero or significantly older than
+      // our last save). In normal operation (another device legitimately cleared the
+      // menu or advanced the week), we must NOT restore old dishes — that would undo
+      // intentional changes. Only restore when the write itself appears to have failed.
+      var likelyFailedWrite = (remoteTs === 0) || (remoteTs < _lastSaved - 5000);
+      var localMenuDishes     = likelyFailedWrite && (DB.menuDishes     && DB.menuDishes.length)     ? DB.menuDishes     : null;
+      var localNextMenuDishes = likelyFailedWrite && (DB.nextMenuDishes && DB.nextMenuDishes.length) ? DB.nextMenuDishes : null;
       Object.assign(DB, remote);
       if (Array.isArray(localTemplates) && localTemplates.length > (Array.isArray(DB.menuTemplates) ? DB.menuTemplates.length : 0)) {
         DB.menuTemplates = localTemplates;
@@ -10405,6 +10414,13 @@ function _startFbListener() {
       if (!Array.isArray(DB.menuTemplates)) DB.menuTemplates = [];
       if (localArchives && (!DB.weeklyArchives || !DB.weeklyArchives.length)) {
         DB.weeklyArchives = localArchives;
+      }
+      // Only restore dishes if this looks like a failed write, not a legitimate clear
+      if (localMenuDishes && (!DB.menuDishes || !DB.menuDishes.length)) {
+        DB.menuDishes = localMenuDishes;
+      }
+      if (localNextMenuDishes && (!DB.nextMenuDishes || !DB.nextMenuDishes.length)) {
+        DB.nextMenuDishes = localNextMenuDishes;
       }
       // Restore nextMenuDishes from isolated localStorage key if mobile app wiped it
       nextMenuGuard();
@@ -10540,15 +10556,27 @@ function loadFromFirebase(callback) {
       // which would wipe a deliberately-opened portal state.
       var localNextPub = DB.nextMenuPublished;
       // Preserve weeklyArchives — they live in /hist/ and are not in the live blob
-      var localArchives = (DB.weeklyArchives && DB.weeklyArchives.length) ? DB.weeklyArchives : null;
+      var localArchives       = (DB.weeklyArchives && DB.weeklyArchives.length)     ? DB.weeklyArchives : null;
+      // Only restore menuDishes / nextMenuDishes if Firebase looks stale (failed write).
+      // If remoteTs > 0 and >= _lastSaved the remote is authoritative — don't restore.
+      var likelyFailedLoad    = (remoteTs === 0) || (remoteTs < _lastSaved - 5000);
+      var localMenuDishes     = likelyFailedLoad && (DB.menuDishes     && DB.menuDishes.length)     ? DB.menuDishes     : null;
+      var localNextMenuDishes = likelyFailedLoad && (DB.nextMenuDishes && DB.nextMenuDishes.length) ? DB.nextMenuDishes : null;
       delete remote._ts;
       Object.assign(DB, remote);
-      // Restore nextMenuPublished if remote wiped it (ops app is the authority on this)
-      if (localNextPub === true && !DB.nextMenuPublished) {
+      // Restore nextMenuPublished only if our write appears to have failed — not
+      // unconditionally, or a manual portal close gets reversed on next startup.
+      if (likelyFailedLoad && localNextPub === true && !DB.nextMenuPublished) {
         DB.nextMenuPublished = true;
       }
       if (localArchives && (!DB.weeklyArchives || !DB.weeklyArchives.length)) {
         DB.weeklyArchives = localArchives;
+      }
+      if (localMenuDishes && (!DB.menuDishes || !DB.menuDishes.length)) {
+        DB.menuDishes = localMenuDishes;
+      }
+      if (localNextMenuDishes && (!DB.nextMenuDishes || !DB.nextMenuDishes.length)) {
+        DB.nextMenuDishes = localNextMenuDishes;
       }
       migrateData(); // backfill any fields added since this data was last saved
       // Restore nextMenuDishes from isolated localStorage key if Firebase was wiped by mobile app
