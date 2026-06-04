@@ -10348,6 +10348,15 @@ var _fbListening= false;
 var _localWrite = false;   // flag: we triggered the next onValue, skip re-applying
 var _lastSaved  = (function(){ try { return parseInt(localStorage.getItem('29perf_lastSaved')||'0',10)||0; } catch(e){ return 0; } })();
 var _archivesLoaded = false; // flag: weeklyArchives loaded from /hist/ Firebase path
+// ── STALE-DEVICE WRITE GUARD STATE ──────────────────────────────────────────
+// _fbBaseTs = the _ts of the last cloud snapshot whose DATA this device's DB
+// actually reflects (i.e. the cloud version we are "based on"). A full-blob
+// write is only permitted if the cloud has NOT moved past this version. This is
+// the single check that prevents an old/stale device (whose write-time _ts looks
+// fresh even though its data is months old) from reverting the whole database.
+// It is ONLY updated when we adopt cloud data into DB, or after our own write.
+var _fbBaseTs   = 0;
+var _staleAlerted = false;  // throttle the "save blocked" alert to once per stale episode
 
 // ── Sync UI helpers ─────────────────────────────────────
 function setSyncUI(state, msg) {
@@ -10556,6 +10565,8 @@ function _startFbListener() {
       var localMenuDishes     = likelyFailedWrite && (DB.menuDishes     && DB.menuDishes.length)     ? DB.menuDishes     : null;
       var localNextMenuDishes = likelyFailedWrite && (DB.nextMenuDishes && DB.nextMenuDishes.length) ? DB.nextMenuDishes : null;
       Object.assign(DB, remote);
+      // We have adopted this cloud snapshot — it is now our base version.
+      _fbBaseTs = remoteTs; _staleAlerted = false;
       if (Array.isArray(localTemplates) && localTemplates.length > (Array.isArray(DB.menuTemplates) ? DB.menuTemplates.length : 0)) {
         DB.menuTemplates = localTemplates;
       }
@@ -10659,16 +10670,48 @@ function _flushToFirebase() {
   });
   payload._ts = ts;
 
-  _localWrite = true;
-  _lastSaved  = ts;
-  // Persist _lastSaved so page reloads don't reset it to 0
-  try { localStorage.setItem('29perf_lastSaved', String(ts)); } catch(e) {}
-  _fbRef.set(payload).then(function() {
-    setSyncUI('connected', '<strong>Sync</strong> · saved ✓');
+  // ── STALE-DEVICE WRITE GUARD ────────────────────────────────────────────────
+  // Before overwriting the whole cloud blob, read ONLY the cloud's current _ts
+  // (cheap — a single number, not the whole node). If the cloud is NEWER than the
+  // version this device is based on (_fbBaseTs), then either another device wrote
+  // since we last synced, or THIS device is stale (old data carrying a fresh
+  // write-time _ts — exactly what corrupted the database before). Either way we
+  // must NOT clobber it. Abort, tell the user to reload, and let the live
+  // listener pull the authoritative data in.
+  //
+  // Note: mobile-app writes land with _ts = 0, which never beats a real base, so
+  // the existing "mobile wiped the menu" recovery write still goes through.
+  _fbRef.child('_ts').once('value').then(function(tsSnap) {
+    var cloudTs = tsSnap.val() || 0;
+    if (cloudTs > _fbBaseTs + 250 && cloudTs !== _lastSaved) {
+      setSyncUI('offline', '<strong>Sync</strong> · save blocked — reload to get latest');
+      console.warn('[stale-guard] blocked whole-blob write. cloudTs=' + cloudTs + ' baseTs=' + _fbBaseTs);
+      if (!_staleAlerted) {
+        _staleAlerted = true;
+        alert('⚠️ Save blocked to protect your data.\n\n'
+            + 'This device is showing an OLDER version of the database than the cloud. '
+            + 'Saving now would overwrite newer data — this is exactly what corrupted the system before.\n\n'
+            + 'Reload this page to pull the latest data, then re-make your changes.');
+      }
+      return; // do NOT write
+    }
+    // Safe to commit.
+    _localWrite = true;
+    _lastSaved  = ts;
+    try { localStorage.setItem('29perf_lastSaved', String(ts)); } catch(e) {}
+    _fbRef.set(payload).then(function() {
+      _fbBaseTs = ts;          // our write is now the cloud's current version
+      _staleAlerted = false;
+      setSyncUI('connected', '<strong>Sync</strong> · saved ✓');
+    }).catch(function(e) {
+      _localWrite = false;
+      setSyncUI('offline', '<strong>Sync</strong> · save failed');
+      console.warn('Firebase save error:', e);
+    });
   }).catch(function(e) {
-    _localWrite = false;
-    setSyncUI('offline', '<strong>Sync</strong> · save failed');
-    console.warn('Firebase save error:', e);
+    // Fail safe: if we cannot read the guard value, do NOT overwrite.
+    setSyncUI('offline', '<strong>Sync</strong> · save check failed');
+    console.warn('[stale-guard] _ts read failed, write skipped:', e);
   });
 }
 
@@ -10685,8 +10728,16 @@ function loadFromFirebase(callback) {
       // without this check, the one-time pull would overwrite newer localStorage data
       // with the old Firebase snapshot, causing dishes and portal state to disappear.
       var remoteTs = remote._ts || 0;
-      if (remoteTs > 0 && remoteTs < _lastSaved) {
-        // Our local data is newer.  Write it back so Firebase catches up, then proceed.
+      // Prefer local over cloud ONLY within a tight window (a genuine just-missed
+      // write — pushed dishes/toggled portal, then refreshed seconds later). A
+      // device that has been closed for minutes/hours/days and reopened with stale
+      // localStorage must NOT win here — that is the exact stale-clobber vector.
+      // In that case we fall through and adopt the cloud (authoritative) instead.
+      var localAheadBy = _lastSaved - remoteTs;
+      if (remoteTs > 0 && localAheadBy > 0 && localAheadBy < 10000) {
+        // Our local data is genuinely newer (just-missed write). Mark cloud as our
+        // base so the catch-up write passes the stale-guard, then write it back.
+        _fbBaseTs = remoteTs;
         setTimeout(saveToFirebaseNow, 300);
         callback(true);
         return;
@@ -10712,6 +10763,8 @@ function loadFromFirebase(callback) {
       var localNextMenuDishes = likelyFailedLoad && (DB.nextMenuDishes && DB.nextMenuDishes.length) ? DB.nextMenuDishes : null;
       delete remote._ts;
       Object.assign(DB, remote);
+      // Adopted the cloud snapshot — it is now our base version for the write guard.
+      _fbBaseTs = remoteTs; _staleAlerted = false;
       // Restore nextMenuPublished only if our write appears to have failed — not
       // unconditionally, or a manual portal close gets reversed on next startup.
       if (likelyFailedLoad && localNextPub === true && !DB.nextMenuPublished) {
