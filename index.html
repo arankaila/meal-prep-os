@@ -10669,6 +10669,14 @@ function _flushToFirebase() {
     payload[k] = v;
   });
   payload._ts = ts;
+  // WRITER MARKER (server-enforced lockout): the security rules only accept a
+  // whole-blob write when _wm === _ts. This guarded ERP sets them equal on every
+  // write. Retired/unguarded clients (the old mobile app, stale tabs) set a fresh
+  // _ts but never set a matching _wm, so Firebase rejects their writes outright —
+  // they can no longer clobber the menu from any device. The customer portal only
+  // writes targeted child paths (orders/customers/discounts) that leave _ts/_wm
+  // untouched and equal, so ordering is unaffected.
+  payload._wm = ts;
 
   // ── STALE-DEVICE WRITE GUARD ────────────────────────────────────────────────
   // Before overwriting the whole cloud blob, read ONLY the cloud's current _ts
