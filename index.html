@@ -10357,6 +10357,12 @@ var _archivesLoaded = false; // flag: weeklyArchives loaded from /hist/ Firebase
 // It is ONLY updated when we adopt cloud data into DB, or after our own write.
 var _fbBaseTs   = 0;
 var _staleAlerted = false;  // throttle the "save blocked" alert to once per stale episode
+// _fbBaseVer = the monotonic version counter (_ver) of the cloud snapshot this
+// device's DB currently reflects. Writes commit via a transaction only when the
+// cloud is still at this version; a stale device (whose _fbBaseVer is behind the
+// cloud) aborts instead of overwriting. Clock-independent — replaces the old
+// wall-clock staleness check that mis-fired under device clock skew.
+var _fbBaseVer  = null;
 
 // ── Sync UI helpers ─────────────────────────────────────
 function setSyncUI(state, msg) {
@@ -10534,6 +10540,11 @@ function _startFbListener() {
     if (_localWrite) { _localWrite = false; return; }
     // Only apply if remote is newer than last local save
     var remoteTs = remote._ts || 0;
+    // Version-based adoption (clock-independent). The cloud's monotonic _ver tells
+    // us, without trusting any clock, whether the cloud is ahead of what this
+    // device reflects. This is the signal that reliably heals a stale device.
+    var remoteVer  = (typeof remote._ver === 'number') ? remote._ver : null;
+    var versionNewer = (remoteVer !== null) && (_fbBaseVer === null || remoteVer > _fbBaseVer);
 
     // ── Mobile-app wipe guard (runs regardless of timestamp) ──────────────────
     // The mobile app writes without nextMenuDishes/_ts, so remoteTs=0 never
@@ -10549,7 +10560,7 @@ function _startFbListener() {
       setTimeout(saveToFirebaseNow, 150);
     }
 
-    if (remoteTs > _lastSaved + 500) {
+    if (versionNewer || (remoteVer === null && remoteTs > _lastSaved + 500)) {
       delete remote._ts;
       // Preserve local menuTemplates if the remote has fewer — prevents race condition
       // where the 1.5s debounce hasn't flushed a just-saved template yet
@@ -10567,6 +10578,7 @@ function _startFbListener() {
       Object.assign(DB, remote);
       // We have adopted this cloud snapshot — it is now our base version.
       _fbBaseTs = remoteTs; _staleAlerted = false;
+      if (remoteVer !== null) _fbBaseVer = remoteVer;
       if (Array.isArray(localTemplates) && localTemplates.length > (Array.isArray(DB.menuTemplates) ? DB.menuTemplates.length : 0)) {
         DB.menuTemplates = localTemplates;
       }
@@ -10688,35 +10700,63 @@ function _flushToFirebase() {
   // orders/customers: before overwriting the whole blob, re-read those two
   // collections and merge in anything this device is missing, so a save can never
   // erase an order that arrived from the portal in the meantime.
-  function _commitFlush() {
-    _localWrite = true;
-    _lastSaved  = ts;
-    try { localStorage.setItem('29perf_lastSaved', String(ts)); } catch(e) {}
-    _fbRef.set(payload).then(function() {
-      _fbBaseTs = ts;
-      _staleAlerted = false;
-      setSyncUI('connected', '<strong>Sync</strong> · saved ✓');
-    }).catch(function(e) {
-      _localWrite = false;
-      setSyncUI('offline', '<strong>Sync</strong> · save failed' + (e && e.code ? ' (' + e.code + ')' : ''));
-      console.warn('Firebase save error:', e);
-    });
-  }
-  _fbRef.once('value').then(function(snap) {
-    var remote = snap.val() || {};
+  // ── VERSION-BASED CONCURRENCY (clock-independent) ───────────────────────────
+  // We overwrite the whole blob via a TRANSACTION keyed on a monotonic version
+  // counter (_ver), NOT on wall-clock timestamps. A write only commits if the
+  // cloud is still at the version this device's data is based on (_fbBaseVer). If
+  // another device — or a stale laptop carrying an old cached menu — has moved the
+  // cloud forward since we synced, the transaction ABORTS: we never clobber newer
+  // data, and the live listener pulls the latest in. This is immune to clock skew
+  // (so it can never wedge a legitimate editor the way the old timestamp check
+  // did) and it stops a stale device from reverting the menu even though its write
+  // carries a valid _wm marker. Orders/customers present in the cloud but missing
+  // locally are merged in so a save can never drop a portal order.
+  _localWrite = true;
+  _fbRef.transaction(function(cur) {
+    var curVer = (cur && typeof cur._ver === 'number') ? cur._ver : 0;
+    if (_fbBaseVer !== null && curVer > _fbBaseVer) {
+      return; // abort — cloud is ahead of this device; do NOT overwrite
+    }
     function asArr(v) { return !v ? [] : (Array.isArray(v) ? v.filter(Boolean) : Object.values(v).filter(Boolean)); }
+    var out = {};
+    Object.keys(payload).forEach(function(k) { out[k] = payload[k]; });
     ['weeklyOrders', 'customers'].forEach(function(key) {
-      var local = Array.isArray(payload[key]) ? payload[key].slice() : [];
+      var local = Array.isArray(out[key]) ? out[key].slice() : [];
       var ids = {};
       local.forEach(function(o) { if (o && o.id) ids[o.id] = 1; });
-      asArr(remote[key]).forEach(function(o) { if (o && o.id && !ids[o.id]) local.push(o); });
-      payload[key] = local;
+      asArr(cur && cur[key]).forEach(function(o) { if (o && o.id && !ids[o.id]) local.push(o); });
+      out[key] = local;
     });
-    _commitFlush();
-  }).catch(function() {
-    // If the safety re-read fails, still write — the server rule protects us.
-    _commitFlush();
-  });
+    var nowTs = Date.now();
+    out._ver = curVer + 1;
+    out._ts  = nowTs;
+    out._wm  = nowTs;   // server rule requires _wm === _ts
+    return out;
+  }, function(err, committed, snap) {
+    if (err) {
+      _localWrite = false;
+      setSyncUI('offline', '<strong>Sync</strong> · save failed' + (err.code ? ' (' + err.code + ')' : ''));
+      console.warn('Firebase save error:', err);
+      return;
+    }
+    if (!committed) {
+      // Aborted: the cloud was ahead of us. The listener will deliver the newer
+      // data and we adopt it — no data loss, no wedge. The user's change is still
+      // in local DB and will be re-flushed on the next save once we have synced.
+      _localWrite = false;
+      setSyncUI('syncing', '<strong>Sync</strong> · syncing latest…');
+      console.warn('[concurrency] save deferred — cloud was newer; adopting latest.');
+      return;
+    }
+    var val = snap && snap.val ? snap.val() : null;
+    if (val && typeof val._ver === 'number') _fbBaseVer = val._ver;
+    if (val && typeof val._ts === 'number') {
+      _lastSaved = val._ts; _fbBaseTs = val._ts;
+      try { localStorage.setItem('29perf_lastSaved', String(val._ts)); } catch(e) {}
+    }
+    _staleAlerted = false;
+    setSyncUI('connected', '<strong>Sync</strong> · saved ✓');
+  }, false); // applyLocally:false — don't fire our own listener optimistically
 }
 
 // ── Load latest from Firebase once (for init) ───────────
@@ -10732,16 +10772,20 @@ function loadFromFirebase(callback) {
       // without this check, the one-time pull would overwrite newer localStorage data
       // with the old Firebase snapshot, causing dishes and portal state to disappear.
       var remoteTs = remote._ts || 0;
-      // Prefer local over cloud ONLY within a tight window (a genuine just-missed
-      // write — pushed dishes/toggled portal, then refreshed seconds later). A
-      // device that has been closed for minutes/hours/days and reopened with stale
-      // localStorage must NOT win here — that is the exact stale-clobber vector.
-      // In that case we fall through and adopt the cloud (authoritative) instead.
+      // Version-authoritative load. The cloud's monotonic _ver — not any clock —
+      // decides who is newer. We prefer local over cloud ONLY when local's version
+      // is strictly ahead (a genuine just-missed write). A stale laptop reopened
+      // with an old cached menu has a LOWER _ver than the cloud, so it adopts the
+      // cloud instead of writing its old menu back — closing the resurrection path.
+      var localVer  = (typeof DB._ver === 'number') ? DB._ver : null;
+      var remoteVer = (typeof remote._ver === 'number') ? remote._ver : null;
       var localAheadBy = _lastSaved - remoteTs;
-      if (remoteTs > 0 && localAheadBy > 0 && localAheadBy < 10000) {
-        // Our local data is genuinely newer (just-missed write). Mark cloud as our
-        // base so the catch-up write passes the stale-guard, then write it back.
+      var preferLocal = (remoteVer !== null && localVer !== null)
+        ? (localVer > remoteVer)                                  // version says we're ahead
+        : (remoteTs > 0 && localAheadBy > 0 && localAheadBy < 10000); // legacy fallback (no versions)
+      if (preferLocal) {
         _fbBaseTs = remoteTs;
+        if (remoteVer !== null) _fbBaseVer = remoteVer;
         setTimeout(saveToFirebaseNow, 300);
         callback(true);
         return;
@@ -10762,13 +10806,17 @@ function loadFromFirebase(callback) {
       var localArchives       = (DB.weeklyArchives && DB.weeklyArchives.length)     ? DB.weeklyArchives : null;
       // Only restore menuDishes / nextMenuDishes if Firebase looks stale (failed write).
       // If remoteTs > 0 and >= _lastSaved the remote is authoritative — don't restore.
-      var likelyFailedLoad    = (remoteTs === 0) || (remoteTs < _lastSaved - 5000);
+      // With a cloud version present, the cloud is authoritative — never "restore"
+      // local dishes over it (that was the clock-based failed-write heuristic that
+      // resurrected a stale device's old menu). Only fall back to it pre-migration.
+      var likelyFailedLoad    = (remoteVer !== null) ? false : ((remoteTs === 0) || (remoteTs < _lastSaved - 5000));
       var localMenuDishes     = likelyFailedLoad && (DB.menuDishes     && DB.menuDishes.length)     ? DB.menuDishes     : null;
       var localNextMenuDishes = likelyFailedLoad && (DB.nextMenuDishes && DB.nextMenuDishes.length) ? DB.nextMenuDishes : null;
       delete remote._ts;
       Object.assign(DB, remote);
       // Adopted the cloud snapshot — it is now our base version for the write guard.
       _fbBaseTs = remoteTs; _staleAlerted = false;
+      if (remoteVer !== null) _fbBaseVer = remoteVer;
       // Restore nextMenuPublished only if our write appears to have failed — not
       // unconditionally, or a manual portal close gets reversed on next startup.
       if (likelyFailedLoad && localNextPub === true && !DB.nextMenuPublished) {
@@ -10859,6 +10907,11 @@ function load() {
     var s = localStorage.getItem('29perfOS');
     if (s) {
       Object.assign(DB, JSON.parse(s));
+      // Seed the version base from whatever this device last held, so that BEFORE
+      // the first cloud sync our write-transaction already knows our data version.
+      // A stale device thus starts with a low _fbBaseVer and cannot overwrite a
+      // higher cloud version even if it tries to save before the listener heals it.
+      _fbBaseVer = (typeof DB._ver === 'number') ? DB._ver : null;
       migrateData();
       // Immediately restore nextMenuDishes from isolated key if main localStorage
       // is missing it (e.g. the push failed silently, or storage was partially cleared).
