@@ -10678,48 +10678,44 @@ function _flushToFirebase() {
   // untouched and equal, so ordering is unaffected.
   payload._wm = ts;
 
-  // ── STALE-DEVICE WRITE GUARD ────────────────────────────────────────────────
-  // Before overwriting the whole cloud blob, read ONLY the cloud's current _ts
-  // (cheap — a single number, not the whole node). If the cloud is NEWER than the
-  // version this device is based on (_fbBaseTs), then either another device wrote
-  // since we last synced, or THIS device is stale (old data carrying a fresh
-  // write-time _ts — exactly what corrupted the database before). Either way we
-  // must NOT clobber it. Abort, tell the user to reload, and let the live
-  // listener pull the authoritative data in.
-  //
-  // Note: mobile-app writes land with _ts = 0, which never beats a real base, so
-  // the existing "mobile wiped the menu" recovery write still goes through.
-  _fbRef.child('_ts').once('value').then(function(tsSnap) {
-    var cloudTs = tsSnap.val() || 0;
-    if (cloudTs > _fbBaseTs + 250 && cloudTs !== _lastSaved) {
-      setSyncUI('offline', '<strong>Sync</strong> · save blocked — reload to get latest');
-      console.warn('[stale-guard] blocked whole-blob write. cloudTs=' + cloudTs + ' baseTs=' + _fbBaseTs);
-      if (!_staleAlerted) {
-        _staleAlerted = true;
-        alert('⚠️ Save blocked to protect your data.\n\n'
-            + 'This device is showing an OLDER version of the database than the cloud. '
-            + 'Saving now would overwrite newer data — this is exactly what corrupted the system before.\n\n'
-            + 'Reload this page to pull the latest data, then re-make your changes.');
-      }
-      return; // do NOT write
-    }
-    // Safe to commit.
+  // ── ORDER-SAFETY MERGE (no wall-clock blocking) ─────────────────────────────
+  // The SERVER security rule (_wm === _ts) is now the authoritative protection
+  // against unauthorised/stale clients: the retired mobile app and any old code
+  // cannot produce the marker, so Firebase rejects their writes outright. We
+  // therefore NO LONGER block writes on a wall-clock timestamp comparison — that
+  // check mis-fired whenever two devices' clocks differed (clock skew), wedging
+  // legitimate edits and refusing to save. The one thing we still protect is
+  // orders/customers: before overwriting the whole blob, re-read those two
+  // collections and merge in anything this device is missing, so a save can never
+  // erase an order that arrived from the portal in the meantime.
+  function _commitFlush() {
     _localWrite = true;
     _lastSaved  = ts;
     try { localStorage.setItem('29perf_lastSaved', String(ts)); } catch(e) {}
     _fbRef.set(payload).then(function() {
-      _fbBaseTs = ts;          // our write is now the cloud's current version
+      _fbBaseTs = ts;
       _staleAlerted = false;
       setSyncUI('connected', '<strong>Sync</strong> · saved ✓');
     }).catch(function(e) {
       _localWrite = false;
-      setSyncUI('offline', '<strong>Sync</strong> · save failed');
+      setSyncUI('offline', '<strong>Sync</strong> · save failed' + (e && e.code ? ' (' + e.code + ')' : ''));
       console.warn('Firebase save error:', e);
     });
-  }).catch(function(e) {
-    // Fail safe: if we cannot read the guard value, do NOT overwrite.
-    setSyncUI('offline', '<strong>Sync</strong> · save check failed');
-    console.warn('[stale-guard] _ts read failed, write skipped:', e);
+  }
+  _fbRef.once('value').then(function(snap) {
+    var remote = snap.val() || {};
+    function asArr(v) { return !v ? [] : (Array.isArray(v) ? v.filter(Boolean) : Object.values(v).filter(Boolean)); }
+    ['weeklyOrders', 'customers'].forEach(function(key) {
+      var local = Array.isArray(payload[key]) ? payload[key].slice() : [];
+      var ids = {};
+      local.forEach(function(o) { if (o && o.id) ids[o.id] = 1; });
+      asArr(remote[key]).forEach(function(o) { if (o && o.id && !ids[o.id]) local.push(o); });
+      payload[key] = local;
+    });
+    _commitFlush();
+  }).catch(function() {
+    // If the safety re-read fails, still write — the server rule protects us.
+    _commitFlush();
   });
 }
 
