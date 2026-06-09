@@ -10819,8 +10819,39 @@ function _flushToFirebase() {
       try { localStorage.setItem('29perf_lastSaved', String(val._ts)); } catch(e) {}
     }
     _staleAlerted = false;
+    _publishPublicMenu();   // keep the customer-facing public node in sync
     setSyncUI('connected', '<strong>Sync</strong> · saved ✓');
   }, false); // applyLocally:false — don't fire our own listener optimistically
+}
+
+// ── Public menu node (what the customer portal reads) ───────────────────────
+// The portal must NOT receive customers/orders/recipes/etc. — only the menu it
+// needs to render. We publish a slim, PII-free node to 29perfOS/public/menu and
+// point the portal there. This closes the customer-data leak (anyone could read
+// the whole customers table from the portal, and the email "prefill" exposed
+// names/phones/addresses) and cuts portal downloads further.
+function _publishPublicMenu() {
+  if (!_fbDb) return;
+  var pub = {
+    menuDishes:        DB.menuDishes        || [],
+    nextMenuDishes:    DB.nextMenuDishes    || [],
+    menuPublished:     !!DB.menuPublished,
+    nextMenuPublished: !!DB.nextMenuPublished,
+    menuWeekLabel:     DB.menuWeekLabel     || '',
+    nextMenuWeekLabel: DB.nextMenuWeekLabel || '',
+    dropDates:         DB.dropDates         || {},
+    nextDropDates:     DB.nextDropDates     || {},
+    s1Deadline:        DB.s1Deadline        || null,
+    s2Deadline:        DB.s2Deadline        || null,
+    nextS1Deadline:    DB.nextS1Deadline    || null,
+    nextS2Deadline:    DB.nextS2Deadline    || null,
+    autoPublishFired:  !!DB.autoPublishFired,
+    minOrderQty:       DB.minOrderQty       || 3,
+    defaultSellPrice:  DB.defaultSellPrice  || 9.99,
+    _ts: Date.now()
+  };
+  try { _fbDb.ref('29perfOS/public/menu').set(pub); }
+  catch(e) { console.warn('publishPublicMenu failed', e); }
 }
 
 // ── Load latest from Firebase once (for init) ───────────
