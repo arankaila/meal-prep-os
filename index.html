@@ -10427,6 +10427,18 @@ var _staleAlerted = false;  // throttle the "save blocked" alert to once per sta
 // cloud) aborts instead of overwriting. Clock-independent — replaces the old
 // wall-clock staleness check that mis-fired under device clock skew.
 var _fbBaseVer  = null;
+// Deletion tombstones: when the user deletes a customer/order we briefly remember
+// its id so neither the live listener merge nor the flush safety-merge re-adds it
+// from the cloud before our deletion has propagated. Without this, deletes bounce
+// back ("I delete it and it reappears"). 2-minute window covers sync latency.
+var _tombstones = {};
+function _tombstone(id){ if (id) _tombstones[id] = Date.now(); }
+function _isTombstoned(id){
+  var t = _tombstones[id];
+  if (!t) return false;
+  if (Date.now() - t > 120000) { delete _tombstones[id]; return false; }
+  return true;
+}
 
 // ── Sync UI helpers ─────────────────────────────────────
 function setSyncUI(state, msg) {
@@ -10575,7 +10587,7 @@ function _startFbListener() {
         ? remote.weeklyOrders
         : Object.values(remote.weeklyOrders).filter(Boolean);
       var localIds = new Set((DB.weeklyOrders || []).map(function(o) { return o.id; }));
-      var newOrders = incomingOrders.filter(function(o) { return o && o.id && !localIds.has(o.id); });
+      var newOrders = incomingOrders.filter(function(o) { return o && o.id && !localIds.has(o.id) && !_isTombstoned(o.id); });
       if (newOrders.length) {
         if (!Array.isArray(DB.weeklyOrders)) DB.weeklyOrders = [];
         DB.weeklyOrders = DB.weeklyOrders.concat(newOrders);
@@ -10592,7 +10604,7 @@ function _startFbListener() {
         ? remote.customers
         : Object.values(remote.customers).filter(Boolean);
       var localCustIds = new Set((DB.customers || []).map(function(c) { return c.id; }));
-      var newCusts = incomingCusts.filter(function(c) { return c && c.id && !localCustIds.has(c.id); });
+      var newCusts = incomingCusts.filter(function(c) { return c && c.id && !localCustIds.has(c.id) && !_isTombstoned(c.id); });
       if (newCusts.length) {
         if (!Array.isArray(DB.customers)) DB.customers = [];
         DB.customers = DB.customers.concat(newCusts);
@@ -10788,7 +10800,7 @@ function _flushToFirebase() {
       var local = Array.isArray(out[key]) ? out[key].slice() : [];
       var ids = {};
       local.forEach(function(o) { if (o && o.id) ids[o.id] = 1; });
-      asArr(cur && cur[key]).forEach(function(o) { if (o && o.id && !ids[o.id]) local.push(o); });
+      asArr(cur && cur[key]).forEach(function(o) { if (o && o.id && !ids[o.id] && !_isTombstoned(o.id)) local.push(o); });
       out[key] = local;
     });
     var nowTs = Date.now();
@@ -11589,12 +11601,40 @@ function openCustomerModal(id) {
   openModal('cust-modal');
 }
 
+// Collision-free customer id: always one past the highest CUST### actually in use
+// (not just the stored counter, which was corrupted in the June incident and
+// handed out duplicate ids like CUST001 to two different people).
+function _nextCustomerId() {
+  var maxN = (DB.customers || []).reduce(function(m, c) {
+    var x = /^CUST0*(\d+)$/.exec(c && c.id || '');
+    return Math.max(m, x ? parseInt(x[1], 10) : 0);
+  }, 0);
+  var n = Math.max(maxN + 1, DB.nextCustomerId || 1);
+  DB.nextCustomerId = n + 1;
+  return 'CUST' + String(n).padStart(3, '0');
+}
+
 function saveCustomer() {
   var name = (document.getElementById('cust-name').value || '').trim();
   if (!name) { alert('Customer name is required.'); return; }
 
+  // De-duplicate by email: if this is a NEW add but the email already exists,
+  // update that record instead of creating a second one (which caused the portal
+  // "c_<email>" record and a manual "CUST###" record to diverge).
+  var emailVal = (document.getElementById('cust-email').value || '').trim();
+  if (!_editingCustomerId && emailVal) {
+    var dupe = (DB.customers || []).find(function(c) {
+      return (c.email || '').toLowerCase() === emailVal.toLowerCase();
+    });
+    if (dupe) {
+      if (confirm('A customer with this email already exists (' + dupe.name + ').\n\nUpdate that record instead of creating a duplicate?')) {
+        _editingCustomerId = dupe.id;
+      }
+    }
+  }
+
   var data = {
-    id:       _editingCustomerId || ('CUST' + String(DB.nextCustomerId++).padStart(3, '0')),
+    id:       _editingCustomerId || _nextCustomerId(),
     name:     name,
     phone:    (document.getElementById('cust-phone').value    || '').trim(),
     email:    (document.getElementById('cust-email').value    || '').trim(),
@@ -11626,6 +11666,8 @@ function deleteCustomer(id) {
   var c = getCustById(id);
   if (!c) return;
   if (!confirm('Delete ' + c.name + '?\n\nThis will also remove all their orders from the system.')) return;
+  _tombstone(id);
+  (DB.weeklyOrders || []).forEach(function(o) { if (o.customerId === id) _tombstone(o.id); });
   DB.customers    = (DB.customers    || []).filter(function(x) { return x.id !== id; });
   DB.weeklyOrders = (DB.weeklyOrders || []).filter(function(o) { return o.customerId !== id; });
   save();
@@ -11782,6 +11824,7 @@ function saveOrder() {
 
 function deleteOrder(id) {
   if (!confirm('Remove this order?')) return;
+  _tombstone(id);
   DB.weeklyOrders = (DB.weeklyOrders || []).filter(function(o) { return o.id !== id; });
   save();
   renderOrdersPanel();
