@@ -10832,9 +10832,21 @@ function _flushToFirebase() {
 // names/phones/addresses) and cuts portal downloads further.
 function _publishPublicMenu() {
   if (!_fbDb) return;
+  // Slim nutrition data so the portal can compute macros WITHOUT exposing costs,
+  // suppliers, cost history, or recipe steps. Only the customer-facing nutrition
+  // fields and the ingredient quantities each recipe uses are published.
+  var slimIngredients = (DB.ingredients || []).map(function(i) {
+    return { id: i.id, name: i.name, kcal: i.kcal, prot: i.prot, carb: i.carb, fat: i.fat, allergens: i.allergens || [] };
+  });
+  var slimRecipes = (DB.recipes || []).map(function(r) {
+    return { id: r.id, name: r.name, status: r.status,
+             lines: (r.lines || []).map(function(l) { return { ingId: l.ingId, qty: l.qty }; }) };
+  });
   var pub = {
     menuDishes:        DB.menuDishes        || [],
     nextMenuDishes:    DB.nextMenuDishes    || [],
+    ingredients:       slimIngredients,
+    recipes:           slimRecipes,
     menuPublished:     !!DB.menuPublished,
     nextMenuPublished: !!DB.nextMenuPublished,
     menuWeekLabel:     DB.menuWeekLabel     || '',
