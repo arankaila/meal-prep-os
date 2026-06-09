@@ -2630,22 +2630,25 @@ select.route-confirm-input option { background:var(--surface2); }
           <input class="form-input" type="text" placeholder="&#x1F50D; Search by name, city or postcode..." id="cust-search" oninput="filterCustomers(this.value)" style="width:260px;font-size:12px">
           <div style="display:flex;gap:6px;align-items:center">
             <button class="del-filter-btn active" onclick="setCustFilter(this,'all')">All</button>
-            <button class="del-filter-btn" onclick="setCustFilter(this,'active')">Active</button>
-            <button class="del-filter-btn" onclick="setCustFilter(this,'paused')">Paused</button>
-            <button class="del-filter-btn" onclick="setCustFilter(this,'recurring')">Recurring</button>
+            <button class="del-filter-btn" onclick="setCustFilter(this,'top')">Top Spenders</button>
+            <button class="del-filter-btn" onclick="setCustFilter(this,'recent')">Recently Ordered</button>
+            <button class="del-filter-btn" onclick="setCustFilter(this,'lapsed')">Lapsed</button>
           </div>
           <div id="cust-count" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:auto"></div>
         </div>
+        <div id="cust-summary" class="no-print" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"></div>
         <div id="cust-table-wrap">
           <table class="gs-table del-cust-table">
             <thead>
               <tr>
-                <th>Customer</th>
+                <th onclick="sortCustomers('name')" style="cursor:pointer" title="Sort by name">Customer</th>
                 <th>Contact</th>
                 <th>Address</th>
-                <th>Type</th>
                 <th>Dietary / Notes</th>
-                <th>This Week</th>
+                <th onclick="sortCustomers('count')" style="cursor:pointer" title="Sort by orders">Total Orders &#x21C5;</th>
+                <th onclick="sortCustomers('total')" style="cursor:pointer" title="Sort by total value">Total Value &#x21C5;</th>
+                <th onclick="sortCustomers('avg')" style="cursor:pointer" title="Sort by average value">Avg Value &#x21C5;</th>
+                <th onclick="sortCustomers('last')" style="cursor:pointer" title="Sort by last ordered">Last Ordered &#x21C5;</th>
                 <th class="no-print">Actions</th>
               </tr>
             </thead>
@@ -11498,6 +11501,7 @@ function filterCustomers(v) { _custSearch = v; renderCustomersTable(); }
 
 function setCustFilter(btn, f) {
   _custFilter = f;
+  _custSort = { key: null, dir: 1 };   // let the preset's natural sort take over
   document.querySelectorAll('#del-panel-customers .del-filter-btn').forEach(function(b) {
     b.classList.remove('active');
   });
@@ -11505,70 +11509,144 @@ function setCustFilter(btn, f) {
   renderCustomersTable();
 }
 
+// Lifetime customer order stats. Archived orders live under 29perfOS/archive/orders
+// (separate from the live weeklyOrders) — loaded once, lazily, then the table
+// re-renders so totals reflect a customer's full history, not just this week.
+var _custArchOrders = null;
+function _ensureArchivedOrders() {
+  if (_custArchOrders !== null || !_fbDb) return;
+  _custArchOrders = []; // sentinel: loading (prevents repeat fetches)
+  _fbDb.ref('29perfOS/archive/orders').once('value').then(function(snap) {
+    var v = snap.val() || {};
+    _custArchOrders = Object.keys(v).map(function(k) { return v[k]; }).filter(Boolean);
+    renderCustomersTable();
+  }).catch(function(e) { console.warn('archived orders load failed', e); _custArchOrders = []; });
+}
+function _orderValue(o) {
+  if (Array.isArray(o.items) && o.items.length) {
+    return o.items.reduce(function(s, i) { return s + (parseFloat(i.unitPrice) || 0) * (parseInt(i.qty) || 0); }, 0);
+  }
+  // Fallback for older orders that stored only an allocation map: price from menu.
+  var alloc = o.allocation || {}, sum = 0;
+  var menu = (DB.menuDishes || []).concat(DB.nextMenuDishes || []);
+  Object.keys(alloc).forEach(function(did) {
+    var d = menu.find(function(x) { return x.id === did; });
+    sum += (d ? parseFloat(d.sellPrice) || 0 : 0) * (parseInt(alloc[did]) || 0);
+  });
+  return sum;
+}
+function custOrderStats(custId) {
+  var all = (DB.weeklyOrders || []).concat(_custArchOrders || []);
+  var seen = {}, mine = [];
+  all.forEach(function(o) {
+    if (!o || o.customerId !== custId || !o.id || seen[o.id]) return;
+    if (getOrderStatus(o) === 'cancelled') return;   // don't count cancelled orders
+    seen[o.id] = 1; mine.push(o);
+  });
+  var total = mine.reduce(function(s, o) { return s + _orderValue(o); }, 0);
+  var last = 0;
+  mine.forEach(function(o) {
+    var t = Date.parse(o.createdAt || o.submittedAt || o.confirmedAt || '') || 0;
+    if (t > last) last = t;
+  });
+  return { count: mine.length, total: total, avg: mine.length ? total / mine.length : 0, last: last };
+}
+function _relTime(ts) {
+  if (!ts) return '&mdash;';
+  var d = Math.floor((Date.now() - ts) / 86400000);
+  if (d <= 0) return 'today';
+  if (d === 1) return 'yesterday';
+  if (d < 14) return d + ' days ago';
+  if (d < 60) return Math.floor(d / 7) + ' wks ago';
+  return Math.floor(d / 30) + ' mo ago';
+}
+
+var _custSort = { key: null, dir: 1 };
+function sortCustomers(key) {
+  if (_custSort.key === key) { _custSort.dir *= -1; }
+  else { _custSort.key = key; _custSort.dir = (key === 'name') ? 1 : -1; }
+  renderCustomersTable();
+}
+
 function renderCustomersTable() {
   if (!DB.customers) DB.customers = [];
-  var week = DB.menuWeekLabel || '';
+  _ensureArchivedOrders();
 
-  var filtered = DB.customers.filter(function(c) {
-    if (_custFilter === 'active'    && c.status !== 'active')    return false;
-    if (_custFilter === 'paused'    && c.status !== 'paused')    return false;
-    if (_custFilter === 'recurring' && c.type   !== 'recurring') return false;
-    if (_custSearch) {
-      var s = (_custSearch || '').toLowerCase();
-      if (!(c.name     || '').toLowerCase().includes(s) &&
-          !(c.postcode || '').toLowerCase().includes(s) &&
-          !(c.city     || '').toLowerCase().includes(s) &&
-          !(c.email    || '').toLowerCase().includes(s)) return false;
+  // Attach lifetime stats to each customer
+  var rows = DB.customers.map(function(c) { return { c: c, st: custOrderStats(c.id) }; });
+
+  // Search
+  if (_custSearch) {
+    var s = _custSearch.toLowerCase();
+    rows = rows.filter(function(r) {
+      var c = r.c;
+      return (c.name||'').toLowerCase().includes(s) || (c.postcode||'').toLowerCase().includes(s) ||
+             (c.city||'').toLowerCase().includes(s) || (c.email||'').toLowerCase().includes(s);
+    });
+  }
+
+  // Preset filter — "Lapsed" = has ordered before but not in the last 30 days
+  if (_custFilter === 'lapsed') {
+    rows = rows.filter(function(r) { return r.st.count > 0 && r.st.last && (Date.now() - r.st.last) > 30 * 86400000; });
+  }
+
+  // Sort — an explicit column click wins; otherwise the active preset's natural order
+  var key = _custSort.key, dir = _custSort.dir;
+  if (!key) {
+    if (_custFilter === 'top')         { key = 'total'; dir = -1; }
+    else if (_custFilter === 'recent') { key = 'last';  dir = -1; }
+    else if (_custFilter === 'lapsed') { key = 'last';  dir =  1; }
+    else                               { key = 'name';  dir =  1; }
+  }
+  rows.sort(function(a, b) {
+    if (key === 'name') {
+      var va = (a.c.name||'').toLowerCase(), vb = (b.c.name||'').toLowerCase();
+      return va < vb ? -dir : va > vb ? dir : 0;
     }
-    return true;
+    return ((a.st[key] || 0) - (b.st[key] || 0)) * dir;
   });
 
+  // Summary bar — across ALL customers, independent of the current view
+  var allStats   = DB.customers.map(function(c) { return custOrderStats(c.id); });
+  var totalRev   = allStats.reduce(function(s, x) { return s + x.total; }, 0);
+  var withOrders = allStats.filter(function(x) { return x.count > 0; }).length;
+  var sumEl = document.getElementById('cust-summary');
+  if (sumEl) {
+    function card(label, val) {
+      return '<div style="flex:1;min-width:120px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px">' +
+        '<div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">' + label + '</div>' +
+        '<div style="font-size:16px;font-weight:700;font-family:var(--mono)">' + val + '</div></div>';
+    }
+    sumEl.innerHTML = card('Customers', DB.customers.length) +
+      card('Lifetime Revenue', '&pound;' + totalRev.toFixed(2)) +
+      card('Avg / Customer', '&pound;' + (withOrders ? (totalRev / withOrders).toFixed(2) : '0.00'));
+  }
+
   var countEl = document.getElementById('cust-count');
-  if (countEl) countEl.textContent = filtered.length + ' of ' + DB.customers.length + ' customers';
+  if (countEl) countEl.textContent = rows.length + ' of ' + DB.customers.length + ' customers';
 
   var tbody = document.getElementById('cust-tbody');
   var empty = document.getElementById('cust-empty');
   if (!tbody) return;
-
-  if (!filtered.length) {
-    tbody.innerHTML = '';
-    if (empty) empty.style.display = 'block';
-    return;
-  }
+  if (!rows.length) { tbody.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
   if (empty) empty.style.display = 'none';
 
-  tbody.innerHTML = filtered.map(function(c) {
-    var orders      = custOrdersThisWeek(c.id);
-    var typeLabel   = c.type === 'recurring' ? 'RECURRING' : 'ONE-OFF';
-    var typeCls     = c.type === 'recurring' ? 'recurring' : 'oneoff';
-    var statusCls   = c.status === 'active'  ? 'active'    : 'paused';
+  tbody.innerHTML = rows.map(function(r) {
+    var c = r.c, st = r.st;
     var dietaryText = [c.dietary, c.notes].filter(Boolean).join(' &middot; ');
-
-    var orderSummary = '';
-    if (orders.length) {
-      orderSummary = '<span style="color:var(--gold);font-weight:700">' + orders.length + ' order' + (orders.length > 1 ? 's' : '') + '</span>';
-      var sessions = orders.map(function(o) { return o.session; }).join(', ');
-      orderSummary += '<br><span style="font-size:9px;color:var(--text3)">' + sessions + '</span>';
-    } else {
-      orderSummary = '<span style="color:var(--text3);font-size:11px">none</span>';
-    }
-
     return '<tr>' +
-      '<td class="cust-name-cell">' + n2h(c.name) +
-        (c.email ? '<small>' + n2h(c.email) + '</small>' : '') +
-      '</td>' +
+      '<td class="cust-name-cell">' + n2h(c.name) + (c.email ? '<small>' + n2h(c.email) + '</small>' : '') + '</td>' +
       '<td style="font-size:11px;color:var(--text2);font-family:var(--mono)">' + (c.phone ? n2h(c.phone) : '&mdash;') + '</td>' +
       '<td class="cust-addr">' +
         (c.addr1 ? n2h(c.addr1) : '') +
         (c.addr2 ? '<br>' + n2h(c.addr2) : '') +
         (c.city || c.postcode ? '<br>' + n2h(c.city || '') + ' <strong>' + (c.postcode || '').toUpperCase() + '</strong>' : '') +
       '</td>' +
-      '<td>' +
-        '<span class="cust-badge ' + typeCls + '">' + typeLabel + '</span><br>' +
-        '<span class="cust-badge ' + statusCls + '" style="margin-top:3px;display:inline-block">' + (c.status || '').toUpperCase() + '</span>' +
-      '</td>' +
       '<td class="cust-dietary">' + (dietaryText || '&mdash;') + '</td>' +
-      '<td class="cust-order-count">' + orderSummary + '</td>' +
+      '<td style="font-weight:700;color:var(--gold);text-align:center">' + st.count + '</td>' +
+      '<td style="font-family:var(--mono);white-space:nowrap">&pound;' + st.total.toFixed(2) + '</td>' +
+      '<td style="font-family:var(--mono);color:var(--text2);white-space:nowrap">&pound;' + st.avg.toFixed(2) + '</td>' +
+      '<td style="font-size:11px;color:var(--text2);white-space:nowrap">' + _relTime(st.last) + '</td>' +
       '<td class="no-print" style="white-space:nowrap">' +
         '<button class="action-btn" onclick="openCustomerModal(\'' + c.id + '\')" title="Edit">&#x270F;&#xFE0F;</button> ' +
         '<button class="action-btn" onclick="addOrderForCustomer(\'' + c.id + '\')" title="Add Order this week">&#x2795;</button> ' +
