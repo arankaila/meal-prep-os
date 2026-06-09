@@ -7470,6 +7470,59 @@ function triggerPhotoUpload(realIdx) {
   if (fileInput) fileInput.click();
 }
 
+// ── Dish image → Firebase Storage ───────────────────────────────────────────
+// Uploads a JPEG blob to Storage and resolves with its public download URL.
+// Storing the URL (not a base64 string) keeps the Realtime Database blob tiny —
+// the whole-node sync no longer carries multi-MB images, which was the cause of
+// the download-quota blow-out. Images are served from Storage's CDN and cached
+// by the browser, so quality is unaffected.
+function _storeDishImage(blob, keyHint) {
+  if (!_fbApp || !firebase.storage) {
+    return Promise.reject(new Error('Storage not available'));
+  }
+  var safe = String(keyHint || 'dish').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40) || 'dish';
+  var path = 'dish-photos/' + safe + '_' + Date.now() + '.jpg';
+  var ref  = firebase.storage(_fbApp).ref(path);
+  return ref.put(blob, { contentType: 'image/jpeg' }).then(function(snap){
+    return snap.ref.getDownloadURL();
+  });
+}
+
+// One-time migration: move existing base64 dish photos into Storage and replace
+// them with URLs. Run once from the ERP console: migratePhotosToStorage()
+function migratePhotosToStorage() {
+  if (!_fbApp || !firebase.storage) { alert('Enable Firebase Storage first.'); return; }
+  function dataUrlToBlob(dataUrl) {
+    var parts = dataUrl.split(',');
+    var mime = (parts[0].match(/:(.*?);/) || [])[1] || 'image/jpeg';
+    var bin = atob(parts[1]); var n = bin.length; var arr = new Uint8Array(n);
+    while (n--) arr[n] = bin.charCodeAt(n);
+    return new Blob([arr], { type: mime });
+  }
+  var all = (DB.menuDishes || []).concat(DB.nextMenuDishes || []);
+  var todo = all.filter(function(d) { return d && typeof d.photoUrl === 'string' && d.photoUrl.indexOf('data:') === 0; });
+  if (!todo.length) { alert('No embedded photos to migrate — already done ✓'); return; }
+  if (!confirm('Migrate ' + todo.length + ' embedded photo(s) to Storage? Replaces them with URLs and shrinks the database.')) return;
+  var done = 0, failed = 0;
+  (function next(i) {
+    if (i >= todo.length) {
+      save();
+      if (typeof nextMenuWrite === 'function') nextMenuWrite(DB.nextMenuDishes);
+      alert('Migration complete ✓  uploaded ' + done + ', failed ' + failed + '. Check Firebase usage.');
+      console.log('[migrate] done=' + done + ' failed=' + failed);
+      return;
+    }
+    var d = todo[i];
+    try {
+      _storeDishImage(dataUrlToBlob(d.photoUrl), d.id).then(function(url) {
+        d.photoUrl = url; done++;
+        console.log('[migrate] ' + d.id + ' ' + (d.name||'') + ' → uploaded');
+        next(i + 1);
+      }).catch(function(e) { failed++; console.warn('[migrate] failed ' + d.id, e); next(i + 1); });
+    } catch (e) { failed++; console.warn('[migrate] bad dataURL ' + d.id, e); next(i + 1); }
+  })(0);
+}
+
 function handlePhotoUpload(realIdx, input) {
   var file = input.files && input.files[0];
   if (!file) return;
@@ -7499,11 +7552,22 @@ function handlePhotoUpload(realIdx, input) {
       var canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-      ud(realIdx, 'photoUrl', dataUrl);
-      notify('📷 Photo saved ✓');
-      if (btn) { btn.textContent = '↑ Upload'; btn.disabled = false; }
-      input.value = '';
+      // Upload to Storage; store ONLY the URL (keeps the DB blob small).
+      if (btn) btn.textContent = '↑ Uploading…';
+      canvas.toBlob(function(blob) {
+        if (!blob) { notify('⚠ Could not process image'); if (btn) { btn.textContent = '↑ Upload'; btn.disabled = false; } input.value=''; return; }
+        _storeDishImage(blob, dish.id).then(function(url) {
+          ud(realIdx, 'photoUrl', url);
+          notify('📷 Photo uploaded ✓');
+          if (btn) { btn.textContent = '↑ Upload'; btn.disabled = false; }
+          input.value = '';
+        }).catch(function(err) {
+          console.warn('Storage upload failed:', err);
+          notify('⚠ Upload failed — ' + (err && err.code ? err.code : 'is Storage enabled?'));
+          if (btn) { btn.textContent = '↑ Upload'; btn.disabled = false; }
+          input.value = '';
+        });
+      }, 'image/jpeg', 0.9);
     };
     img.onerror = function() {
       notify('⚠ Could not read image');
@@ -14193,12 +14257,24 @@ function qbHandlePhotoUpload(idx, input) {
       var canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      slot.photoUrl = canvas.toDataURL('image/jpeg', 0.9);
-      save();
-      var el = document.getElementById('qb-detail-photo-'+idx);
-      if (el) el.innerHTML = qbRenderPhotoSection(slot, idx);
-      notify('📷 Photo saved ✓');
-      input.value = '';
+      if (btn) btn.textContent = '↑ Uploading…';
+      canvas.toBlob(function(blob) {
+        if (!blob) { notify('⚠ Could not process image'); if (btn) { btn.textContent = '↑ Upload Photo'; btn.disabled = false; } input.value=''; return; }
+        _storeDishImage(blob, slot.id || ('qbslot'+idx)).then(function(url) {
+          slot.photoUrl = url;
+          save();
+          var el = document.getElementById('qb-detail-photo-'+idx);
+          if (el) el.innerHTML = qbRenderPhotoSection(slot, idx);
+          notify('📷 Photo uploaded ✓');
+          if (btn) { btn.textContent = '↑ Upload Photo'; btn.disabled = false; }
+          input.value = '';
+        }).catch(function(err) {
+          console.warn('Storage upload failed:', err);
+          notify('⚠ Upload failed — ' + (err && err.code ? err.code : 'is Storage enabled?'));
+          if (btn) { btn.textContent = '↑ Upload Photo'; btn.disabled = false; }
+          input.value = '';
+        });
+      }, 'image/jpeg', 0.9);
     };
     img.onerror = function() { notify('⚠ Could not read image'); if (btn) { btn.textContent = '↑ Upload Photo'; btn.disabled = false; } input.value = ''; };
     img.src = e.target.result;
