@@ -137,6 +137,23 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);height:100vh
 .gsp-sub{font-family:var(--mono);font-size:10px;color:var(--text3);flex-shrink:0;}
 .gsp-empty{padding:18px 16px;font-size:12px;color:var(--text3);text-align:center;}
 .gsp-hint{display:flex;gap:14px;padding:8px 16px;border-top:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--text3);}
+
+/* KITCHEN MODE — staff view: ops pages only, tablet-sized touch targets */
+body.kitchen-mode .nav-item.km-hidden,
+body.kitchen-mode .nav-section.km-hidden,
+body.kitchen-mode .sidebar-backup-label,
+body.kitchen-mode .sidebar-btn-row,
+body.kitchen-mode .sync-status,
+body.kitchen-mode #theme-toggle-btn,
+body.kitchen-mode .wk-next-chip{display:none !important;}
+body.kitchen-mode #kitchen-mode-btn{background:var(--gold);color:#000;border-color:var(--gold);}
+body.kitchen-mode .btn{padding:10px 16px;font-size:13px;min-height:40px;}
+body.kitchen-mode .btn-sm{padding:8px 13px;font-size:12px;min-height:36px;}
+body.kitchen-mode .tab,body.kitchen-mode .del-filter-btn,body.kitchen-mode .ord-status-tab,
+body.kitchen-mode .inv-filter-btn,body.kitchen-mode .prod-type-btn{padding:9px 16px;font-size:12.5px;min-height:38px;display:inline-flex;align-items:center;}
+body.kitchen-mode input[type="checkbox"]{width:22px;height:22px;}
+body.kitchen-mode .wk-stage{padding:10px 14px;}
+body.kitchen-mode .action-btn{font-size:16px;padding:8px;}
 .content>#page-guide.active{flex:1;overflow:hidden;margin:-20px;padding:0;}
 
 /* BUTTONS */
@@ -1924,6 +1941,10 @@ select.route-confirm-input option { background:var(--surface2); }
   </nav>
   <div class="sidebar-footer">
     <div class="ver-badge">v1.1 · 29 Performance</div>
+    <button id="kitchen-mode-btn" onclick="toggleKitchenMode()"
+      style="width:100%;margin-bottom:10px;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;justify-content:center">
+      👨‍🍳 <span id="kitchen-mode-label">Kitchen Mode</span>
+    </button>
     <!-- Firebase Sync Status -->
     <div class="sync-status" onclick="openFbSetup()" id="sync-status-widget" title="Click to manage Firebase sync">
       <div class="sync-dot unconfigured" id="sync-dot"></div>
@@ -2349,10 +2370,14 @@ select.route-confirm-input option { background:var(--surface2); }
 
       <!-- Track Ingredient Panel -->
       <div class="card mb-14">
-        <div class="card-header">
-          <div class="card-title">🏷 Track Ingredient</div>
-          <div class="card-sub">Add items from your ingredient database to inventory tracking</div>
+        <div class="card-header" onclick="toggleTrackPanel()" style="cursor:pointer">
+          <div class="card-title"><span id="track-panel-chevron">▸</span> 🏷 Track Ingredients</div>
+          <div class="card-sub">Add items to inventory tracking</div>
+          <div class="card-actions" onclick="event.stopPropagation()">
+            <button class="btn btn-gold btn-sm" onclick="bulkTrackMenuIngredients()" title="Flag every ingredient used by this week's menu for inventory tracking">📥 Track this week's menu</button>
+          </div>
         </div>
+        <div id="track-ing-body" style="display:none">
         <div style="display:flex;gap:8px;padding:12px;background:var(--surface2);border-radius:6px;align-items:flex-end">
           <div style="flex:1">
             <label class="form-label" style="margin-bottom:6px">Select Ingredient</label>
@@ -2362,6 +2387,7 @@ select.route-confirm-input option { background:var(--surface2); }
           <button class="btn btn-gold" onclick="addIngredientTracking()">+ Add to Tracking</button>
         </div>
         <div id="track-ing-suggestions" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div><!-- /track-ing-body -->
       </div>
 
       <!-- Filter + Search bar -->
@@ -4390,7 +4416,7 @@ select.route-confirm-input option { background:var(--surface2); }
     <div class="modal-header"><div class="modal-title" id="ing-modal-title">Add Ingredient</div><button class="modal-close" onclick="closeModal('ing-modal')">×</button></div>
     <div class="modal-body">
       <div class="form-grid">
-        <div class="form-group"><label>Name *</label><input id="ing-name" placeholder="e.g. Chicken Breast"></div>
+        <div class="form-group"><label>Name *</label><input id="ing-name" placeholder="e.g. Chicken Breast" oninput="ingDupCheck(this.value)"><div id="ing-dup-warn" style="display:none;font-size:10px;color:#ff9f0a;margin-top:3px;font-family:var(--mono)"></div></div>
         <div class="form-group"><label>Brand</label><input id="ing-brand" placeholder="e.g. Tesco"></div>
         <div class="form-group"><label>Category *</label>
           <select id="ing-cat"></select>
@@ -4417,6 +4443,10 @@ select.route-confirm-input option { background:var(--surface2); }
         <div class="form-group"><label>Omega-3 (mg)</label><input id="ing-omega3" type="number" step="0.1" min="0"></div>
         <div class="form-group"><label>Omega-6 (mg)</label><input id="ing-omega6" type="number" step="0.1" min="0"></div>
       </div>
+      <div id="ing-micros-toggle" onclick="toggleIngMicros()" style="margin:14px 0 8px;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:6px;cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;">
+        <span><span id="ing-micros-chevron">▸</span> Micronutrients — vitamins &amp; minerals <span style="color:var(--text3);text-transform:none;letter-spacing:0">(optional — most entries skip these)</span></span>
+      </div>
+      <div id="ing-micros-body" style="display:none">
       <div style="margin:14px 0 8px;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:6px;">Vitamins (per 100g raw)</div>
       <div class="form-grid-3">
         <div class="form-group"><label>Vitamin A (µg)</label><input id="ing-vitA" type="number" step="0.1" min="0"></div>
@@ -4446,6 +4476,7 @@ select.route-confirm-input option { background:var(--surface2); }
         <div class="form-group"><label>Iodine (µg)</label><input id="ing-iodine" type="number" step="0.1" min="0"></div>
         <div class="form-group"><label>Chromium (µg)</label><input id="ing-chromium" type="number" step="0.1" min="0"></div>
       </div>
+      </div><!-- /ing-micros-body -->
       <div style="margin:14px 0 8px;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:6px;">UK Allergens (select all that apply)</div>
       <label id="no-allergen-wrap" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;padding:8px 12px;background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-radius:6px;width:fit-content;">
         <input type="checkbox" id="ing-no-allergen" onchange="toggleAllergenPanel(this.checked)" style="width:auto;padding:0;border:none;accent-color:var(--green);">
@@ -4455,6 +4486,7 @@ select.route-confirm-input option { background:var(--surface2); }
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('ing-modal')">Cancel</button>
+      <button class="btn btn-ghost" id="ing-save-another-btn" onclick="saveIngredient(true)">Save &amp; Add Another</button>
       <button class="btn btn-gold" onclick="saveIngredient()">Save Ingredient</button>
     </div>
   </div>
@@ -6037,7 +6069,7 @@ function renderIngredients(){
       <td><strong>${ing.name}</strong>${ing.brand?`<br><span class="small muted">${ing.brand}</span>`:''}</td>
       <td>${catBadgeHtml(ing.cat)}</td>
       <td class="small muted">${ing.supplier||'—'}</td>
-      <td class="mono">£${n(ing.ap).toFixed(2)}</td>
+      <td class="mono ing-cost-cell" onclick="ingInlineCost(event,'${ing.id}')" title="Click to edit cost" style="cursor:pointer">£${n(ing.ap).toFixed(2)} <span style="opacity:.35;font-size:9px">✏</span></td>
       <td class="mono">${ing.proc}% / ${ing.cook}%</td>
       <td class="mono text-gold"><strong>£${ep.toFixed(2)}</strong></td>
       <td><div class="macro-bar"><span class="mp mp-kcal">${n(ing.kcal).toFixed(0)}kcal</span><span class="mp mp-prot">${n(ing.prot).toFixed(1)}P</span><span class="mp mp-carb">${n(ing.carb).toFixed(1)}C</span><span class="mp mp-fat">${n(ing.fat).toFixed(1)}F</span><span class="mp mp-fibre">${n(ing.fibre).toFixed(1)}Fi</span></div></td>
@@ -6101,7 +6133,33 @@ function openIngModal(id=null){
       ${a}
     </label>`).join('');
   toggleAllergenPanel(noAllergen);
+  // Micros collapsed unless this ingredient actually has micro values (rare)
+  var microFields=['omega3','omega6','vitA','vitB1','vitB2','vitB3','vitB6','vitB12','folate','vitC','vitD','vitE','vitK','calcium','iron','magnesium','phosphorus','potassium','sodium','zinc','selenium','manganese','copper','iodine','chromium'];
+  var hasMicros = ing && microFields.some(function(f){ return n(ing[f]) > 0; });
+  toggleIngMicros(hasMicros);
+  ingDupCheck(ing ? ing.name : '');
+  var saBtn = document.getElementById('ing-save-another-btn');
+  if (saBtn) saBtn.style.display = id ? 'none' : '';
   openModal('ing-modal');
+  setTimeout(function(){ var el = document.getElementById('ing-name'); if (el && !id) el.focus(); }, 60);
+}
+
+function toggleIngMicros(force) {
+  var body = document.getElementById('ing-micros-body');
+  var chev = document.getElementById('ing-micros-chevron');
+  if (!body) return;
+  var show = (typeof force === 'boolean') ? force : body.style.display === 'none';
+  body.style.display = show ? '' : 'none';
+  if (chev) chev.textContent = show ? '▾' : '▸';
+}
+
+function ingDupCheck(val) {
+  var warn = document.getElementById('ing-dup-warn');
+  if (!warn) return;
+  var nm = (val || '').trim().toLowerCase();
+  var dup = nm && (DB.ingredients || []).find(function(i){ return i.name.toLowerCase() === nm && i.id !== editIngId; });
+  warn.style.display = dup ? '' : 'none';
+  if (dup) warn.textContent = '⚠ "' + dup.name + '" already exists (' + dup.id + ') — edit that instead?';
 }
 
 function toggleAllergenPanel(noAllergen) {
@@ -6116,7 +6174,7 @@ function toggleAllergenPanel(noAllergen) {
   }
 }
 
-function saveIngredient(){
+function saveIngredient(addAnother){
   const name=document.getElementById('ing-name').value.trim();
   if(!name){alert('Name required');return;}
   const numFields=['ap','proc','cook','par','kcal','prot','carb','sugars','fat','sat','fibre','salt','omega3','omega6','vitA','vitB1','vitB2','vitB3','vitB6','vitB12','folate','vitC','vitD','vitE','vitK','calcium','iron','magnesium','phosphorus','potassium','sodium','zinc','selenium','manganese','copper','iodine','chromium'];
@@ -6147,8 +6205,41 @@ function saveIngredient(){
     DB.ingredients.push(ing);
   }
   editIngId=null;
-  closeModal('ing-modal');
   save();renderIngredients();renderInflationTracker();notify('Ingredient saved ✓');
+  if (addAnother) {
+    openIngModal(null); // fresh form, modal stays open, name focused
+  } else {
+    closeModal('ing-modal');
+  }
+}
+
+function ingInlineCost(ev, id) {
+  ev.stopPropagation();
+  var td = ev.currentTarget;
+  if (td.querySelector('input')) return;
+  var ing = (DB.ingredients || []).find(function(i){ return i.id === id; });
+  if (!ing) return;
+  td.innerHTML = '<input type="number" step="0.001" min="0" value="' + n(ing.ap) + '" style="width:74px;background:var(--surface3);border:1px solid var(--gold);border-radius:4px;color:var(--text);font-family:var(--mono);font-size:11px;padding:3px 6px;outline:none">';
+  var inp = td.querySelector('input');
+  inp.focus(); inp.select();
+  var done = false;
+  function commit(saveIt) {
+    if (done) return; done = true;
+    var v = n(inp.value);
+    if (saveIt && Math.abs(v - n(ing.ap)) > 0.0001) {
+      ing.costHistory = ing.costHistory || [];
+      if (n(ing.ap) > 0) ing.costHistory.unshift({ ap: n(ing.ap), date: new Date().toISOString() });
+      ing.ap = v;
+      save();
+      notify('£' + v.toFixed(3) + ' — cost updated, history snapshotted ✓');
+    }
+    renderIngredients();
+  }
+  inp.addEventListener('blur', function(){ commit(true); });
+  inp.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') commit(true);
+    if (e.key === 'Escape') commit(false);
+  });
 }
 
 function deleteIng(id){
@@ -8627,6 +8718,39 @@ function selectIngredientTracking(ingId){
   document.getElementById('track-ing-search').value=(DB.ingredients.find(i=>i.id===ingId)?.name||'');
   filterTrackIngredients('');
 }
+function toggleTrackPanel() {
+  var body = document.getElementById('track-ing-body');
+  var chev = document.getElementById('track-panel-chevron');
+  if (!body) return;
+  var show = body.style.display === 'none';
+  body.style.display = show ? '' : 'none';
+  if (chev) chev.textContent = show ? '▾' : '▸';
+}
+
+/* One-click onboarding: track every ingredient this week's menu actually uses */
+function bulkTrackMenuIngredients() {
+  var dishes = (typeof getProductionDishes === 'function') ? getProductionDishes() : (DB.menuDishes || []);
+  if (!dishes.length) { notify('No menu this week — build the menu first'); return; }
+  var ingIds = {};
+  dishes.forEach(function(d) {
+    ['protein','carb','veg','condiment','complete'].forEach(function(slot) {
+      var comp = getComp(d[slot]);
+      if (!comp || !comp.lines) return;
+      comp.lines.forEach(function(l){ if (l.ingId) ingIds[l.ingId] = 1; });
+    });
+  });
+  var newly = 0, already = 0;
+  Object.keys(ingIds).forEach(function(id) {
+    var ing = (DB.ingredients || []).find(function(i){ return i.id === id; });
+    if (!ing) return;
+    if (ing.trackInventory) { already++; return; }
+    ing.trackInventory = true; newly++;
+  });
+  if (!newly && !already) { notify('No matching ingredients found on this menu'); return; }
+  save(); renderInventory();
+  notify('📥 ' + newly + ' ingredient' + (newly !== 1 ? 's' : '') + ' added to tracking' + (already ? ' (' + already + ' already tracked)' : '') + ' ✓');
+}
+
 function addIngredientTracking(){
   const val=document.getElementById('track-ing-search').value.trim();
   const ing=DB.ingredients.find(i=>i.name.toLowerCase()===val.toLowerCase());
@@ -9500,9 +9624,14 @@ function restoreLabourFromArchive(id) {
 }
 
 function deleteArchive(id) {
-  if (!confirm('Delete this archived week? This cannot be undone.')) return;
+  var arc = DB.weeklyArchives.find(a => a.id === id);
+  if (!arc) return;
   DB.weeklyArchives = DB.weeklyArchives.filter(a => a.id !== id);
   save(); renderHistory();
+  notifyUndo('Archive "' + (arc.label || id) + '" deleted', function() {
+    DB.weeklyArchives.push(arc);
+    save(); renderHistory(); notify('Archive restored ✓');
+  });
 }
 
 /* Toggle the drill-down drawer for a row */
@@ -10222,10 +10351,17 @@ function saveStaff() {
 }
 
 function deleteStaff(id) {
-  if (!confirm('Remove staff member? Their shifts will also be removed.')) return;
+  var st = DB.labourStaff.find(s => s.id === id);
+  if (!st) return;
+  var theirShifts = DB.labourShifts.filter(sh => sh.staffId === id);
   DB.labourStaff = DB.labourStaff.filter(s => s.id !== id);
   DB.labourShifts = DB.labourShifts.filter(sh => sh.staffId !== id);
-  save(); renderLabour(); notify('Staff removed');
+  save(); renderLabour();
+  notifyUndo(st.name + ' removed' + (theirShifts.length ? ' (+' + theirShifts.length + ' shifts)' : ''), function() {
+    DB.labourStaff.push(st);
+    DB.labourShifts = DB.labourShifts.concat(theirShifts);
+    save(); renderLabour(); notify(st.name + ' restored ✓');
+  });
 }
 
 function openShiftModal(id) {
@@ -10561,6 +10697,7 @@ var _fbBaseVer  = null;
 // back ("I delete it and it reappears"). 2-minute window covers sync latency.
 var _tombstones = {};
 function _tombstone(id){ if (id) _tombstones[id] = Date.now(); }
+function _untombstone(id){ if (id) delete _tombstones[id]; }
 function _isTombstoned(id){
   var t = _tombstones[id];
   if (!t) return false;
@@ -11421,6 +11558,21 @@ function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function notify(msg){const el=document.createElement('div');el.className='notif';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2800);}
 
+/* Toast with a 10s Undo action — modern replacement for confirm() on deletes */
+function notifyUndo(msg, undoFn) {
+  const el = document.createElement('div');
+  el.className = 'notif';
+  el.style.display = 'flex'; el.style.alignItems = 'center'; el.style.gap = '12px';
+  const span = document.createElement('span'); span.textContent = msg;
+  const btn = document.createElement('button');
+  btn.textContent = '↶ Undo';
+  btn.style.cssText = 'background:var(--gold);color:#000;border:none;border-radius:5px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--sans);flex-shrink:0';
+  btn.onclick = function() { el.remove(); try { undoFn(); } catch(e) {} };
+  el.appendChild(span); el.appendChild(btn);
+  document.body.appendChild(el);
+  setTimeout(function(){ el.remove(); }, 10000);
+}
+
 // ═══════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════
@@ -11874,17 +12026,22 @@ function saveCustomer() {
 function deleteCustomer(id) {
   var c = getCustById(id);
   if (!c) return;
-  if (!confirm('Delete ' + c.name + '?\n\nThis will also remove all their orders from the system.')) return;
+  var theirOrders = (DB.weeklyOrders || []).filter(function(o) { return o.customerId === id; });
   _tombstone(id);
-  (DB.weeklyOrders || []).forEach(function(o) { if (o.customerId === id) _tombstone(o.id); });
+  theirOrders.forEach(function(o) { _tombstone(o.id); });
   DB.customers    = (DB.customers    || []).filter(function(x) { return x.id !== id; });
   DB.weeklyOrders = (DB.weeklyOrders || []).filter(function(o) { return o.customerId !== id; });
   save();
-  renderCustomersTable();
-  renderOrdersPanel();
-  renderRouteSheet();
-  renderLabels();
-  notify('Customer deleted');
+  renderCustomersTable(); renderOrdersPanel(); renderRouteSheet(); renderLabels();
+  notifyUndo(c.name + ' deleted' + (theirOrders.length ? ' (+' + theirOrders.length + ' order' + (theirOrders.length > 1 ? 's' : '') + ')' : ''), function() {
+    _untombstone(id);
+    theirOrders.forEach(function(o) { _untombstone(o.id); });
+    DB.customers.push(c);
+    DB.weeklyOrders = DB.weeklyOrders.concat(theirOrders);
+    save();
+    renderCustomersTable(); renderOrdersPanel(); renderRouteSheet(); renderLabels();
+    notify(c.name + ' restored ✓');
+  });
 }
 
 // ── ORDER MODAL ───────────────────────────────────────────────
@@ -11970,9 +12127,29 @@ function buildDishAllocRows(editingOrderId) {
     var qty = existing[d.id] || 0;
     return '<div class="alloc-dish-input-row">' +
       '<span class="alloc-dish-label">' + n2h(d.name || 'Dish') + '</span>' +
-      '<input class="form-input" type="number" min="0" max="99" value="' + qty + '" id="alloc-' + d.id + '" style="width:60px;text-align:center;padding:4px 6px">' +
+      '<span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-right:6px">£' + (n(d.sellPrice) || DB.defaultSellPrice || 0).toFixed(2) + '</span>' +
+      '<input class="form-input" type="number" min="0" max="99" value="' + qty + '" id="alloc-' + d.id + '" oninput="orderUpdateTotal()" style="width:60px;text-align:center;padding:4px 6px">' +
     '</div>';
-  }).join('');
+  }).join('') +
+  '<div id="order-live-total" style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:12px"></div>';
+  orderUpdateTotal();
+}
+
+function orderUpdateTotal() {
+  var el = document.getElementById('order-live-total');
+  if (!el) return;
+  var meals = 0, total = 0;
+  (DB.menuDishes || []).forEach(function(d) {
+    var inp = document.getElementById('alloc-' + d.id);
+    var q = inp ? n(inp.value) : 0;
+    if (q > 0) { meals += q; total += q * (n(d.sellPrice) || DB.defaultSellPrice || 0); }
+  });
+  var minQ = n(DB.minOrderQty) || 0;
+  var under = minQ > 0 && meals > 0 && meals < minQ;
+  el.innerHTML =
+    '<span style="color:' + (under ? '#ff9f0a' : 'var(--text2)') + '">' + meals + ' meal' + (meals !== 1 ? 's' : '') +
+      (under ? ' — below the ' + minQ + '-meal portal minimum' : '') + '</span>' +
+    '<strong style="color:var(--gold);font-size:14px">£' + total.toFixed(2) + '</strong>';
 }
 
 function saveOrder() {
@@ -12032,15 +12209,19 @@ function saveOrder() {
 }
 
 function deleteOrder(id) {
-  if (!confirm('Remove this order?')) return;
+  var removed = (DB.weeklyOrders || []).find(function(o) { return o.id === id; });
+  if (!removed) return;
   _tombstone(id);
   DB.weeklyOrders = (DB.weeklyOrders || []).filter(function(o) { return o.id !== id; });
   save();
-  renderOrdersPanel();
-  renderRouteSheet();
-  renderLabels();
-  renderCustomersTable();
-  notify('Order removed');
+  renderOrdersPanel(); renderRouteSheet(); renderLabels(); renderCustomersTable();
+  notifyUndo('Order removed', function() {
+    _untombstone(id);
+    DB.weeklyOrders.push(removed);
+    save();
+    renderOrdersPanel(); renderRouteSheet(); renderLabels(); renderCustomersTable();
+    notify('Order restored ✓');
+  });
 }
 
 // ── ORDERS PANEL ──────────────────────────────────────────────
@@ -12476,10 +12657,82 @@ function gsKeyNav(e) {
   else if (e.key === 'Escape') { gsClosePalette(); }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// KITCHEN MODE — simplified staff view (June 2026)
+// Ops pages only (Production, Packing & Fulfilment, Delivery), bigger touch
+// targets, destructive/owner tools hidden. Per-device via localStorage.
+// Exit can be protected with DB.kitchenPassword (set on first activation).
+// ═══════════════════════════════════════════════════════════════
+var KM_PAGES = ['production', 'packsheet', 'delivery'];
+
+function kitchenModeOn() { try { return localStorage.getItem('29perf_kitchenMode') === '1'; } catch(e) { return false; } }
+
+function applyKitchenMode() {
+  var on = kitchenModeOn();
+  document.body.classList.toggle('kitchen-mode', on);
+  var lbl = document.getElementById('kitchen-mode-label');
+  if (lbl) lbl.textContent = on ? 'Exit Kitchen Mode' : 'Kitchen Mode';
+  // Hide nav items that aren't kitchen pages; hide sections left empty
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    var oc = item.getAttribute('onclick') || '';
+    var m = oc.match(/showPage\('([^']+)'\)/);
+    var keep = m && KM_PAGES.indexOf(m[1]) !== -1;
+    item.classList.toggle('km-hidden', on && !keep);
+  });
+  document.querySelectorAll('.nav-section').forEach(function(sec) {
+    var anyVisible = Array.prototype.some.call(sec.querySelectorAll('.nav-item'), function(it){ return !it.classList.contains('km-hidden'); });
+    sec.classList.toggle('km-hidden', on && !anyVisible);
+  });
+  // If currently on a non-kitchen page, move to Production
+  if (on) {
+    var active = document.querySelector('.page.active');
+    var pageId = active ? active.id.replace('page-', '') : '';
+    if (KM_PAGES.indexOf(pageId) === -1) showPage('production');
+  }
+}
+
+function toggleKitchenMode() {
+  if (kitchenModeOn()) {
+    // Exiting — password-protected if one is set
+    var pw = (DB.kitchenPassword || '').trim();
+    if (pw) {
+      var entered = prompt('Enter the kitchen-mode exit password:');
+      if (entered === null) return;
+      if (entered !== pw) { notify('Wrong password ✗'); return; }
+    }
+    try { localStorage.setItem('29perf_kitchenMode', '0'); } catch(e) {}
+    applyKitchenMode();
+    notify('Kitchen mode off — full ERP restored');
+  } else {
+    if (!(DB.kitchenPassword || '').trim()) {
+      var set = prompt('Kitchen mode locks this device to Production, Packing and Delivery.\n\nOptional: set an exit password so staff can\'t leave kitchen mode (leave blank for none):');
+      if (set === null) return;
+      if (set.trim()) { DB.kitchenPassword = set.trim(); save(); }
+    }
+    try { localStorage.setItem('29perf_kitchenMode', '1'); } catch(e) {}
+    applyKitchenMode();
+    notify('👨‍🍳 Kitchen mode on — Production · Packing · Delivery');
+  }
+}
+
+// Kitchen mode restricts week-tracker navigation to kitchen pages
+var _wkStageGoFull = wkStageGo;
+wkStageGo = function(page) {
+  if (kitchenModeOn()) {
+    if (page === '_advance' || page === '_next') return;
+    if (KM_PAGES.indexOf(page) === -1) return;
+  }
+  _wkStageGoFull(page);
+};
+
+// Apply on boot (after DOM ready — this script runs at end of body)
+setTimeout(applyKitchenMode, 100);
+
 // Global shortcut: Cmd/Ctrl-K opens, Esc closes
 document.addEventListener('keydown', function(e) {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
     e.preventDefault();
+    if (kitchenModeOn()) return; // staff devices stay on kitchen pages
     var ov = document.getElementById('gsp-overlay');
     if (ov.classList.contains('open')) gsClosePalette(); else gsOpenPalette();
   } else if (e.key === 'Escape') {
