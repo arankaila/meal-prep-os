@@ -1758,6 +1758,64 @@ select.route-confirm-input option { background:var(--surface2); }
 .next-hint{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--gold-dim,rgba(242,194,51,.07));border:1px solid rgba(242,194,51,.25);border-radius:8px;margin-bottom:12px;font-size:12px;color:var(--text2);}
 .next-hint .nh-icon{flex-shrink:0;font-size:14px;}
 .next-hint strong{color:var(--text);}
+/* COOK BOARD (Phase 2B) */
+.cook-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+.cook-card{background:var(--surface);border:2px solid var(--border);border-radius:11px;padding:14px 16px;cursor:pointer;transition:all .15s;position:relative;}
+.cook-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.cook-card.st-in_progress{border-color:#60a5fa;box-shadow:0 0 0 2px rgba(96,165,250,.15);}
+.cook-card.st-complete{border-color:rgba(74,222,128,.5);opacity:.6;}
+.cook-card .cc-type{font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);}
+.cook-card .cc-name{font-size:16px;font-weight:800;margin:3px 0 6px;line-height:1.2;}
+.cook-card .cc-qty{font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:700;}
+.cook-card .cc-status{position:absolute;top:10px;right:12px;font-size:9px;font-family:var(--mono);font-weight:700;padding:2px 8px;border-radius:8px;}
+.cook-overlay{display:none;position:fixed;inset:0;background:var(--bg,#0a0a0a);z-index:6000;overflow-y:auto;padding:22px;}
+.cook-overlay.open{display:block;}
+.cook-ov-name{font-size:30px;font-weight:900;letter-spacing:-.5px;margin:4px 0 2px;}
+.cook-ov-qty{font-family:var(--mono);font-size:20px;color:var(--gold);font-weight:800;margin-bottom:14px;}
+.cook-ov-target{display:inline-flex;align-items:center;gap:8px;background:rgba(242,194,51,.1);border:1px solid rgba(242,194,51,.35);border-radius:9px;padding:10px 16px;font-size:16px;font-weight:700;margin-bottom:16px;}
+.cook-ov-section{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin:16px 0 8px;}
+.cook-ov-line{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:15px;}
+.cook-step{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);font-size:15px;line-height:1.45;cursor:pointer;}
+.cook-step input{width:24px;height:24px;accent-color:var(--gold);flex-shrink:0;margin-top:1px;}
+.cook-step.done span{text-decoration:line-through;color:var(--text3);}
+/* BOX BOARD (Phase 2C) */
+.bb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;}
+.bb-tile{background:var(--surface);border:2px solid var(--border);border-radius:10px;padding:11px 13px;}
+.bb-tile.bb-done{border-color:rgba(74,222,128,.5);background:rgba(74,222,128,.05);}
+.bb-tile .bb-cust{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bb-tile .bb-dish{font-size:11px;color:var(--text2);margin:2px 0 7px;line-height:1.3;}
+.bb-dot{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:var(--mono);margin-right:8px;color:var(--text3);}
+.bb-dot.on{color:#4ade80;}
+.bb-chip{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:8px;border:2px solid var(--gold);background:rgba(242,194,51,.1);color:var(--gold);font-weight:700;font-size:13px;cursor:pointer;margin:0 8px 8px 0;}
+.bb-chip.bb-chip-off{border-color:var(--border2);background:var(--surface2);color:var(--text3);font-weight:600;}
+.bb-fill-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:9px;margin-bottom:8px;}
+.bb-fill-row.bb-filled{opacity:.5;}
+.bb-fill-btn{background:var(--gold);color:#000;border:none;border-radius:8px;font-size:14px;font-weight:800;padding:10px 18px;cursor:pointer;flex-shrink:0;}
+/* TV BOARD (Phase 2D) — castable, zero-touch, glanceable from across the kitchen */
+.tv-board{display:none;position:fixed;inset:0;background:#0a0a0a;z-index:7000;color:#fff;padding:34px 44px;flex-direction:column;gap:20px;overflow:hidden;}
+.tv-board.open{display:flex;}
+.tv-hdr{display:flex;align-items:baseline;gap:22px;border-bottom:2px solid rgba(242,194,51,.35);padding-bottom:14px;}
+.tv-hdr .tv-wk{font-size:34px;font-weight:900;letter-spacing:-1px;color:#f2c233;}
+.tv-hdr .tv-sess{font-size:22px;font-weight:700;color:#ddd;}
+.tv-hdr .tv-count{margin-left:auto;font-family:var(--mono);font-size:20px;color:#aaa;}
+.tv-cols{display:grid;grid-template-columns:1.15fr 1fr;gap:34px;flex:1;min-height:0;}
+.tv-col-title{font-family:var(--mono);font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:12px;}
+.tv-prod-row{display:flex;align-items:center;gap:14px;padding:9px 0;border-bottom:1px solid #222;font-size:21px;}
+.tv-prod-row .nm{flex:1;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tv-prod-row.tv-done{opacity:.45;}
+.tv-prod-row.tv-active .nm{color:#f2c233;}
+.tv-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;background:#333;}
+.tv-dot.d-in_progress{background:#60a5fa;box-shadow:0 0 12px rgba(96,165,250,.6);}
+.tv-dot.d-complete{background:#4ade80;}
+.tv-bar-wrap{height:26px;background:#1c1c1c;border-radius:13px;overflow:hidden;margin:10px 0 16px;}
+.tv-bar{height:100%;background:linear-gradient(90deg,#f2c233,#4ade80);border-radius:13px;transition:width .6s;}
+.tv-big{font-size:56px;font-weight:900;letter-spacing:-2px;}
+.tv-missing{font-size:18px;color:#ddd;padding:5px 0;border-bottom:1px solid #222;display:flex;justify-content:space-between;gap:10px;}
+.tv-stages{display:flex;gap:10px;align-items:center;border-top:2px solid #222;padding-top:16px;}
+.tv-stage{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;color:#666;}
+.tv-stage.s-done{color:#4ade80;}
+.tv-stage.s-active{color:#f2c233;}
+.tv-exit{position:absolute;top:18px;right:22px;background:none;border:1px solid #333;color:#666;border-radius:7px;padding:6px 13px;cursor:pointer;font-size:13px;}
 .qb-flavour-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;}
 .qb-flavour-chip{display:inline-flex;align-items:center;gap:6px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:4px 10px 4px 13px;font-size:12px;font-family:var(--sans);font-weight:600;}
 .qb-chip-meta{font-size:10px;color:var(--text3);font-weight:400;font-family:var(--mono);}
@@ -1950,6 +2008,10 @@ select.route-confirm-input option { background:var(--surface2); }
   </nav>
   <div class="sidebar-footer">
     <div class="ver-badge">v1.1 · 29 Performance</div>
+    <button onclick="enterTvMode()"
+      style="width:100%;margin-bottom:8px;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;justify-content:center" title="Full-screen production board — cast this tab to the kitchen TV">
+      📺 TV Board
+    </button>
     <button id="kitchen-mode-btn" onclick="toggleKitchenMode()"
       style="width:100%;margin-bottom:10px;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;justify-content:center">
       👨‍🍳 <span id="kitchen-mode-label">Kitchen Mode</span>
@@ -2260,6 +2322,7 @@ select.route-confirm-input option { background:var(--surface2); }
             <div class="tab active" data-view="sheet" onclick="setPackView('sheet',this)">📦 Pack Sheet</div>
             <div class="tab" data-view="labels" onclick="setPackView('labels',this)">🏷 Print Labels</div>
             <div class="tab" data-view="station" onclick="setPackView('station',this)">✅ Tick-off Station</div>
+            <div class="tab" data-view="boxes" onclick="setPackView('boxes',this)">📥 Box Board</div>
           </div>
         </div>
       </div>
@@ -2343,6 +2406,9 @@ select.route-confirm-input option { background:var(--surface2); }
         </div>
         <div class="ff-dish-grid" id="ff-dish-grid"></div>
       </div>
+
+      <!-- BOX BOARD VIEW (Phase 2C) — progressive boxing during cook day -->
+      <div id="pack-boxes-view" style="display:none"></div>
     </div>
 
     <!-- PRODUCTION -->
@@ -2363,7 +2429,14 @@ select.route-confirm-input option { background:var(--surface2); }
         <div style="font-size:22px;font-weight:900;letter-spacing:-1px">29 Performance · Production Plan</div>
         <div id="prod-print-date" style="font-size:12px;margin-top:4px;color:#555;font-family:monospace"></div>
       </div>
+      <div class="tabs no-print" id="prod-view-tabs" style="margin-bottom:12px">
+        <div class="tab" data-pview="prep" onclick="setProdView('prep')">🔪 Prep Day</div>
+        <div class="tab" data-pview="cook" onclick="setProdView('cook')">🍳 Cook Board</div>
+        <div class="tab" data-pview="planner" onclick="setProdView('planner')">📋 Planner</div>
+      </div>
       <div class="kpi-grid prod-no-print" id="prod-kpi-grid"></div>
+      <div id="prod-prep-view" style="display:none"></div>
+      <div id="prod-cook-view" style="display:none"></div>
       <div class="prod-progress-overview prod-no-print" id="prod-progress-overview" style="display:none"></div>
       <div class="prod-filter-bar prod-no-print" id="prod-filter-bar"></div>
       <div id="prod-station-view"></div>
@@ -3097,6 +3170,9 @@ select.route-confirm-input option { background:var(--surface2); }
 
             <h2 class="gs-h2">Shopping in packs, not grams (Phase 1)</h2>
             <p class="gs-p">Give an ingredient a <strong>pack size</strong> (and optionally pack price, or a unit name + weight like "pepper · 150g") in its edit form, and Purchasing stops saying "4,260g" and starts saying <strong>"7 × 650g (+290g spare) · ~£23.10"</strong> or <strong>"≈10 peppers"</strong>. Each line has a checkbox that syncs across devices — tick items off on the iPad as they go in the trolley. The 🛒 Basket KPI shows the true rounded-to-packs spend. Also new: each recipe ingredient line takes a <strong>prep note</strong> ("sliced 5mm") — this feeds the upcoming Prep Cards for prep day. And every order now carries a payment status — tap the badge to cycle <strong>💳 Unpaid → ✓ Paid → 🎁 Comped</strong>; comped athlete meals are totalled as marketing spend on the Athletes page.</p>
+
+            <h2 class="gs-h2">The kitchen surfaces (Phase 2)</h2>
+            <p class="gs-p"><strong>Production now has three faces.</strong> 🔪 <strong>Prep Day</strong> (Dad, day before): every ingredient with its total in real units ("≈10 peppers · 1.5kg raw"), how to process it, and exactly how many grams go into each component's container — tick each split as it's weighed out. 🍳 <strong>Cook Board</strong> (Mum, cook day): every component as a card — tap one for the full-screen recipe with batch quantities in huge type, a target finish weight up front, and checkable steps; run as many cards at once as the hobs allow. 📋 <strong>Planner</strong> is the original management table. On the Packing page, the new 📥 <strong>Box Board</strong> handles progressive boxing: when a component finishes cooking, tap its chip and tick it into each customer's boxes — boxes turn green when everything has landed, and the board must be all green by fridge time. Cast the <strong>📺 TV Board</strong> (sidebar button) to the kitchen TV: live production list, box count, drop countdown, and the week's stages — it updates itself. The Route Sheet now has 🧭 Navigate (opens Maps) and one-tap ✓ Delivered per stop.</p>
 
             <h2 class="gs-h2">Quality of life</h2>
             <p class="gs-p"><strong>⌘K / Ctrl-K</strong> searches everything (dishes, ingredients, recipes, customers, orders) and jumps straight there. Deletes now show a 10-second <strong>↶ Undo</strong> instead of a confirm popup. The ingredient form hides the 33 micronutrient fields unless you need them, warns on duplicate names, and has "Save &amp; Add Another" for batch entry. Click any ingredient's £ cost in the table to edit it in place. Orders show a live total as you type quantities. The 📊 Stats strips on ops pages are collapsed by default — click to expand. Each ops page shows a 👉 hint telling you what to do now and what comes next. Production completion now asks for the <strong>actual cooked weight</strong> and flags variance against the plan (⚖ chip), so under-production is caught before packing. In Inventory, <strong>📥 Track this week's menu</strong> flags every ingredient the menu uses in one click.</p>
@@ -6898,8 +6974,11 @@ function setPackView(view, el) {
   document.getElementById('pack-sheet-view').style.display   = view === 'sheet'   ? '' : 'none';
   document.getElementById('pack-labels-view').style.display  = view === 'labels'  ? '' : 'none';
   document.getElementById('pack-station-view').style.display = view === 'station' ? '' : 'none';
+  var bx = document.getElementById('pack-boxes-view');
+  if (bx) bx.style.display = view === 'boxes' ? '' : 'none';
   if (view === 'labels')  renderLabels();
   if (view === 'station') renderFulfillmentStation();
+  if (view === 'boxes')   renderBoxBoard();
 }
 function setPackSession(v, el) {
   packSessionFilter = v;
@@ -8350,8 +8429,224 @@ function renderProduction(){
     return `<button class="prod-type-btn${cls}${active}" onclick="setProdTypeFilter('${t}',this)">${label}</button>`;
   }).join('');
 
-  renderProdStationView();
-  renderProdProgressOverview();
+  applyProdView();
+}
+
+function getProdView() {
+  try { return localStorage.getItem('29perf_prodView') || 'planner'; } catch(e) { return 'planner'; }
+}
+function setProdView(v) {
+  try { localStorage.setItem('29perf_prodView', v); } catch(e) {}
+  applyProdView();
+}
+/* Show the active production face: Prep (D-2) / Cook Board (D-1) / Planner */
+function applyProdView() {
+  var v = getProdView();
+  document.querySelectorAll('#prod-view-tabs .tab').forEach(function(t) {
+    t.classList.toggle('active', t.getAttribute('data-pview') === v);
+  });
+  var prep = document.getElementById('prod-prep-view');
+  var cook = document.getElementById('prod-cook-view');
+  var stn  = document.getElementById('prod-station-view');
+  var fb   = document.getElementById('prod-filter-bar');
+  var po   = document.getElementById('prod-progress-overview');
+  if (prep) prep.style.display = v === 'prep' ? '' : 'none';
+  if (cook) cook.style.display = v === 'cook' ? '' : 'none';
+  if (stn)  stn.style.display  = v === 'planner' ? '' : 'none';
+  if (fb)   fb.style.display   = v === 'planner' ? '' : 'none';
+  if (v === 'planner') { renderProdStationView(); renderProdProgressOverview(); }
+  else if (po) po.style.display = 'none';
+  if (v === 'prep') renderPrepView();
+  if (v === 'cook') renderCookBoard();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PREP VIEW (Phase 2A) — Dad's D-2 surface. Ingredient-major:
+// total to take out, how to process it, and the per-component
+// container splits. Checkable, synced via DB.prepProgress.
+// ═══════════════════════════════════════════════════════════════
+function prepProgressKey() { return (getProductionWeekLabel() || 'wk') + '|' + prodSessionFilter; }
+function prepProgress() {
+  var key = prepProgressKey();
+  if (!DB.prepProgress || DB.prepProgress.key !== key) DB.prepProgress = { key: key, items: {} };
+  return DB.prepProgress.items;
+}
+function tickPrepSplit(id, checked) {
+  var items = prepProgress();
+  if (checked) items[id] = true; else delete items[id];
+  save();
+  renderPrepView();
+}
+
+/* Build ingredient-major prep data from the production slot */
+function buildPrepData() {
+  var map = {};
+  getProductionDishes().forEach(function(dish) {
+    var ports = dishPortions(dish, prodSessionFilter);
+    if (!ports) return;
+    var overall = n(dish.scaleOverall) || 1;
+    [['protein', n(dish.scaleProtein) || 1], ['carb', n(dish.scaleCarb) || 1],
+     ['veg', n(dish.scaleVeg) || 1], ['condiment', 1], ['complete', 1]].forEach(function(pair) {
+      var compName = dish[pair[0]];
+      if (!compName) return;
+      var rec = DB.recipes.find(function(r){ return r.name === compName && r.status === 'Active'; });
+      if (!rec || !rec.lines) return;
+      rec.lines.forEach(function(l) {
+        var ing = DB.ingredients.find(function(i){ return i.id === l.ingId; });
+        if (!ing) return;
+        var edible = n(l.qty) * pair[1] * overall * ports;
+        if (!map[ing.id]) map[ing.id] = { ing: ing, rawG: 0, splits: {} };
+        map[ing.id].rawG += edible / ((n(ing.proc) || 100) / 100);
+        var sp = map[ing.id].splits[compName] || { comp: compName, edibleG: 0, prep: '' };
+        sp.edibleG += edible;
+        if (l.prep) sp.prep = l.prep;
+        map[ing.id].splits[compName] = sp;
+      });
+    });
+  });
+  return Object.values(map).sort(function(a, b){ return b.rawG - a.rawG; });
+}
+
+function renderPrepView() {
+  var el = document.getElementById('prod-prep-view');
+  if (!el) return;
+  var data = buildPrepData();
+  if (!data.length) {
+    el.innerHTML = '<div class="empty-state"><div class="big">🔪</div><div class="msg">Nothing to prep — confirm orders so portions sync, then come back.</div></div>';
+    return;
+  }
+  var checks = prepProgress();
+  var doneCount = 0, totalSplits = 0;
+  var cards = data.map(function(d) {
+    var ing = d.ing;
+    var splits = Object.values(d.splits);
+    var allDone = splits.every(function(sp){ return checks[ing.id + '|' + sp.comp]; });
+    splits.forEach(function(sp){ totalSplits++; if (checks[ing.id + '|' + sp.comp]) doneCount++; });
+    // Total line: countable units if known, else kg/g
+    var totalTxt = d.rawG >= 1000 ? (d.rawG / 1000).toFixed(2) + ' kg' : Math.round(d.rawG) + ' g';
+    if (n(ing.unitWeight) > 0) {
+      var units = Math.ceil(d.rawG / n(ing.unitWeight));
+      totalTxt = '≈' + units + ' ' + (ing.unitName || 'unit') + (units !== 1 ? 's' : '') + ' <span style="color:var(--text3);font-size:12px">(' + totalTxt + ' raw)</span>';
+    } else {
+      totalTxt += ' <span style="color:var(--text3);font-size:12px">raw</span>';
+    }
+    var preps = splits.map(function(sp){ return sp.prep; }).filter(Boolean);
+    var prepSet = preps.filter(function(v, i){ return preps.indexOf(v) === i; });
+    var splitRows = splits.map(function(sp) {
+      var sid = ing.id + '|' + sp.comp;
+      var done = !!checks[sid];
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border)">' +
+        '<input type="checkbox" ' + (done ? 'checked' : '') + ' onchange="tickPrepSplit(\'' + sid.replace(/'/g, "\\'") + '\',this.checked)" style="width:22px;height:22px;accent-color:var(--gold);cursor:pointer;flex-shrink:0">' +
+        '<span style="flex:1;font-size:13px;' + (done ? 'text-decoration:line-through;color:var(--text3)' : '') + '">→ <strong>' + Math.round(sp.edibleG) + ' g</strong> · ' + sp.comp + ' 🥡' +
+        (sp.prep ? ' <span style="color:var(--gold);font-size:11px">(' + sp.prep + ')</span>' : '') + '</span>' +
+      '</div>';
+    }).join('');
+    return '<div class="card" style="margin-bottom:10px;padding:14px 16px;' + (allDone ? 'opacity:.55;border-color:rgba(74,222,128,.4)' : '') + '">' +
+      '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">' +
+        '<span style="font-size:16px;font-weight:800">' + (allDone ? '✅ ' : '') + ing.name + '</span>' +
+        '<span style="font-family:var(--mono);font-size:15px;color:var(--gold);font-weight:700">' + totalTxt + '</span>' +
+        (prepSet.length ? '<span style="font-size:12px;color:var(--text2);background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:2px 8px">🔪 ' + prepSet.join(' · ') + '</span>' : '') +
+      '</div>' + splitRows + '</div>';
+  }).join('');
+  el.innerHTML =
+    '<div class="next-hint no-print"><span class="nh-icon">🔪</span><span><strong>Prep day:</strong> take out the total, process it as shown, weigh each split into its labelled container, tick it off. ' +
+    '<strong>' + doneCount + '/' + totalSplits + ' splits done.</strong> Tomorrow Mum cooks straight from the containers.</span></div>' + cards;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COOK BOARD (Phase 2B) — Mum's D-1 surface. Concurrent cards, one
+// component full-screen at a time, target weight stated up front.
+// ═══════════════════════════════════════════════════════════════
+function renderCookBoard() {
+  var el = document.getElementById('prod-cook-view');
+  if (!el) return;
+  if (!prodRows.length) {
+    el.innerHTML = '<div class="empty-state"><div class="big">🍳</div><div class="msg">Nothing to cook — confirm orders so portions sync.</div></div>';
+    return;
+  }
+  var done = prodRows.filter(function(r){ return getComponentStatus(r.name) === 'complete'; }).length;
+  var stLabel = { not_started: ['TO DO', 'var(--surface3);color:var(--text3)'], in_progress: ['ON THE STOVE', 'rgba(96,165,250,.2);color:#60a5fa'], complete: ['DONE ✓', 'rgba(74,222,128,.18);color:#4ade80'] };
+  el.innerHTML =
+    '<div class="next-hint no-print"><span class="nh-icon">🍳</span><span><strong>Cook day:</strong> tap a card to open it full-screen. Run as many at once as the hobs allow — helpers can take any card. <strong>' + done + '/' + prodRows.length + ' done.</strong></span></div>' +
+    '<div class="cook-grid">' + prodRows.map(function(r, i) {
+      var st = getComponentStatus(r.name);
+      var lab = stLabel[st] || stLabel.not_started;
+      return '<div class="cook-card st-' + st + '" onclick="openCookCard(' + i + ')">' +
+        '<span class="cc-status" style="background:' + lab[1] + '">' + lab[0] + '</span>' +
+        '<div class="cc-type">' + r.type + ' · ' + r.station + '</div>' +
+        '<div class="cc-name">' + r.name + '</div>' +
+        '<div class="cc-qty">' + (r.batchRaw >= 1000 ? (r.batchRaw / 1000).toFixed(1) + ' kg' : r.batchRaw + ' g') + ' raw → ~' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(1) + ' kg' : r.batchCooked + ' g') + '</div>' +
+        '<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px">' + r.portions + ' portions' + (st === 'complete' ? ' ' + prodYieldChip(r.name) : '') + '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+}
+
+var _cookCardIdx = null;
+function openCookCard(i) {
+  var r = prodRows[i];
+  if (!r) return;
+  _cookCardIdx = i;
+  var rec = DB.recipes.find(function(rc){ return rc.name === r.name && rc.status === 'Active'; });
+  var st = getComponentStatus(r.name);
+  var ov = document.getElementById('cook-overlay');
+  if (!ov) {
+    document.body.insertAdjacentHTML('beforeend', '<div class="cook-overlay" id="cook-overlay"></div>');
+    ov = document.getElementById('cook-overlay');
+  }
+  // Scaled ingredient lines for THIS batch (per-line grams × portions × scale)
+  var rawQty = (rec && rec.lines) ? rec.lines.reduce(function(sum, l){ return sum + n(l.qty); }, 0) : 0;
+  var lines = (rec && rec.lines || []).map(function(l) {
+    var ing = DB.ingredients.find(function(x){ return x.id === l.ingId; });
+    var grams = n(l.qty) * r.portions * r.scale;
+    return '<div class="cook-ov-line"><span>' + (ing ? ing.name : l.ingId) +
+      (l.prep ? ' <span style="color:var(--gold);font-size:12px">(' + l.prep + ')</span>' : '') + '</span>' +
+      '<strong style="font-family:var(--mono)">' + (grams >= 1000 ? (grams / 1000).toFixed(2) + ' kg' : Math.round(grams) + ' g') + '</strong></div>';
+  }).join('');
+  function steps(arr, phase) {
+    if (!arr || !arr.length) return '';
+    return '<div class="cook-ov-section">' + phase + '</div>' + arr.map(function(stp, j) {
+      var sid = r.name + '|' + phase + '|' + j;
+      var d = window._cookSteps && window._cookSteps[sid];
+      return '<label class="cook-step' + (d ? ' done' : '') + '"><input type="checkbox" ' + (d ? 'checked' : '') +
+        ' onchange="tickCookStep(\'' + sid.replace(/'/g, "\\'") + '\',this.checked)"><span>' + stp + '</span></label>';
+    }).join('');
+  }
+  var actions = st === 'complete'
+    ? '<button class="btn btn-ghost" onclick="setComponentStatus(\'' + r.name.replace(/'/g, "\\'") + '\',\'not_started\');openCookCard(' + i + ')">↺ Reset</button>'
+    : (st === 'not_started'
+        ? '<button class="btn btn-gold" style="font-size:15px;padding:12px 22px" onclick="setComponentStatus(\'' + r.name.replace(/'/g, "\\'") + '\',\'in_progress\');openCookCard(' + i + ')">▶ Start Cooking</button>'
+        : '') +
+      '<button class="btn btn-green" style="font-size:15px;padding:12px 22px" onclick="promptCompleteComponent(\'' + r.name.replace(/'/g, "\\'") + '\');closeCookCard()">✓ Done — weigh &amp; log</button>';
+  ov.innerHTML =
+    '<div style="max-width:760px;margin:0 auto">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center">' +
+        '<button class="btn btn-ghost" onclick="closeCookCard()">← Board</button>' +
+        '<div style="display:flex;gap:8px">' +
+          (i > 0 ? '<button class="btn btn-ghost btn-sm" onclick="openCookCard(' + (i - 1) + ')">‹ Prev</button>' : '') +
+          (i < prodRows.length - 1 ? '<button class="btn btn-ghost btn-sm" onclick="openCookCard(' + (i + 1) + ')">Next ›</button>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="cook-ov-name">' + r.name + '</div>' +
+      '<div class="cook-ov-qty">' + (r.batchRaw >= 1000 ? (r.batchRaw / 1000).toFixed(2) + ' kg' : r.batchRaw + ' g') + ' raw · ' + r.portions + ' portions · ' + r.cookMethod + '</div>' +
+      '<div class="cook-ov-target">🎯 Finish with ~<strong>' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(2) + ' kg' : r.batchCooked + ' g') + '</strong>' + (r.targetTemp ? ' · 🌡 ' + r.targetTemp + '°C core' : '') + '</div>' +
+      '<div class="cook-ov-section">This batch needs</div>' + (lines || '<div style="color:var(--text3);font-size:13px">No ingredient lines on this recipe.</div>') +
+      steps(r.prepSteps || (rec && rec.prepSteps), 'Prep') +
+      steps(rec && rec.cookSteps, 'Cook') +
+      steps(rec && rec.finishSteps, 'Finish') +
+      '<div style="display:flex;gap:10px;margin:22px 0 40px;flex-wrap:wrap">' + actions + '</div>' +
+    '</div>';
+  ov.classList.add('open');
+}
+function closeCookCard() {
+  var ov = document.getElementById('cook-overlay');
+  if (ov) ov.classList.remove('open');
+  _cookCardIdx = null;
+  renderCookBoard();
+}
+function tickCookStep(sid, checked) {
+  if (!window._cookSteps) window._cookSteps = {};
+  window._cookSteps[sid] = checked;
+  if (_cookCardIdx != null) openCookCard(_cookCardIdx);
 }
 
 function renderProdProgressOverview() {
@@ -8407,6 +8702,7 @@ function setComponentStatus(compName, status) {
   }
   renderProdStationView();
   renderProdProgressOverview();
+  try { renderCookBoard(); } catch(e) {}
   renderFulfillmentStation && renderFulfillmentStation();
 }
 
@@ -11513,7 +11809,8 @@ function save() {
   // 3. Keep the week tracker in step with every data change (cheap, debounced to next frame)
   if (!window._wkTrackerQueued) {
     window._wkTrackerQueued = true;
-    requestAnimationFrame(function(){ window._wkTrackerQueued = false; try { renderWeekTracker(); } catch(e) {} });
+    requestAnimationFrame(function(){ window._wkTrackerQueued = false; try { renderWeekTracker(); } catch(e) {}
+      try { var tv = document.getElementById('tv-board'); if (tv && tv.classList.contains('open')) renderTvBoard(); } catch(e) {} });
   }
 }
 
@@ -13009,6 +13306,106 @@ wkStageGo = function(page) {
 setTimeout(applyKitchenMode, 100);
 
 // ═══════════════════════════════════════════════════════════════
+// TV BOARD (Phase 2D) — cast this tab to the kitchen TV. Read-only,
+// auto-refreshing; the family watches the week turn green.
+// ═══════════════════════════════════════════════════════════════
+var _tvTimer = null;
+function enterTvMode() {
+  var el = document.getElementById('tv-board');
+  if (!el) { document.body.insertAdjacentHTML('beforeend', '<div class="tv-board" id="tv-board"></div>'); el = document.getElementById('tv-board'); }
+  el.classList.add('open');
+  renderTvBoard();
+  clearInterval(_tvTimer);
+  _tvTimer = setInterval(function(){ if (el.classList.contains('open')) renderTvBoard(); }, 20000);
+  try { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); } catch(e) {}
+}
+function exitTvMode() {
+  var el = document.getElementById('tv-board');
+  if (el) el.classList.remove('open');
+  clearInterval(_tvTimer);
+  try { document.exitFullscreen && document.exitFullscreen(); } catch(e) {}
+}
+
+function renderTvBoard() {
+  var el = document.getElementById('tv-board');
+  if (!el) return;
+  var st;
+  try { st = getWeekStageState(); } catch(e) { return; }
+  var gs = getGlobalSession();
+  var sessTxt = gs === 'all' ? 'Both sessions' : gs === 'sunday' ? '☀ Sunday' : '🌙 Wednesday';
+
+  // Deadline / drop countdown
+  var now = new Date(), countTxt = '';
+  var dd = DB.dropDates || {};
+  var nextDrop = [dd.sunday, dd.wednesday].filter(Boolean).map(function(d){ return new Date(d + 'T09:00:00'); })
+    .filter(function(d){ return d > now; }).sort(function(a, b){ return a - b; })[0];
+  if (nextDrop) {
+    var hrs = Math.floor((nextDrop - now) / 3600000);
+    countTxt = '🚐 drop in ' + (hrs >= 24 ? Math.floor(hrs / 24) + 'd ' + (hrs % 24) + 'h' : hrs + 'h');
+  }
+
+  // Production list (uses prodRows if production page computed them; else compute)
+  if (!prodRows.length) { try { renderProduction(); } catch(e) {} }
+  var rows = prodRows.map(function(r) {
+    var cst = getComponentStatus(r.name);
+    return '<div class="tv-prod-row ' + (cst === 'complete' ? 'tv-done' : cst === 'in_progress' ? 'tv-active' : '') + '">' +
+      '<span class="tv-dot d-' + cst + '"></span><span class="nm">' + r.name + '</span>' +
+      '<span style="font-family:var(--mono);font-size:16px;color:#888">' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(1) + 'kg' : r.batchCooked + 'g') + '</span>' +
+    '</div>';
+  }).join('');
+  var prodDone = prodRows.filter(function(r){ return getComponentStatus(r.name) === 'complete'; }).length;
+
+  // Box board summary
+  var groups = bbBoxGroups();
+  var totalBx = groups.reduce(function(sum, g){ return sum + g.qty; }, 0);
+  var doneG = groups.filter(function(g){ return g.comps.every(function(c){ return bbIsFilled(g.ord, g.dish.id, c); }); });
+  var doneBx = doneG.reduce(function(sum, g){ return sum + g.qty; }, 0);
+  var missing = groups.filter(function(g){ return !g.comps.every(function(c){ return bbIsFilled(g.ord, g.dish.id, c); }); })
+    .slice(0, 7).map(function(g) {
+      var cust = getCustById(g.ord.customerId);
+      var who = g.ord.recipientName || (cust ? cust.name : '');
+      var waiting = g.comps.filter(function(c){ return !bbIsFilled(g.ord, g.dish.id, c); });
+      return '<div class="tv-missing"><span>' + n2h(who) + ' · ' + n2h(g.dish.name) + '</span><span style="color:#f2c233">' + waiting.length + ' to go</span></div>';
+    }).join('');
+
+  // Tracker stages
+  var stages = [
+    ['Menu', st.dishes.length > 0],
+    ['Orders', st.dishes.length > 0 && !st.portal.anyOpen && st.pending === 0 && st.orders.length > 0],
+    ['Buy', st.anyProdLog],
+    ['Cook', st.compNames.length > 0 && st.compDone === st.compNames.length],
+    ['Box', st.packTotal > 0 && st.packDone === st.packTotal],
+    ['Deliver', st.orders.length > 0 && st.delivered === st.orders.length],
+    ['Close', st.archived]
+  ];
+  var activeIdx = stages.findIndex(function(p){ return !p[1]; });
+  var stageHtml = stages.map(function(pr, i) {
+    var cls = pr[1] ? 's-done' : (i === activeIdx ? 's-active' : '');
+    return '<span class="tv-stage ' + cls + '">' + (pr[1] ? '●' : i === activeIdx ? '◉' : '○') + ' ' + pr[0] + '</span>' +
+      (i < stages.length - 1 ? '<span style="color:#333">—</span>' : '');
+  }).join('');
+
+  el.innerHTML =
+    '<button class="tv-exit" onclick="exitTvMode()">✕ exit</button>' +
+    '<div class="tv-hdr"><span class="tv-wk">' + (st.week || '—') + '</span><span class="tv-sess">' + sessTxt + '</span>' +
+      '<span class="tv-count">' + (countTxt || '') + '</span></div>' +
+    '<div class="tv-cols">' +
+      '<div style="min-height:0;display:flex;flex-direction:column">' +
+        '<div class="tv-col-title">🍳 Production — ' + prodDone + ' / ' + prodRows.length + '</div>' +
+        '<div class="tv-bar-wrap"><div class="tv-bar" style="width:' + (prodRows.length ? Math.round(prodDone / prodRows.length * 100) : 0) + '%"></div></div>' +
+        '<div style="overflow:hidden;flex:1">' + rows + '</div>' +
+      '</div>' +
+      '<div style="min-height:0;display:flex;flex-direction:column">' +
+        '<div class="tv-col-title">📥 Boxes</div>' +
+        '<div class="tv-big" style="color:' + (totalBx && doneBx === totalBx ? '#4ade80' : '#fff') + '">' + doneBx + ' <span style="color:#555;font-size:34px">/ ' + totalBx + '</span></div>' +
+        '<div class="tv-bar-wrap"><div class="tv-bar" style="width:' + (totalBx ? Math.round(doneBx / totalBx * 100) : 0) + '%"></div></div>' +
+        '<div style="overflow:hidden;flex:1">' + (missing || (totalBx ? '<div style="font-size:26px;color:#4ade80;font-weight:800;margin-top:14px">All boxes complete ✅</div>' : '')) + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="tv-stages">' + stageHtml + '</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
 // GLOBAL SESSION CONTEXT (June 2026)
 // ONE Sunday/Wednesday toggle for the whole app. Forgetting to switch
 // the session on one page caused wrong-session prep/pack/labels — now
@@ -13778,6 +14175,20 @@ function saveRouteConfirmation(ordId, field, value) {
   }, 400);
 }
 
+/* One tap from the van: set the order delivered + stamp the route confirmation */
+function markStopDelivered(ordId) {
+  var ord = (DB.weeklyOrders || []).find(function(o){ return o.id === ordId; });
+  if (!ord) return;
+  ord.status = 'delivered';
+  ord.deliveredAt = new Date().toISOString();
+  saveRouteConfirmation(ordId, 'delivered', 'Yes');
+  var t = new Date();
+  saveRouteConfirmation(ordId, 'time', String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0'));
+  save();
+  renderRouteSheet();
+  notify('✓ Delivered — logged at ' + t.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+}
+
 function renderRouteSheet() {
   var week   = getProductionWeekLabel() || DB.menuWeekLabel || '';
   var dishes = getProductionDishes();
@@ -13832,6 +14243,12 @@ function renderRouteSheet() {
           '</div>' +
           '<div class="route-stop-addr">' + (cust ? n2h(custFullAddress(cust)) : '&mdash;') + '</div>' +
           (cust && cust.phone ? '<div class="route-stop-phone">&#x1F4F1; ' + n2h(cust.phone) + '</div>' : '') +
+        '</div>' +
+        '<div class="no-print" style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">' +
+          (cust && custFullAddress(cust) ? '<a class="btn btn-ghost btn-sm" style="text-decoration:none;justify-content:center" href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(custFullAddress(cust)) + '" target="_blank" rel="noopener">🧭 Navigate</a>' : '') +
+          (getOrderStatus(ord) !== 'delivered'
+            ? '<button class="btn btn-green btn-sm" onclick="markStopDelivered(\'' + ord.id + '\')">✓ Delivered</button>'
+            : '<span style="font-size:11px;color:#4ade80;font-weight:700;text-align:center">✓ Done</span>') +
         '</div>' +
       '</div>' +
       '<div class="route-stop-body">' +
@@ -14416,6 +14833,133 @@ function isDishProductionReady(dish) {
     return log && log.status === 'complete';
   });
 }
+
+// ═══════════════════════════════════════════════════════════════
+// BOX BOARD (Phase 2C) — progressive boxing. Components flow into
+// boxes as they finish cooking; a box is done when all its dish's
+// components have landed. Tracking: order.fillProgress[dishId][comp].
+// ═══════════════════════════════════════════════════════════════
+var _bbFillComp = null; // component currently being distributed
+
+function bbDishComps(dish) {
+  return ['protein','carb','veg','condiment','complete'].map(function(sl){ return dish[sl]; }).filter(Boolean);
+}
+function bbBoxGroups() {
+  var dishes = getProductionDishes();
+  var orders = getProductionOrders();
+  var groups = [];
+  orders.forEach(function(o) {
+    Object.keys(o.allocation || {}).forEach(function(did) {
+      var qty = Math.round(n(o.allocation[did]));
+      if (qty < 1) return;
+      var dish = dishes.find(function(d){ return d.id === did; });
+      if (!dish) return;
+      groups.push({ ord: o, dish: dish, qty: qty, comps: bbDishComps(dish) });
+    });
+  });
+  return groups;
+}
+function bbIsFilled(ord, dishId, comp) {
+  return !!(ord.fillProgress && ord.fillProgress[dishId] && ord.fillProgress[dishId][comp]);
+}
+function fillBoxComp(ordId, dishId, comp) {
+  var ord = (DB.weeklyOrders || []).find(function(o){ return o.id === ordId; });
+  if (!ord) return;
+  if (!ord.fillProgress) ord.fillProgress = {};
+  if (!ord.fillProgress[dishId]) ord.fillProgress[dishId] = {};
+  var was = !!ord.fillProgress[dishId][comp];
+  ord.fillProgress[dishId][comp] = !was;
+  if (was) delete ord.fillProgress[dishId][comp];
+  // Box complete when every component of the dish has landed → mark packed
+  var dish = getProductionDishes().find(function(d){ return d.id === dishId; });
+  if (dish) {
+    var allIn = bbDishComps(dish).every(function(c){ return ord.fillProgress[dishId][c]; });
+    if (!ord.packProgress) ord.packProgress = {};
+    if (allIn) ord.packProgress[dishId] = { packed: true, packedAt: new Date().toISOString() };
+    else if (ord.packProgress[dishId] && ord.packProgress[dishId].packed) ord.packProgress[dishId] = { packed: false, packedAt: null };
+  }
+  save();
+  renderBoxBoard();
+}
+
+function renderBoxBoard() {
+  var el = document.getElementById('pack-boxes-view');
+  if (!el) return;
+  var groups = bbBoxGroups();
+  if (!groups.length) {
+    el.innerHTML = '<div class="ff-gate"><div class="ff-gate-icon">📥</div><div class="ff-gate-title">No boxes this week</div><div class="ff-gate-sub">Confirm orders first — boxes appear here as soon as there are allocations.</div></div>';
+    return;
+  }
+  var week = getProductionWeekLabel() || DB.menuWeekLabel || '';
+
+  // Distinct components across the board, with cook + fill state
+  var compState = {}; // comp -> {cooked, needed, filled}
+  groups.forEach(function(g) {
+    g.comps.forEach(function(c) {
+      if (!compState[c]) {
+        var log = (DB.productionLog || []).find(function(p){ return p.week === week && p.component === c; });
+        compState[c] = { cooked: !!(log && log.status === 'complete'), needed: 0, filled: 0 };
+      }
+      compState[c].needed++;
+      if (bbIsFilled(g.ord, g.dish.id, c)) compState[c].filled++;
+    });
+  });
+
+  var doneBoxes = groups.filter(function(g){ return g.comps.every(function(c){ return bbIsFilled(g.ord, g.dish.id, c); }); });
+  var totalBoxesCnt = groups.reduce(function(sum, g){ return sum + g.qty; }, 0);
+  var doneBoxesCnt  = doneBoxes.reduce(function(sum, g){ return sum + g.qty; }, 0);
+
+  // Ready-to-fill chips: cooked components with boxes still waiting
+  var chips = Object.keys(compState).map(function(c) {
+    var st = compState[c];
+    var waiting = st.needed - st.filled;
+    var ready = st.cooked && waiting > 0;
+    var active = _bbFillComp === c;
+    var cls = ready || active ? 'bb-chip' : 'bb-chip bb-chip-off';
+    var lab = (st.cooked ? '🍳 ' : '⏳ ') + c + (waiting > 0 ? ' · ' + waiting + ' to fill' : ' ✓');
+    return '<span class="' + cls + '" ' + (active ? 'style="outline:2px solid var(--gold)"' : '') + ' onclick="bbSelectComp(\'' + c.replace(/'/g, "\\'") + '\')">' + lab + '</span>';
+  }).join('');
+
+  var html =
+    '<div class="next-hint no-print"><span class="nh-icon">📥</span><span><strong>' + doneBoxesCnt + '/' + totalBoxesCnt + ' boxes complete.</strong> When a component finishes cooking, tap its chip and tick it into each box. A box turns green when everything has landed — all green by fridge time.</span></div>' +
+    '<div style="margin-bottom:14px">' + chips + '</div>';
+
+  if (_bbFillComp && compState[_bbFillComp]) {
+    var c = _bbFillComp;
+    var rows = groups.filter(function(g){ return g.comps.indexOf(c) !== -1; })
+      .sort(function(a, b){ return (bbIsFilled(a.ord, a.dish.id, c) ? 1 : 0) - (bbIsFilled(b.ord, b.dish.id, c) ? 1 : 0); })
+      .map(function(g) {
+        var cust = getCustById(g.ord.customerId);
+        var who = g.ord.recipientName || (cust ? cust.name : g.ord.id);
+        var filled = bbIsFilled(g.ord, g.dish.id, c);
+        return '<div class="bb-fill-row' + (filled ? ' bb-filled' : '') + '">' +
+          '<div style="flex:1;min-width:0"><strong>' + n2h(who) + '</strong> <span style="color:var(--text3)">· ' + n2h(g.dish.name) + '</span></div>' +
+          '<span style="font-family:var(--mono);font-weight:800;font-size:15px">×' + g.qty + '</span>' +
+          '<button class="bb-fill-btn" style="' + (filled ? 'background:var(--surface3);color:var(--text3)' : '') + '" onclick="fillBoxComp(\'' + g.ord.id + '\',\'' + g.dish.id + '\',\'' + c.replace(/'/g, "\\'") + '\')">' + (filled ? '↺' : '✓ In') + '</button>' +
+        '</div>';
+      }).join('');
+    html += '<div class="card" style="padding:14px 16px;margin-bottom:14px"><div style="font-weight:800;font-size:15px;margin-bottom:10px">Filling: ' + n2h(c) + '</div>' + rows + '</div>';
+  }
+
+  html += '<div class="bb-grid">' + groups.map(function(g) {
+    var cust = getCustById(g.ord.customerId);
+    var who = g.ord.recipientName || (cust ? cust.name : g.ord.id);
+    var done = g.comps.every(function(cc){ return bbIsFilled(g.ord, g.dish.id, cc); });
+    var dots = g.comps.map(function(cc) {
+      var f = bbIsFilled(g.ord, g.dish.id, cc);
+      return '<span class="bb-dot' + (f ? ' on' : '') + '">' + (f ? '●' : '○') + ' ' + cc.split(' ')[0] + '</span>';
+    }).join('');
+    var dietary = cust && cust.dietary ? '<div style="font-size:10px;color:#f87171;margin-top:4px">⚠ ' + n2h(cust.dietary) + '</div>' : '';
+    return '<div class="bb-tile' + (done ? ' bb-done' : '') + '">' +
+      '<div class="bb-cust">' + (done ? '✅ ' : '') + n2h(who) + ' <span style="font-family:var(--mono);color:var(--text3)">×' + g.qty + '</span></div>' +
+      '<div class="bb-dish">' + n2h(g.dish.name) + '</div>' +
+      '<div>' + dots + '</div>' + dietary +
+    '</div>';
+  }).join('') + '</div>';
+
+  el.innerHTML = html;
+}
+function bbSelectComp(c) { _bbFillComp = _bbFillComp === c ? null : c; renderBoxBoard(); }
 
 function renderFulfillmentStation() {
   var dishes = getProductionDishes();
