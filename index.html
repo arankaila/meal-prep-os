@@ -1749,6 +1749,12 @@ select.route-confirm-input option { background:var(--surface2); }
 .qbi-icon-btn.on{background:var(--gold);color:#000;border-color:var(--gold);}
 .qbi-psych{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:12px;}
 .qbi-psych-row{display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:11.5px;color:var(--text2);}
+/* STATS COLLAPSE + NEXT-STEP HINTS */
+.stats-toggle{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);cursor:pointer;border:1px solid var(--border2);border-radius:5px;padding:3px 9px;background:var(--surface2);margin-bottom:10px;user-select:none;}
+.stats-toggle:hover{color:var(--text);}
+.next-hint{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--gold-dim,rgba(242,194,51,.07));border:1px solid rgba(242,194,51,.25);border-radius:8px;margin-bottom:12px;font-size:12px;color:var(--text2);}
+.next-hint .nh-icon{flex-shrink:0;font-size:14px;}
+.next-hint strong{color:var(--text);}
 .qb-flavour-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;}
 .qb-flavour-chip{display:inline-flex;align-items:center;gap:6px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:4px 10px 4px 13px;font-size:12px;font-family:var(--sans);font-weight:600;}
 .qb-chip-meta{font-size:10px;color:var(--text3);font-weight:400;font-family:var(--mono);}
@@ -2282,6 +2288,11 @@ select.route-confirm-input option { background:var(--surface2); }
               <input type="checkbox" id="lbl-show-name" onchange="renderLabels()" style="width:13px;height:13px;cursor:pointer;accent-color:var(--gold)">
               Show name on label
             </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;padding:4px 10px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2)" title="Short component code packers use to verify box contents against the label">
+              <input type="checkbox" id="lbl-show-code" checked onchange="renderLabels()" style="width:13px;height:13px;cursor:pointer;accent-color:var(--gold)">
+              Meal code
+            </label>
+            <button class="btn btn-ghost btn-sm" onclick="downloadAllLabelJpegs()" title="One JPEG per label, zipped — upload straight to the label printer">⬇ All as JPEGs</button>
             <button class="btn btn-gold btn-sm" style="margin-left:auto" onclick="printDymoLabels()">&#x1F5A8; Print All — Dymo</button>
           </div>
           <!-- Row 2: use-by + storage -->
@@ -3021,6 +3032,7 @@ select.route-confirm-input option { background:var(--surface2); }
         <div class="guide-toc">
           <div class="guide-toc-inner">
             <div class="guide-toc-head">Overview</div>
+            <div class="guide-toc-item" onclick="showGuideSection('gs-whatsnew')"><span class="toc-icon">✨</span>What's New — Jun 2026</div>
             <div class="guide-toc-item active" onclick="showGuideSection('gs-start')"><span class="toc-icon">🚀</span>Getting Started</div>
             <div class="guide-toc-item" onclick="showGuideSection('gs-flow')"><span class="toc-icon">🔄</span>Data Flow</div>
             <div class="guide-toc-head">Master Data</div>
@@ -3033,10 +3045,10 @@ select.route-confirm-input option { background:var(--surface2); }
             <div class="guide-toc-item" onclick="showGuideSection('gs-coststack')"><span class="toc-icon">💰</span>Cost Stack</div>
             <div class="guide-toc-item" onclick="showGuideSection('gs-archive')"><span class="toc-icon">📅</span>Weekly Archive</div>
             <div class="guide-toc-head">Production</div>
-            <div class="guide-toc-item" onclick="showGuideSection('gs-packsheet')"><span class="toc-icon">📦</span>Packaging</div>
+            <div class="guide-toc-item" onclick="showGuideSection('gs-packsheet')"><span class="toc-icon">📦</span>Packing &amp; Fulfilment</div>
             <div class="guide-toc-item" onclick="showGuideSection('gs-production')"><span class="toc-icon">🏭</span>Production</div>
             <div class="guide-toc-item" onclick="showGuideSection('gs-purchasing')"><span class="toc-icon">🚚</span>Purchasing</div>
-            <div class="guide-toc-item" onclick="showGuideSection('gs-fulfillment')"><span class="toc-icon">✅</span>Fulfillment</div>
+            <div class="guide-toc-item" onclick="showGuideSection('gs-fulfillment')"><span class="toc-icon">✅</span>Tick-off Station</div>
             <div class="guide-toc-head">Intelligence</div>
             <div class="guide-toc-item" onclick="showGuideSection('gs-dashboard')"><span class="toc-icon">📊</span>Dashboard</div>
             <div class="guide-toc-item" onclick="showGuideSection('gs-inflation')"><span class="toc-icon">📈</span>Price Inflation</div>
@@ -3057,6 +3069,32 @@ select.route-confirm-input option { background:var(--surface2); }
         <div class="guide-body" id="guide-body">
 
           <!-- ═══ GETTING STARTED ═══ -->
+          <div class="guide-section" id="gs-whatsnew">
+            <h1 class="gs-h1">✨ What's New — June 2026</h1>
+            <p class="gs-p">The app was overhauled for simplicity. If you've used it before, here's everything that changed; if you're new, this is also the quickest tour of how the system thinks.</p>
+
+            <h2 class="gs-h2">The Week Tracker (top of every page)</h2>
+            <p class="gs-p">The strip under the title bar shows the whole week: <strong>Menu → Orders → Purchase → Produce → Pack → Deliver → Close</strong>. Gold dot = where the week is now. Green = done. Amber badge = needs attention (e.g. pending orders). <strong>Click any stage to jump to its page.</strong> The "Next" chip on the right shows whether next week's menu is ready. If you only learn one thing: follow the gold dot left to right and the week runs itself.</p>
+
+            <h2 class="gs-h2">One Sunday / Wednesday switch</h2>
+            <p class="gs-p">The <strong>All · ☀ Sun · 🌙 Wed</strong> switch in the Week Tracker controls the session on <em>every</em> page at once — Orders, Purchasing, Production, Packing, Labels and the Route Sheet always agree. You can no longer prep Sunday's food while looking at Wednesday's pack sheet. It remembers your choice per device.</p>
+
+            <h2 class="gs-h2">Closing the week safely</h2>
+            <p class="gs-p"><strong>Advance Week</strong> now opens a pre-flight checklist that actually verifies everything (pending orders, production, packing, deliveries, next week's menu/label/dates) with fix-it links. Week labels fill themselves from drop dates — set the dates and "14th &amp; 17th Jun" appears on its own.</p>
+
+            <h2 class="gs-h2">Packing &amp; Fulfilment merged</h2>
+            <p class="gs-p">One page, three tabs: <strong>Pack Sheet</strong> (what goes in each box), <strong>Print Labels</strong>, and the <strong>Tick-off Station</strong> (tap each box as it's packed). Labels can now download as <strong>JPEGs</strong> (one per label, zipped) for direct upload to the label printer, and the meal code can be toggled off. Meal codes are short component abbreviations packers can use to verify box contents at a glance.</p>
+
+            <h2 class="gs-h2">✨ Menu Ideation (Quick Build)</h2>
+            <p class="gs-p">Set how many dishes you want and how many components the kitchen can handle — the generator proposes a full menu that reads expansive to customers but stays minimal to cook. It rotates against the last 4 weeks, favours proven sellers, scores variety/simplicity/freshness/margin, and runs a menu-psychology checklist (price anchor, protein spread, Fuel Lite balance). 🔒 lock dishes you like, regenerate the rest, then <strong>Apply to build slots → Save as Menu → Deploy</strong> whenever you need it.</p>
+
+            <h2 class="gs-h2">👨‍🍳 Kitchen Mode</h2>
+            <p class="gs-p">The button at the bottom of the sidebar locks a device to <strong>Production, Packing &amp; Fulfilment and Delivery</strong> with big touch targets — ideal for the kitchen tablet. Exit can be password-protected. Staff can't wander into finance or master data.</p>
+
+            <h2 class="gs-h2">Quality of life</h2>
+            <p class="gs-p"><strong>⌘K / Ctrl-K</strong> searches everything (dishes, ingredients, recipes, customers, orders) and jumps straight there. Deletes now show a 10-second <strong>↶ Undo</strong> instead of a confirm popup. The ingredient form hides the 33 micronutrient fields unless you need them, warns on duplicate names, and has "Save &amp; Add Another" for batch entry. Click any ingredient's £ cost in the table to edit it in place. Orders show a live total as you type quantities. The 📊 Stats strips on ops pages are collapsed by default — click to expand. Each ops page shows a 👉 hint telling you what to do now and what comes next. Production completion now asks for the <strong>actual cooked weight</strong> and flags variance against the plan (⚖ chip), so under-production is caught before packing. In Inventory, <strong>📥 Track this week's menu</strong> flags every ingredient the menu uses in one click.</p>
+          </div>
+
           <div class="guide-section active" id="gs-start">
             <div class="gs-hero">
               <div class="gs-title">🚀 Getting Started</div>
@@ -5186,6 +5224,99 @@ const PAGE_CFG = {
 
 let lastPage = 'dashboard';
 
+// ═══════════════════════════════════════════════════════════════
+// STATS COLLAPSE — analytics strips fold away; ops pages open in work view
+// ═══════════════════════════════════════════════════════════════
+var STATS_SECTIONS = {
+  menu:       { els: ['menu-kpi-grid','menu-stats-bar'], def: true  },
+  orders:     { els: ['orders-kpi-strip'],               def: true  },
+  purchasing: { els: ['purch-kpi-grid'],                 def: false },
+  production: { els: ['prod-kpi-grid'],                  def: false },
+  inventory:  { els: ['inv-kpi-strip'],                  def: false },
+  labour:     { els: ['labour-kpi-grid'],                def: true  },
+  history:    { els: ['hist-kpi-grid','arc-charts-panel'], def: true }
+};
+
+function _statsOpenMap() {
+  try { return JSON.parse(localStorage.getItem('29perf_statsOpen') || '{}'); } catch(e) { return {}; }
+}
+function statsIsOpen(id) {
+  var m = _statsOpenMap();
+  return (id in m) ? !!m[id] : STATS_SECTIONS[id].def;
+}
+function toggleStats(id) {
+  var m = _statsOpenMap();
+  m[id] = !statsIsOpen(id);
+  try { localStorage.setItem('29perf_statsOpen', JSON.stringify(m)); } catch(e) {}
+  applyStatsCollapse(id);
+}
+function applyStatsCollapse(id) {
+  var cfg = STATS_SECTIONS[id];
+  if (!cfg) return;
+  var open = statsIsOpen(id) && !kitchenModeOn(); // kitchen mode: stats always hidden
+  var first = document.getElementById(cfg.els[0]);
+  if (!first) return;
+  var btnId = 'stats-toggle-' + id;
+  var btn = document.getElementById(btnId);
+  if (!btn) {
+    first.insertAdjacentHTML('beforebegin',
+      '<div class="stats-toggle no-print" id="' + btnId + '" onclick="toggleStats(\'' + id + '\')"></div>');
+    btn = document.getElementById(btnId);
+  }
+  btn.innerHTML = (open ? '▾' : '▸') + ' 📊 Stats &amp; KPIs';
+  btn.style.display = kitchenModeOn() ? 'none' : '';
+  cfg.els.forEach(function(eid) {
+    var el = document.getElementById(eid);
+    if (el) el.style.display = open ? '' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NEXT-STEP HINTS — every ops page says what to do now and what's next
+// ═══════════════════════════════════════════════════════════════
+function renderNextHint(id) {
+  var pages = ['menu','orders','purchasing','production','packsheet','delivery'];
+  if (pages.indexOf(id) === -1) return;
+  var st;
+  try { st = getWeekStageState(); } catch(e) { return; }
+  var txt = '';
+  if (id === 'menu') {
+    txt = !st.dishes.length
+      ? 'Start here: add dishes to this week\'s menu — or let <strong>Quick Build → ✨ Menu Ideation</strong> generate one.'
+      : !st.portal.anyOpen && !st.orders.length
+        ? 'Menu built ✓ — set <strong>drop dates</strong> (the week label fills itself), then open the portal from <strong>Orders</strong>.'
+        : 'Menu live ✓ — orders land in <strong>Orders</strong>. Next stop: <strong>Purchasing</strong> once ordering closes.';
+  } else if (id === 'orders') {
+    txt = st.pending > 0
+      ? '<strong>' + st.pending + ' pending order' + (st.pending > 1 ? 's' : '') + '</strong> — confirm or cancel them. Portions sync automatically. Next: <strong>Purchasing</strong>.'
+      : st.portal.anyOpen
+        ? 'Ordering is <strong>open</strong> — new orders appear here live. Confirm them as they land.'
+        : st.orders.length ? 'All orders confirmed ✓ — next: <strong>Purchasing</strong>.' : 'No orders yet — open the portal or add one manually.';
+  } else if (id === 'purchasing') {
+    txt = 'Shop this list (per supplier). Receive tracked stock in <strong>Inventory</strong>. Next: <strong>Production</strong>.';
+  } else if (id === 'production') {
+    txt = st.compNames.length
+      ? '<strong>' + st.compDone + '/' + st.compNames.length + ' components done</strong> — tick each Complete as it leaves the pan (temp + weight logged). Next: <strong>Packing</strong>.'
+      : 'Nothing to produce yet — confirm orders first so portions sync.';
+  } else if (id === 'packsheet') {
+    txt = st.packTotal
+      ? '<strong>' + st.packDone + '/' + st.packTotal + ' packed</strong> — work the Pack Sheet, tick boxes off in the <strong>Station</strong> view, print or download labels. Next: <strong>Delivery</strong>.'
+      : 'Nothing to pack yet — production comes first.';
+  } else if (id === 'delivery') {
+    txt = st.orders.length
+      ? '<strong>' + st.delivered + '/' + st.orders.length + ' delivered</strong> — run the Route Sheet per session, mark each drop delivered. Then close the week from the tracker.'
+      : 'No deliveries this week yet.';
+  }
+  var page = document.getElementById('page-' + id);
+  if (!page) return;
+  var hint = document.getElementById('nh-' + id);
+  if (!hint) {
+    page.insertAdjacentHTML('afterbegin', '<div class="next-hint no-print" id="nh-' + id + '"></div>');
+    hint = document.getElementById('nh-' + id);
+  }
+  hint.innerHTML = '<span class="nh-icon">👉</span><span>' + txt + '</span>';
+}
+
 function showPage(id) {
   // Legacy alias — Fulfillment merged into Packing & Fulfilment (June 2026)
   if (id === 'fulfillment') {
@@ -5239,6 +5370,8 @@ function showPage(id) {
   };
   if (renders[id]) renders[id]();
   renderWeekTracker();
+  applyStatsCollapse(id);
+  renderNextHint(id);
 
   // Stamp print-date into whichever print header exists on this page
   const printDateStr = new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -8263,13 +8396,31 @@ function setComponentStatus(compName, status) {
   renderFulfillmentStation && renderFulfillmentStation();
 }
 
+/* Yield variance chip — actual vs expected cooked weight from the production log */
+function prodYieldChip(compName) {
+  var week = getProductionWeekLabel() || DB.menuWeekLabel || '';
+  var log = (DB.productionLog || []).find(function(p){ return p.week === week && p.component === compName; });
+  if (!log || log.actualWeight == null || !log.expectedWeight) return '';
+  var pct = (log.actualWeight - log.expectedWeight) / log.expectedWeight * 100;
+  var col = Math.abs(pct) <= 5 ? 'var(--green)' : Math.abs(pct) <= 12 ? '#ff9f0a' : 'var(--red)';
+  var sign = pct >= 0 ? '+' : '';
+  return '<span style="font-family:var(--mono);font-size:9px;font-weight:700;color:' + col + ';border:1px solid ' + col + ';border-radius:4px;padding:1px 6px" title="Actual ' + Math.round(log.actualWeight) + 'g vs expected ' + Math.round(log.expectedWeight) + 'g">⚖ ' + sign + pct.toFixed(0) + '%</span>';
+}
+
 function promptCompleteComponent(compName) {
   var temp = prompt('Core temperature at end of cooking (°C) — leave blank to skip:', '');
   if (temp === null) return; // cancelled
-  completeComponent(compName, temp.trim() ? parseFloat(temp) : null);
+  // Yield check: expected cooked weight from the production plan vs what's on the scale.
+  // Catches under-production before it becomes short portions at packing.
+  var row = (prodRows || []).find(function(r){ return r.name === compName; });
+  var expected = row ? n(row.batchCooked) : 0;
+  var wPrompt = 'Actual cooked weight (g)' + (expected ? ' — plan expects ~' + Math.round(expected) + 'g' : '') + ' — leave blank to skip:';
+  var w = prompt(wPrompt, '');
+  if (w === null) return; // cancelled
+  completeComponent(compName, temp.trim() ? parseFloat(temp) : null, w.trim() ? parseFloat(w) : null, expected || null);
 }
 
-function completeComponent(compName, coreTemp) {
+function completeComponent(compName, coreTemp, actualWeight, expectedWeight) {
   var week = DB.menuWeekLabel || '';
   if (!window._compStatus) window._compStatus = {};
   window._compStatus[(week + '_' + compName)] = 'complete';
@@ -8282,6 +8433,8 @@ function completeComponent(compName, coreTemp) {
     existing.status      = 'complete';
     existing.completedAt = new Date().toISOString();
     if (coreTemp !== null) existing.coreTemp = coreTemp;
+    if (actualWeight != null)   existing.actualWeight   = actualWeight;
+    if (expectedWeight != null) existing.expectedWeight = expectedWeight;
   } else {
     DB.productionLog.push({
       id:          'PROD' + String(DB.nextProductionLogId++).padStart(4,'0'),
@@ -8290,6 +8443,8 @@ function completeComponent(compName, coreTemp) {
       session:     prodSessionFilter || 'all',
       status:      'complete',
       coreTemp:    coreTemp !== null ? coreTemp : null,
+      actualWeight:   actualWeight != null ? actualWeight : null,
+      expectedWeight: expectedWeight != null ? expectedWeight : null,
       startedAt:   null,
       completedAt: new Date().toISOString(),
       staffName:   '',
@@ -8386,6 +8541,7 @@ function renderProdStationView(){
             <button class="comp-status-btn${compStatus==='in_progress'?' active in_progress':''}" onclick="setComponentStatus('${r.name.replace(/'/g,"\\'")}','in_progress')">In Progress</button>
             <button class="comp-status-btn${compStatus==='complete'?' active complete':''}" onclick="promptCompleteComponent('${r.name.replace(/'/g,"\\'")}')">Complete ✓</button>
           </div>
+          ${compStatus==='complete'?prodYieldChip(r.name):''}
           ${compStatus==='complete'?`<button class="btn btn-ghost btn-sm" style="font-size:9px;padding:2px 8px;margin-left:auto" onclick="setComponentStatus('${r.name.replace(/'/g,"\\'")}','not_started')">↺ Reset</button>`:''}
         </div>
         ${r.notes?`<div style="padding:6px 16px;background:rgba(251,191,36,.05);border-bottom:1px solid rgba(251,191,36,.15);font-size:11px;color:#fbbf24;font-family:var(--mono)">📝 ${escHtml(r.notes)}</div>`:''}
@@ -12536,6 +12692,15 @@ function renderWeekTracker() {
     if (i < stages.length - 1) html += '<span class="wk-arrow">›</span>';
   });
 
+  // Session context — global Sunday/Wednesday filter, always visible
+  var gs = (typeof getGlobalSession === 'function') ? getGlobalSession() : 'all';
+  html += '<div style="display:flex;align-items:center;gap:4px;padding:0 10px;border-left:1px solid var(--border);margin-left:6px" title="Session filter — applies to Orders, Purchasing, Production, Packing, Labels and Route everywhere">' +
+    [['all','All'],['sunday','☀ Sun'],['wednesday','🌙 Wed']].map(function(pair) {
+      var on = gs === pair[0];
+      return '<span onclick="setGlobalSession(\'' + pair[0] + '\')" style="cursor:pointer;font-size:10px;font-weight:700;padding:3px 9px;border-radius:5px;border:1px solid ' +
+        (on ? 'var(--gold)' : 'var(--border2)') + ';background:' + (on ? 'var(--gold)' : 'transparent') + ';color:' + (on ? '#000' : 'var(--text3)') + '">' + pair[1] + '</span>';
+    }).join('') + '</div>';
+
   // Next-week readiness chip
   var nxCol = s.nx.ready ? 'var(--green)' : (s.nx.dishes > 0 ? '#ff9f0a' : 'var(--text3)');
   var nxTxt = s.nx.dishes === 0 ? 'not started'
@@ -12727,6 +12892,90 @@ wkStageGo = function(page) {
 
 // Apply on boot (after DOM ready — this script runs at end of body)
 setTimeout(applyKitchenMode, 100);
+
+// ═══════════════════════════════════════════════════════════════
+// GLOBAL SESSION CONTEXT (June 2026)
+// ONE Sunday/Wednesday toggle for the whole app. Forgetting to switch
+// the session on one page caused wrong-session prep/pack/labels — now
+// every page follows the same persisted filter, set from any page or
+// from the Week Tracker.
+// ═══════════════════════════════════════════════════════════════
+function getGlobalSession() {
+  try { return localStorage.getItem('29perf_session') || 'all'; } catch(e) { return 'all'; }
+}
+
+function setGlobalSession(v) {
+  v = (v || 'all').toLowerCase();
+  if (['all','sunday','wednesday'].indexOf(v) === -1) v = 'all';
+  try { localStorage.setItem('29perf_session', v); } catch(e) {}
+  var cap = v === 'all' ? 'all' : v.charAt(0).toUpperCase() + v.slice(1);
+  // All per-page filter variables follow the global value
+  packSessionFilter   = v;
+  prodSessionFilter   = v;
+  purchSessionFilter  = v;
+  _ffSession          = v;
+  _labelSession       = cap;
+  _routeSession       = cap;
+  window._orderSessionFilter = v;
+  syncSessionTabsUI();
+  rerenderActivePage();
+  renderWeekTracker();
+}
+
+/* Reflect the global session on every static tab strip */
+function syncSessionTabsUI() {
+  var v = getGlobalSession();
+  function mark(selector) {
+    document.querySelectorAll(selector).forEach(function(el) {
+      var t = (el.textContent || '').toLowerCase();
+      var hit = v === 'all' ? t.indexOf('all') !== -1 : t.indexOf(v) !== -1;
+      el.classList.toggle('active', hit);
+    });
+  }
+  mark('#pack-session-tabs .tab');
+  mark('#pack-session-tabs-top .tab');
+  mark('#prod-session-tabs .tab');
+  mark('[id^=purch-session-tabs] .tab');
+  mark('#ff-session-tabs .tab');
+  mark('#pack-labels-view .del-filter-btn');
+  mark('#del-panel-route .del-filter-btn');
+  mark('#page-orders .del-toolbar .del-filter-btn');
+}
+
+function rerenderActivePage() {
+  var active = document.querySelector('.page.active');
+  if (!active) return;
+  var id = active.id.replace('page-', '');
+  var fns = {
+    dashboard: renderDashboard, menu: renderMenu, orders: renderOrdersPanel,
+    purchasing: renderPurchasing, production: renderProduction,
+    delivery: renderDelivery, inventory: renderInventory
+  };
+  if (id === 'packsheet') {
+    renderPackSheet();
+    var lblView = document.getElementById('pack-labels-view');
+    var staView = document.getElementById('pack-station-view');
+    if (lblView && lblView.style.display !== 'none') renderLabels();
+    if (staView && staView.style.display !== 'none') renderFulfillmentStation();
+    return;
+  }
+  if (fns[id]) try { fns[id](); } catch(e) {}
+}
+
+// Every legacy per-page setter now delegates to the global context.
+setPackSession        = function(v, el) { setGlobalSession(v); };
+setProdSession        = function(v, el) { setGlobalSession(v); };
+setPurchSession       = function(v, el) { setGlobalSession(v); };
+setFulfillmentSession = function(v, el) { setGlobalSession(v); };
+setLabelSession       = function(el, v) { setGlobalSession(v); };
+setRouteSession       = function(el, v) { setGlobalSession(v); };
+setOrderSessionFilter = function(el, v) { setGlobalSession(v === 'all' ? 'all' : v); };
+
+// Boot: restore the persisted session across all pages
+setTimeout(function() {
+  var v = getGlobalSession();
+  if (v !== 'all') setGlobalSession(v); else syncSessionTabsUI();
+}, 200);
 
 // Global shortcut: Cmd/Ctrl-K opens, Esc closes
 document.addEventListener('keydown', function(e) {
@@ -13501,8 +13750,9 @@ function genMealId(dish) {
   // Build 2-3 letter abbreviation from each filled slot name
   var slots = [dish.protein, dish.carb, dish.veg, dish.condiment, dish.complete];
   var parts = slots.filter(Boolean).map(function(name) {
-    // Split on spaces/hyphens, take first letter of each word, max 3 letters
-    var words = name.trim().split(/[\s\-]+/).filter(Boolean);
+    // Letters/digits only — brackets and punctuation must never reach a label
+    var clean = name.replace(/[^A-Za-z0-9\s\-]/g, ' ');
+    var words = clean.trim().split(/[\s\-]+/).filter(Boolean);
     if (words.length === 1) {
       // Single word: take first 2-3 consonants/chars
       return words[0].slice(0, 3).toUpperCase();
@@ -13534,6 +13784,7 @@ function renderLabels() {
   var storage  = (document.getElementById('lbl-storage')  || {value:'Storage: Refrigerate and chill below 5 °C'}).value.trim();
   var reheat   = (document.getElementById('lbl-reheat')   || {value:''}).value.trim();
   var showName = (document.getElementById('lbl-show-name') || {checked:false}).checked;
+  var showCode = (document.getElementById('lbl-show-code') || {checked:true}).checked;
 
   // Sort by resolved name
   var sorted = orders.slice().sort(function(a, b) {
@@ -13648,7 +13899,7 @@ function renderLabels() {
 
     var totals    = calcDishTotals(dish);
     var allergens = Array.from(totals.allergens || new Set()).sort();
-    var mealId    = genMealId(dish);
+    var mealId    = showCode ? genMealId(dish) : '';
 
     var macroStr = (totals.kcal||0).toFixed(0) + ' kcal · P ' + (totals.prot||0).toFixed(1) + 'g'
       + ' · C ' + (totals.carb||0).toFixed(1) + 'g · F ' + (totals.fat||0).toFixed(1) + 'g'
@@ -13664,6 +13915,8 @@ function renderLabels() {
 
       '<div class="label-print-bar no-print' + (isAthlete ? ' lb-athlete' : '') + '">' +
         '<span style="font-size:10px;color:var(--text2);font-family:var(--mono)">' + barLabel + '</span>' +
+        '<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px" ' +
+          'onclick="downloadLabelJpeg(' + idx + ')" title="Download this label as a JPEG">&#x2B07; JPG</button>' +
         '<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px" ' +
           'onclick="printSingleLabel(' + idx + ')">&#x1F5A8; Print</button>' +
       '</div>' +
@@ -13694,6 +13947,10 @@ function renderLabels() {
       '</div>' +   // .label-card
     '</div>';      // .label-wrap
   }
+
+  // Expose for JPEG export (canvas renderer reads the same data as the cards)
+  window._labelItems = items;
+  window._labelMeta  = { week: week, useBy: useBy, storage: storage, reheat: reheat, showName: showName, showCode: showCode };
 
   var html = summaryHtml;
 
@@ -13765,6 +14022,142 @@ function printSingleLabel(idx) {
   win.document.close();
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+// LABEL → JPEG EXPORT (June 2026) — 89×41mm @ 300dpi, canvas-drawn,
+// for direct upload to the label printer. No external deps except
+// JSZip (cdnjs, lazy-loaded) for the all-labels zip.
+// ═══════════════════════════════════════════════════════════════
+function _lblDrawCanvas(item) {
+  var meta = window._labelMeta || {};
+  var W = 1051, H = 484; // 89 × 41 mm at 300 dpi
+  var cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  var ctx = cv.getContext('2d');
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+  ctx.textBaseline = 'top';
+  var PAD = 30, y = 22, maxW = W - PAD * 2;
+
+  function wrap(text, font, color, lineH, maxLines) {
+    if (!text) return;
+    ctx.font = font; ctx.fillStyle = color;
+    var words = String(text).split(/\s+/), line = '', lines = 0;
+    for (var i = 0; i < words.length; i++) {
+      var test = line ? line + ' ' + words[i] : words[i];
+      if (ctx.measureText(test).width > maxW && line) {
+        if (lines === maxLines - 1) { line = line.replace(/\s*$/, '') + '…'; break; }
+        ctx.fillText(line, PAD, y); y += lineH; lines++;
+        line = words[i];
+      } else line = test;
+    }
+    if (line && y < H - 10) { ctx.fillText(line, PAD, y); y += lineH; }
+  }
+
+  var dish = item.dish, ord = item.ord;
+  var cust = getCustById(ord.customerId);
+  var totals = calcDishTotals(dish);
+  var allergens = Array.from(totals.allergens || new Set()).sort();
+  var nameStr = ord.recipientName || (cust ? cust.name : '');
+  var isAthlete = !!dish.athleteVariant;
+
+  // Header row: business + week left, meal code right
+  ctx.font = '600 22px Courier, monospace'; ctx.fillStyle = '#555555';
+  ctx.fillText('29 PERFORMANCE · ' + (meta.week || ''), PAD, y);
+  if (meta.showCode !== false) {
+    var code = genMealId(dish);
+    if (code) {
+      ctx.font = '700 24px Courier, monospace';
+      var cw = ctx.measureText(code).width;
+      ctx.fillStyle = '#f5f0d0'; ctx.fillRect(W - PAD - cw - 24, y - 8, cw + 24, 40);
+      ctx.strokeStyle = '#b8860b'; ctx.lineWidth = 2; ctx.strokeRect(W - PAD - cw - 24, y - 8, cw + 24, 40);
+      ctx.fillStyle = '#000000'; ctx.fillText(code, W - PAD - cw - 12, y);
+    }
+  }
+  y += 44;
+
+  if (isAthlete) {
+    var athName = (dish.athleteIds || []).map(function(aId) {
+      var ath = (DB.athletes || []).find(function(a){ return a.id === aId; });
+      return ath ? ath.name : '';
+    }).filter(Boolean).join(' / ') || 'Athlete';
+    wrap('ATHLETE — ' + athName + ' — BESPOKE MACROS', '700 26px Helvetica, Arial, sans-serif', '#b45309', 32, 1);
+    y += 2;
+  }
+  if ((meta.showName || isAthlete) && nameStr) {
+    wrap(nameStr + (item.qtyTotal > 1 ? '  [' + item.qIdx + '/' + item.qtyTotal + ']' : ''), '700 30px Helvetica, Arial, sans-serif', '#000000', 36, 1);
+    y += 2;
+  }
+
+  wrap(dish.name || '', '800 44px Helvetica, Arial, sans-serif', '#000000', 50, 2);
+  y += 4;
+
+  var macroStr = (totals.kcal||0).toFixed(0) + ' kcal · P ' + (totals.prot||0).toFixed(1) + 'g · C ' +
+    (totals.carb||0).toFixed(1) + 'g · F ' + (totals.fat||0).toFixed(1) + 'g' +
+    (totals.weight ? ' · ~' + Math.round(totals.weight) + 'g' : '');
+  wrap(macroStr, '24px Courier, monospace', '#444444', 30, 1);
+  y += 4;
+
+  wrap(allergens.length ? 'Contains: ' + allergens.join(', ') : 'No major allergens declared',
+       allergens.length ? '700 26px Helvetica, Arial, sans-serif' : '24px Helvetica, Arial, sans-serif',
+       allergens.length ? '#000000' : '#666666', 32, 2);
+  if (cust && cust.dietary) wrap('⚠ ' + cust.dietary, '600 24px Helvetica, Arial, sans-serif', '#b45309', 30, 1);
+  if (meta.useBy)   wrap('Use by: ' + meta.useBy, '700 28px Helvetica, Arial, sans-serif', '#000000', 34, 1);
+  if (meta.storage) wrap(meta.storage, '22px Helvetica, Arial, sans-serif', '#555555', 27, 1);
+  if (meta.reheat)  wrap(meta.reheat,  '20px Helvetica, Arial, sans-serif', '#777777', 25, 3);
+
+  return cv;
+}
+
+function _lblFileName(item, idx) {
+  var nm = (item.dish.name || 'label').replace(/[^A-Za-z0-9 \-]/g, '').trim().replace(/\s+/g, '-');
+  return String(idx + 1).padStart(3, '0') + '-' + nm + '.jpg';
+}
+
+function downloadLabelJpeg(idx) {
+  var item = (window._labelItems || [])[idx];
+  if (!item) { notify('Render labels first'); return; }
+  _lblDrawCanvas(item).toBlob(function(blob) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = _lblFileName(item, idx);
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  }, 'image/jpeg', 0.92);
+}
+
+function _loadJsZip(cb) {
+  if (window.JSZip) { cb(); return; }
+  var sc = document.createElement('script');
+  sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+  sc.onload = cb;
+  sc.onerror = function(){ notify('Could not load the zip library — check the connection ✗'); };
+  document.head.appendChild(sc);
+}
+
+function downloadAllLabelJpegs() {
+  var items = window._labelItems || [];
+  if (!items.length) { notify('No labels to export — check orders and session filter'); return; }
+  notify('Rendering ' + items.length + ' labels…');
+  _loadJsZip(function() {
+    var zip = new JSZip();
+    var pending = items.length;
+    items.forEach(function(item, idx) {
+      _lblDrawCanvas(item).toBlob(function(blob) {
+        zip.file(_lblFileName(item, idx), blob);
+        if (--pending === 0) {
+          zip.generateAsync({ type: 'blob' }).then(function(zb) {
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(zb);
+            a.download = 'labels-' + ((window._labelMeta || {}).week || 'week').replace(/[^A-Za-z0-9]+/g, '-') + '.zip';
+            a.click();
+            setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+            notify('⬇ ' + items.length + ' label JPEGs zipped ✓');
+          });
+        }
+      }, 'image/jpeg', 0.92);
+    });
+  });
+}
 
 function printDymoLabels() {
   renderLabels();
