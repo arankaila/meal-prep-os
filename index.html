@@ -1821,6 +1821,34 @@ select.route-confirm-input option { background:var(--surface2); }
 .tv-comp.c-filled{border-color:rgba(74,222,128,.5);color:#4ade80;background:rgba(74,222,128,.1);}
 .bb-comp{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;margin:2px 4px 2px 0;background:var(--surface2);border:1px solid var(--border2);color:var(--text3);}
 .bb-comp.c-filled{border-color:rgba(74,222,128,.5);color:#4ade80;background:rgba(74,222,128,.08);}
+/* Cook board stations */
+.cook-station{margin-bottom:26px;}
+.cook-station-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;margin-bottom:12px;background:var(--surface2);border-left:4px solid var(--gold);border-radius:7px;font-size:15px;font-weight:800;letter-spacing:.3px;}
+.cook-station-hdr .cook-station-count{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text3);}
+/* Focus mode — chrome-free for the kitchen iPad */
+body.focus-mode .sidebar,body.focus-mode .topbar,body.focus-mode .wk-tracker,
+body.focus-mode .section-header,body.focus-mode #prod-view-tabs,
+body.focus-mode .stats-toggle,body.focus-mode .sidebar-overlay{display:none !important;}
+body.focus-mode .content{padding:14px;}
+body.focus-mode .main{width:100%;}
+
+/* ── POLISH PASS (June 2026) — calmer surfaces, more rhythm, less noise ── */
+.card,.dash-card,.kpi-card,.qbi-card,.qbi-score{border-radius:11px;}
+.modal{border-radius:13px;}
+.btn,input,select,textarea{border-radius:7px;}
+.section-header{margin-bottom:18px;}
+.section-title{font-size:18px;letter-spacing:-.4px;}
+.section-sub{color:var(--text3);}
+table th{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);}
+table td{padding-top:9px;padding-bottom:9px;}
+.card-header{padding-top:12px;padding-bottom:12px;}
+.notif{border-radius:10px;box-shadow:0 10px 34px rgba(0,0,0,.45);}
+.empty-state{padding:54px 20px;}
+.page{animation:pageIn .16s ease;}
+@keyframes pageIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:5px;}
+::-webkit-scrollbar-track{background:transparent;}
 .qb-flavour-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;}
 .qb-flavour-chip{display:inline-flex;align-items:center;gap:6px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:4px 10px 4px 13px;font-size:12px;font-family:var(--sans);font-weight:600;}
 .qb-chip-meta{font-size:10px;color:var(--text3);font-weight:400;font-family:var(--mono);}
@@ -8578,6 +8606,8 @@ function getProdView() {
 function setProdView(v) {
   try { localStorage.setItem('29perf_prodView', v); } catch(e) {}
   applyProdView();
+  // Kitchen-mode tablets: the cook board goes chrome-free automatically
+  if (v === 'cook' && typeof kitchenModeOn === 'function' && kitchenModeOn()) toggleFocusMode(true);
 }
 /* Show the active production face: Prep (D-2) / Cook Board (D-1) / Planner */
 function applyProdView() {
@@ -8727,19 +8757,55 @@ function renderCookBoard() {
   }
   var done = prodRows.filter(function(r){ return getComponentStatus(r.name) === 'complete'; }).length;
   var stLabel = { not_started: ['TO DO', 'var(--surface3);color:var(--text3)'], in_progress: ['ON THE STOVE', 'rgba(96,165,250,.2);color:#60a5fa'], complete: ['DONE ✓', 'rgba(74,222,128,.18);color:#4ade80'] };
+  // Group by station — the chef thinks in stations, not in a flat list
+  var byStation = {};
+  prodRows.forEach(function(r, i) {
+    var key = r.station || 'Unassigned';
+    if (!byStation[key]) byStation[key] = [];
+    byStation[key].push(i);
+  });
+  var stationsHtml = Object.keys(byStation).map(function(station) {
+    var idxs = byStation[station];
+    var sDone = idxs.filter(function(i){ return getComponentStatus(prodRows[i].name) === 'complete'; }).length;
+    return '<div class="cook-station">' +
+      '<div class="cook-station-hdr"><span>' + station + '</span>' +
+        '<span class="cook-station-count">' + sDone + ' / ' + idxs.length + '</span></div>' +
+      '<div class="cook-grid">' + idxs.map(function(i) {
+        var r = prodRows[i];
+        var st = getComponentStatus(r.name);
+        var lab = stLabel[st] || stLabel.not_started;
+        return '<div class="cook-card st-' + st + '" onclick="openCookCard(' + i + ')">' +
+          '<span class="cc-status" style="background:' + lab[1] + '">' + lab[0] + '</span>' +
+          '<div class="cc-type">' + r.type + '</div>' +
+          '<div class="cc-name">' + r.name + '</div>' +
+          '<div class="cc-qty">' + (r.batchRaw >= 1000 ? (r.batchRaw / 1000).toFixed(1) + ' kg' : r.batchRaw + ' g') + ' raw → ~' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(1) + ' kg' : r.batchCooked + ' g') + '</div>' +
+          '<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px">' + r.portions + ' portions' + (st === 'complete' ? ' ' + prodYieldChip(r.name) : '') + '</div>' +
+        '</div>';
+      }).join('') + '</div>' +
+    '</div>';
+  }).join('');
+
   el.innerHTML =
-    '<div class="next-hint no-print"><span class="nh-icon">🍳</span><span><strong>Cook day:</strong> tap a card to open it full-screen. Run as many at once as the hobs allow — helpers can take any card. <strong>' + done + '/' + prodRows.length + ' done.</strong></span></div>' +
-    '<div class="cook-grid">' + prodRows.map(function(r, i) {
-      var st = getComponentStatus(r.name);
-      var lab = stLabel[st] || stLabel.not_started;
-      return '<div class="cook-card st-' + st + '" onclick="openCookCard(' + i + ')">' +
-        '<span class="cc-status" style="background:' + lab[1] + '">' + lab[0] + '</span>' +
-        '<div class="cc-type">' + r.type + ' · ' + r.station + '</div>' +
-        '<div class="cc-name">' + r.name + '</div>' +
-        '<div class="cc-qty">' + (r.batchRaw >= 1000 ? (r.batchRaw / 1000).toFixed(1) + ' kg' : r.batchRaw + ' g') + ' raw → ~' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(1) + ' kg' : r.batchCooked + ' g') + '</div>' +
-        '<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px">' + r.portions + ' portions' + (st === 'complete' ? ' ' + prodYieldChip(r.name) : '') + '</div>' +
-      '</div>';
-    }).join('') + '</div>';
+    '<div class="next-hint no-print" style="align-items:center"><span class="nh-icon">🍳</span><span style="flex:1"><strong>Cook day:</strong> tap a card to open it full-screen. Run as many at once as the hobs allow. <strong>' + done + '/' + prodRows.length + ' done.</strong></span>' +
+    '<button class="btn btn-ghost btn-sm" onclick="toggleFocusMode()" title="Hide all menus and bars — just the board. Stops mis-taps mid-cook.">⛶ ' + (document.body.classList.contains('focus-mode') ? 'Exit Focus' : 'Focus') + '</button></div>' +
+    stationsHtml;
+}
+
+/* Focus mode — chrome-free cooking. Hides sidebar/topbar/tracker; fullscreen where supported. */
+function toggleFocusMode(force) {
+  var on = (typeof force === 'boolean') ? force : !document.body.classList.contains('focus-mode');
+  document.body.classList.toggle('focus-mode', on);
+  try {
+    if (on && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+    if (!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen();
+  } catch(e) {}
+  if (!document.getElementById('focus-exit-chip')) {
+    document.body.insertAdjacentHTML('beforeend',
+      '<button id="focus-exit-chip" class="no-print" onclick="toggleFocusMode(false)" ' +
+      'style="display:none;position:fixed;top:10px;right:12px;z-index:6500;background:var(--surface2);border:1px solid var(--border2);color:var(--text3);border-radius:8px;padding:7px 13px;font-size:12px;cursor:pointer">⛶ exit focus</button>');
+  }
+  document.getElementById('focus-exit-chip').style.display = on ? '' : 'none';
+  try { renderCookBoard(); } catch(e) {}
 }
 
 var _cookCardIdx = null;
@@ -8791,9 +8857,13 @@ function openCookCard(i) {
       '<div class="cook-ov-qty">' + (r.batchRaw >= 1000 ? (r.batchRaw / 1000).toFixed(2) + ' kg' : r.batchRaw + ' g') + ' raw · ' + r.portions + ' portions · ' + r.cookMethod + '</div>' +
       '<div class="cook-ov-target">🎯 Finish with ~<strong>' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(2) + ' kg' : r.batchCooked + ' g') + '</strong>' + (r.targetTemp ? ' · 🌡 ' + r.targetTemp + '°C core' : '') + '</div>' +
       '<div class="cook-ov-section">This batch needs</div>' + (lines || '<div style="color:var(--text3);font-size:13px">No ingredient lines on this recipe.</div>') +
-      steps(r.prepSteps || (rec && rec.prepSteps), 'Prep') +
-      steps(rec && rec.cookSteps, 'Cook') +
-      steps(rec && rec.finishSteps, 'Finish') +
+      // Cook day leads with COOK steps (legacy recipes stored them in `steps`)
+      steps((rec && rec.cookSteps && rec.cookSteps.length ? rec.cookSteps : (rec && rec.steps) || (r.steps || [])), '🍳 Cook') +
+      steps(rec && rec.finishSteps, '✨ Finish') +
+      ((r.prepSteps || (rec && rec.prepSteps) || []).length
+        ? '<details style="margin-top:14px"><summary style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);cursor:pointer">🔪 Prep steps (done yesterday)</summary>' +
+          steps(r.prepSteps || (rec && rec.prepSteps), 'Prep') + '</details>'
+        : '') +
       '<div style="display:flex;gap:10px;margin:22px 0 40px;flex-wrap:wrap">' + actions + '</div>' +
     '</div>';
   ov.classList.add('open');
