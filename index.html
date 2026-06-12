@@ -1537,6 +1537,9 @@ tr:hover .inv-row-actions{opacity:1;}
 .order-status-badge.staged       {background:rgba(201,168,76,.2);color:var(--gold);border:1px solid rgba(201,168,76,.4);}
 .order-status-badge.delivered    {background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2);opacity:.7;}
 .order-status-badge.cancelled    {background:rgba(248,113,113,.1);color:#f87171;border:1px solid rgba(248,113,113,.2);}
+.order-status-badge.pay-unpaid {background:rgba(255,159,10,.15);color:#ffb340;border:1px solid rgba(255,159,10,.35);cursor:pointer;}
+.order-status-badge.pay-paid   {background:rgba(74,222,128,.15);color:#4ade80;border:1px solid rgba(74,222,128,.3);cursor:pointer;}
+.order-status-badge.pay-comped {background:rgba(167,139,250,.15);color:#c4b5fd;border:1px solid rgba(167,139,250,.3);cursor:pointer;}
 .order-source-badge{padding:2px 7px;border-radius:4px;font-size:9px;font-family:var(--mono);letter-spacing:.5px;flex-shrink:0;}
 .order-source-badge.portal  {background:rgba(96,165,250,.15);color:#60a5fa;}
 .order-source-badge.manual  {background:rgba(255,255,255,.06);color:var(--text3);}
@@ -2732,6 +2735,7 @@ select.route-confirm-input option { background:var(--surface2); }
       <div class="orders-bulk-bar no-print" id="orders-bulk-bar">
         <span class="bulk-label" id="orders-bulk-count">—</span>
         <button class="btn btn-ghost btn-sm" onclick="bulkConfirmOrders()">✓ Confirm All Pending</button>
+        <button class="btn btn-ghost btn-sm" onclick="bulkMarkConfirmedPaid()">💳 Mark Confirmed as Paid</button>
         <button class="btn btn-ghost btn-sm" onclick="exportOrdersCSV()">↓ Export CSV</button>
       </div>
 
@@ -3090,6 +3094,9 @@ select.route-confirm-input option { background:var(--surface2); }
 
             <h2 class="gs-h2">👨‍🍳 Kitchen Mode</h2>
             <p class="gs-p">The button at the bottom of the sidebar locks a device to <strong>Production, Packing &amp; Fulfilment and Delivery</strong> with big touch targets — ideal for the kitchen tablet. Exit can be password-protected. Staff can't wander into finance or master data.</p>
+
+            <h2 class="gs-h2">Shopping in packs, not grams (Phase 1)</h2>
+            <p class="gs-p">Give an ingredient a <strong>pack size</strong> (and optionally pack price, or a unit name + weight like "pepper · 150g") in its edit form, and Purchasing stops saying "4,260g" and starts saying <strong>"7 × 650g (+290g spare) · ~£23.10"</strong> or <strong>"≈10 peppers"</strong>. Each line has a checkbox that syncs across devices — tick items off on the iPad as they go in the trolley. The 🛒 Basket KPI shows the true rounded-to-packs spend. Also new: each recipe ingredient line takes a <strong>prep note</strong> ("sliced 5mm") — this feeds the upcoming Prep Cards for prep day. And every order now carries a payment status — tap the badge to cycle <strong>💳 Unpaid → ✓ Paid → 🎁 Comped</strong>; comped athlete meals are totalled as marketing spend on the Athletes page.</p>
 
             <h2 class="gs-h2">Quality of life</h2>
             <p class="gs-p"><strong>⌘K / Ctrl-K</strong> searches everything (dishes, ingredients, recipes, customers, orders) and jumps straight there. Deletes now show a 10-second <strong>↶ Undo</strong> instead of a confirm popup. The ingredient form hides the 33 micronutrient fields unless you need them, warns on duplicate names, and has "Save &amp; Add Another" for batch entry. Click any ingredient's £ cost in the table to edit it in place. Orders show a live total as you type quantities. The 📊 Stats strips on ops pages are collapsed by default — click to expand. Each ops page shows a 👉 hint telling you what to do now and what comes next. Production completion now asks for the <strong>actual cooked weight</strong> and flags variance against the plan (⚖ chip), so under-production is caught before packing. In Inventory, <strong>📥 Track this week's menu</strong> flags every ingredient the menu uses in one click.</p>
@@ -4466,6 +4473,10 @@ select.route-confirm-input option { background:var(--surface2); }
         <div class="form-group"><label>Processing Yield % (trim loss)</label><input id="ing-proc" type="number" step="0.1" min="0" max="100" value="100"></div>
         <div class="form-group"><label>Cooking Yield % (100=no change, 333=rice)</label><input id="ing-cook" type="number" step="0.1" min="0" max="500" value="100"></div>
         <div class="form-group"><label>PAR Level (g)</label><input id="ing-par" type="number" min="0"></div>
+        <div class="form-group"><label>Pack Size (g per pack) <span style="color:var(--text3);font-weight:400;text-transform:none">— shopping list rounds to packs</span></label><input id="ing-packSize" type="number" min="0" placeholder="e.g. 650"></div>
+        <div class="form-group"><label>Pack Price (£, optional)</label><input id="ing-packPrice" type="number" min="0" step="0.01" placeholder="e.g. 3.30"></div>
+        <div class="form-group"><label>Unit Name (countable)</label><input id="ing-unitName" placeholder="e.g. pepper, tin"></div>
+        <div class="form-group"><label>Unit Weight (g each)</label><input id="ing-unitWeight" type="number" min="0" placeholder="e.g. 150"></div>
         <div class="form-group"><label>Notes</label><input id="ing-notes" placeholder="Optional"></div>
       </div>
       <div style="margin:14px 0 8px;font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:6px;">Core Macros (per 100g raw)</div>
@@ -5292,6 +5303,8 @@ function renderNextHint(id) {
       : st.portal.anyOpen
         ? 'Ordering is <strong>open</strong> — new orders appear here live. Confirm them as they land.'
         : st.orders.length ? 'All orders confirmed ✓ — next: <strong>Purchasing</strong>.' : 'No orders yet — open the portal or add one manually.';
+    var unpaidN = st.orders.filter(function(o){ return (o.payStatus || 'unpaid') === 'unpaid'; }).length;
+    if (unpaidN > 0) txt += ' <span style="color:#ffb340">· 💳 <strong>' + unpaidN + ' unpaid</strong></span>';
   } else if (id === 'purchasing') {
     txt = 'Shop this list (per supplier). Receive tracked stock in <strong>Inventory</strong>. Next: <strong>Production</strong>.';
   } else if (id === 'production') {
@@ -6252,9 +6265,9 @@ function openIngModal(id=null){
   const ing = id ? DB.ingredients.find(i=>i.id===id) : null;
   document.getElementById('ing-modal-title').textContent = ing?'Edit Ingredient':'Add Ingredient';
   rebuildIngCatSelect(ing?.cat||DB.ingCategories?.[0]?.name||'Protein');
-  const fields=['name','brand','type','subtype','supplier','notes'];
+  const fields=['name','brand','type','subtype','supplier','notes','unitName'];
   fields.forEach(f=>{ const el=document.getElementById('ing-'+f); if(el) el.value=ing ? (ing[f]||'') : ''; });
-  const numFields=['ap','proc','cook','par','kcal','prot','carb','sugars','fat','sat','fibre','salt','omega3','omega6','vitA','vitB1','vitB2','vitB3','vitB6','vitB12','folate','vitC','vitD','vitE','vitK','calcium','iron','magnesium','phosphorus','potassium','sodium','zinc','selenium','manganese','copper','iodine','chromium'];
+  const numFields=['ap','proc','cook','par','packSize','packPrice','unitWeight','kcal','prot','carb','sugars','fat','sat','fibre','salt','omega3','omega6','vitA','vitB1','vitB2','vitB3','vitB6','vitB12','folate','vitC','vitD','vitE','vitK','calcium','iron','magnesium','phosphorus','potassium','sodium','zinc','selenium','manganese','copper','iodine','chromium'];
   numFields.forEach(f=>{ const el=document.getElementById('ing-'+f); if(el) el.value=ing ? (n(ing[f])||0) : (f==='proc'||f==='cook'?100:0); });
   // allergen checkboxes
   const noAllergen = ing ? (ing.noAllergen === true || (Array.isArray(ing.allergens) && ing.allergens.length === 0 && ing.noAllergen === true)) : false;
@@ -6310,12 +6323,12 @@ function toggleAllergenPanel(noAllergen) {
 function saveIngredient(addAnother){
   const name=document.getElementById('ing-name').value.trim();
   if(!name){alert('Name required');return;}
-  const numFields=['ap','proc','cook','par','kcal','prot','carb','sugars','fat','sat','fibre','salt','omega3','omega6','vitA','vitB1','vitB2','vitB3','vitB6','vitB12','folate','vitC','vitD','vitE','vitK','calcium','iron','magnesium','phosphorus','potassium','sodium','zinc','selenium','manganese','copper','iodine','chromium'];
+  const numFields=['ap','proc','cook','par','packSize','packPrice','unitWeight','kcal','prot','carb','sugars','fat','sat','fibre','salt','omega3','omega6','vitA','vitB1','vitB2','vitB3','vitB6','vitB12','folate','vitC','vitD','vitE','vitK','calcium','iron','magnesium','phosphorus','potassium','sodium','zinc','selenium','manganese','copper','iodine','chromium'];
   const noAllergen = document.getElementById('ing-no-allergen').checked;
   const ing={
     id: editIngId||('ING'+String(DB.nextIngId++).padStart(3,'0')),
     name, brand:gv('ing-brand'), cat:gv('ing-cat'), type:gv('ing-type'), subtype:gv('ing-subtype'),
-    supplier:gv('ing-supplier'), notes:gv('ing-notes'),
+    supplier:gv('ing-supplier'), notes:gv('ing-notes'), unitName:gv('ing-unitName'),
     noAllergen,
     allergens: noAllergen ? [] : [...document.querySelectorAll('#allergen-checkboxes input:checked')].map(c=>c.value),
     trackInventory: false,
@@ -6548,6 +6561,7 @@ function renderRecIngLines(){
       </div>
       <input type="number" style="flex:0 0 70px" placeholder="qty g" value="${l.qty||''}" onchange="updateRL(${idx},'qty',this.value)" min="0" step="0.1">
       <span class="small muted">g raw</span>
+      <input type="text" style="flex:0 0 150px" placeholder="prep — e.g. sliced 5mm" value="${(l.prep||'').replace(/"/g,'&quot;')}" onchange="updateRL(${idx},'prep',this.value)" title="How this ingredient is processed for this component (drives the Prep Card)">
       <button class="action-btn r" onclick="removeRL(${idx})">×</button>
     </div>`;
   }).join('');
@@ -9166,6 +9180,38 @@ function setPurchView(v){
   document.querySelectorAll('.purch-view-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
   renderPurchasing();
 }
+// ── Shop checklist — tick lines off in the supermarket (synced via DB) ──
+function purchCheckKey() { return (getProductionWeekLabel() || 'wk') + '|' + purchSessionFilter; }
+function purchChecks() {
+  var key = purchCheckKey();
+  if (!DB.purchChecks || DB.purchChecks.key !== key) DB.purchChecks = { key: key, items: {} };
+  return DB.purchChecks.items;
+}
+function tickPurchLine(ingId, checked) {
+  var items = purchChecks();
+  if (checked) items[ingId] = true; else delete items[ingId];
+  save();
+  renderPurchasing();
+}
+
+/* What to physically buy for a line: packs > countable units > raw grams */
+function purchBuyInfo(ing, netRaw) {
+  if (netRaw <= 0) return { text: '—', cost: 0, packs: 0 };
+  var packSize = n(ing.packSize);
+  if (packSize > 0) {
+    var packs = Math.ceil(netRaw / packSize);
+    var buffer = packs * packSize - netRaw;
+    var cost = n(ing.packPrice) > 0 ? packs * n(ing.packPrice) : (packs * packSize / 100) * n(ing.ap);
+    return { text: '<strong>' + packs + '</strong> × ' + packSize + 'g', sub: buffer > 0 ? '+' + Math.round(buffer) + 'g spare' : '', cost: cost, packs: packs };
+  }
+  if (n(ing.unitWeight) > 0) {
+    var units = Math.ceil(netRaw / n(ing.unitWeight));
+    var uname = (ing.unitName || 'unit') + (units !== 1 ? 's' : '');
+    return { text: '<strong>≈' + units + '</strong> ' + uname, sub: Math.round(netRaw) + 'g', cost: (netRaw / 100) * n(ing.ap), packs: 0 };
+  }
+  return { text: Math.round(netRaw) + 'g', sub: '', cost: (netRaw / 100) * n(ing.ap), packs: 0 };
+}
+
 function renderPurchasing(){
   const sessionLabel=purchSessionFilter==='all'?'All Sessions':(purchSessionFilter==='s1'||purchSessionFilter==='sunday')?'Sunday only':'Wednesday only';
   document.getElementById('print-date-purch').textContent='Order for week: '+new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · '+sessionLabel;
@@ -9215,11 +9261,14 @@ function renderPurchasing(){
     <div class="kpi-card"><div class="kpi-label">Total Required Cost</div><div class="kpi-value">£${totalCost.toFixed(2)}</div><div class="kpi-sub">${(totalRawWt/1000).toFixed(1)}kg raw to buy</div></div>
     <div class="kpi-card b"><div class="kpi-label">Net to Order</div><div class="kpi-value">£${netCost.toFixed(2)}</div><div class="kpi-sub">${(netRawWt/1000).toFixed(1)}kg after stock</div></div>
     <div class="kpi-card g"><div class="kpi-label">Suppliers</div><div class="kpi-value">${new Set(orderRows.map(r=>r.ing.supplier||'Misc')).size}</div><div class="kpi-sub">on this order</div></div>
+    <div class="kpi-card"><div class="kpi-label">🛒 Basket (rounded to packs)</div><div class="kpi-value">£${netRows.reduce((sum,r)=>{const nr=Math.max(0,r.rawG-r.onHand);return sum+purchBuyInfo(r.ing,nr).cost;},0).toFixed(2)}</div><div class="kpi-sub">${Object.keys(purchChecks()).length}/${netRows.filter(r=>r.rawG>r.onHand).length} ticked off</div></div>
   `;
 
   // ── shared table row builder ──────────────────────────────
+  const _checks = purchChecks();
   const buildRows = (rows, groupKey) => rows.map(r=>{
     const procYield=(n(r.ing.proc)||100)/100;
+    const ticked=!!_checks[r.ing.id];
     const parFlag=getEffectivePar(r.ing.id)>0&&r.rawG<getEffectivePar(r.ing.id);
     const effPar=getEffectivePar(r.ing.id);
     const invRec=DB.inventory?.[r.ing.id];
@@ -9232,9 +9281,11 @@ function renderPurchasing(){
     const secondaryCol = groupKey==='supplier'
       ? `<td>${catBadgeHtml(r.ing.cat)}</td>`
       : `<td class="small muted">${r.ing.supplier||'Misc'}</td>`;
-    return `<tr ${covered?'style="opacity:0.55"':parFlag?'style="background:rgba(245,158,11,0.05)"':''}>
+    const buy = purchBuyInfo(r.ing, netRaw);
+    return `<tr ${ticked?'style="opacity:0.4"':covered?'style="opacity:0.55"':parFlag?'style="background:rgba(245,158,11,0.05)"':''}>
+      <td class="no-print" style="width:28px"><input type="checkbox" ${ticked?'checked':''} ${covered?'disabled':''} onchange="tickPurchLine('${r.ing.id}',this.checked)" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer"></td>
       <td>
-        <strong>${r.ing.name}</strong>
+        <strong ${ticked?'style="text-decoration:line-through;color:var(--text3)"':''}>${r.ing.name}</strong>
         ${covered?'<span class="small" style="color:#4ade80;margin-left:4px">✓ Covered</span>':''}
         ${!covered&&parFlag?` <span class="small text-amber">⚠ below PAR</span>`:''}
       </td>
@@ -9244,6 +9295,7 @@ function renderPurchasing(){
       <td class="mono muted">${(procYield*100).toFixed(0)}%</td>
       <td class="mono" style="color:${onHand>0?'#4ade80':'var(--text3)'}">${onHand.toFixed(0)}g</td>
       <td class="mono" style="color:${covered?'#4ade80':'#fbbf24'};font-weight:700">${covered?'✓ Covered':netRaw.toFixed(0)+'g'}</td>
+      <td class="mono" style="color:var(--gold)">${covered?'—':buy.text}${buy.sub?'<br><span style="font-size:9px;color:var(--text3)">'+buy.sub+'</span>':''}</td>
       <td class="mono">£${calcEP(r.ing).toFixed(3)}</td>
       <td class="mono ${covered?'muted':'text-gold'}">${covered?'—':'£'+netLineCost.toFixed(2)}</td>
       <td class="mono muted">${effPar||'—'}g</td>
@@ -9254,7 +9306,7 @@ function renderPurchasing(){
   const buildTable = (rows, groupKey) => {
     const secondaryHeader = groupKey==='supplier' ? '<th>Category</th>' : '<th>Supplier</th>';
     return `<div class="table-wrap"><table>
-      <thead><tr><th>Ingredient</th>${secondaryHeader}<th>Edible Needed</th><th>Raw to Buy</th><th>Proc Yield</th><th>On Hand (raw)</th><th>Net to Order</th><th>EP Cost/100g</th><th>Net Cost</th><th>PAR</th><th class="no-print">Action</th></tr></thead>
+      <thead><tr><th class="no-print">✓</th><th>Ingredient</th>${secondaryHeader}<th>Edible Needed</th><th>Raw to Buy</th><th>Proc Yield</th><th>On Hand (raw)</th><th>Net to Order</th><th style="color:var(--gold)">Buy</th><th>EP Cost/100g</th><th>Net Cost</th><th>PAR</th><th class="no-print">Action</th></tr></thead>
       <tbody>${buildRows(rows, groupKey)}</tbody>
     </table></div>`;
   };
@@ -10603,6 +10655,69 @@ function renderAthletes() {
       </div>
     `).join('') :
     '<div style="color:var(--text3);text-align:center;padding:24px">No athletes yet — add your first athlete to create variant dishes</div>';
+  renderAthletePartnershipPanel();
+}
+
+/* Partnership cost report — free athlete meals as a measured marketing spend.
+   Sources: athlete-variant dishes (current menu + last 8 archives) and 🎁 comped orders. */
+function renderAthletePartnershipPanel() {
+  var listEl = document.getElementById('athletes-list');
+  var old = document.getElementById('ath-partnership-card');
+  if (old) old.remove();
+  if (!listEl || !(DB.athletes || []).length) return;
+  var per = {}; // athleteId -> {meals, foodCost, retail}
+  (DB.athletes || []).forEach(function(a){ per[a.id] = { name: a.name, meals: 0, foodCost: 0, retail: 0 }; });
+
+  function tally(dishes) {
+    (dishes || []).forEach(function(d) {
+      if (!d.athleteVariant || !(d.athleteIds || []).length) return;
+      var meals = n(d.drop1) + n(d.drop2);
+      if (!meals) return;
+      var cost = 0;
+      try { cost = calcDishTotals(d).cost * meals; } catch(e) {}
+      var retail = (n(d.sellPrice) || DB.defaultSellPrice || 0) * meals;
+      (d.athleteIds || []).forEach(function(aid) {
+        if (!per[aid]) return;
+        per[aid].meals += meals; per[aid].foodCost += cost; per[aid].retail += retail;
+      });
+    });
+  }
+  tally(DB.menuDishes);
+  tally(DB.nextMenuDishes);
+  (DB.weeklyArchives || []).slice(-8).forEach(function(arc){ tally(arc.dishes); });
+
+  var compedOrders = (DB.weeklyOrders || []).filter(function(o){ return (o.payStatus || '') === 'comped'; });
+  var compedValue = compedOrders.reduce(function(sum, o) {
+    var v = 0;
+    Object.keys(o.allocation || {}).forEach(function(did) {
+      var d = (DB.menuDishes || []).concat(DB.nextMenuDishes || []).find(function(x){ return x.id === did; });
+      v += (o.allocation[did] || 0) * (d ? (n(d.sellPrice) || DB.defaultSellPrice || 0) : (DB.defaultSellPrice || 0));
+    });
+    return sum + v;
+  }, 0);
+
+  var rows = Object.keys(per).map(function(aid) {
+    var x = per[aid];
+    if (!x.meals) return '';
+    return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px">' +
+      '<span style="font-weight:600">🏅 ' + x.name + '</span>' +
+      '<span style="font-family:var(--mono);color:var(--text3)">' + x.meals + ' meals · <span style="color:#fbbf24">£' + x.foodCost.toFixed(2) + ' food</span> · ~£' + x.retail.toFixed(0) + ' retail value</span>' +
+    '</div>';
+  }).join('');
+
+  var totals = Object.values(per).reduce(function(t, x){ t.m += x.meals; t.c += x.foodCost; t.r += x.retail; return t; }, { m: 0, c: 0, r: 0 });
+
+  listEl.insertAdjacentHTML('afterend',
+    '<div class="card mt-14" id="ath-partnership-card">' +
+      '<div class="card-header"><div class="card-title">🎁 Partnership Cost — free meals as marketing spend</div>' +
+      '<div class="card-sub">current + next menu and last 8 archived weeks · plus comped orders</div></div>' +
+      '<div style="padding:12px 16px">' +
+        (rows || '<div style="font-size:12px;color:var(--text3)">No athlete-variant meals recorded yet.</div>') +
+        (totals.m ? '<div style="display:flex;justify-content:space-between;padding:9px 0 2px;font-size:12.5px;font-weight:700"><span>Total</span><span style="font-family:var(--mono)">' + totals.m + ' meals · £' + totals.c.toFixed(2) + ' food cost · ~£' + totals.r.toFixed(0) + ' retail value</span></div>' : '') +
+        (compedOrders.length ? '<div style="margin-top:8px;font-size:11px;color:var(--text3);font-family:var(--mono)">+ ' + compedOrders.length + ' comped order' + (compedOrders.length > 1 ? 's' : '') + ' (~£' + compedValue.toFixed(0) + ' retail) via 🎁 status on Orders</div>' : '') +
+        '<div style="margin-top:10px;font-size:10px;color:var(--text3)">Policy check: partnership value (content, data, reach) should exceed the food-cost line above. If an athlete\'s row keeps growing without return — renegotiate.</div>' +
+      '</div>' +
+    '</div>');
 }
 
 function openAthleteModal(id) {
@@ -13133,6 +13248,35 @@ function bulkConfirmOrders() {
   notify(count + ' order' + (count > 1 ? 's' : '') + ' confirmed ✓');
 }
 
+// ── Payment status: Unpaid / Paid / Comped (athlete partnerships) ──
+// Encodes the manual rule "only confirm once payment is checked", and makes
+// free partnership meals a measured cost instead of invisible leakage.
+function getPayStatus(o) { return o.payStatus || 'unpaid'; }
+function payStatusLabel(ps) { return { unpaid: '💳 Unpaid', paid: '✓ Paid', comped: '🎁 Comped' }[ps] || ps; }
+
+function cyclePayStatus(id) {
+  var ord = (DB.weeklyOrders || []).find(function(o) { return o.id === id; });
+  if (!ord) return;
+  var next = { unpaid: 'paid', paid: 'comped', comped: 'unpaid' };
+  ord.payStatus = next[getPayStatus(ord)];
+  ord.payStatusAt = new Date().toISOString();
+  save();
+  renderOrdersPanel();
+  notify('Payment status → ' + payStatusLabel(ord.payStatus));
+}
+
+function bulkMarkConfirmedPaid() {
+  var count = 0;
+  (getProductionOrders() || []).forEach(function(o) {
+    if (getOrderStatus(o) !== 'cancelled' && getOrderStatus(o) !== 'pending' && getPayStatus(o) === 'unpaid') {
+      o.payStatus = 'paid'; o.payStatusAt = new Date().toISOString(); count++;
+    }
+  });
+  if (!count) { notify('No unpaid confirmed orders'); return; }
+  save(); renderOrdersPanel();
+  notify('💳 ' + count + ' order' + (count > 1 ? 's' : '') + ' marked paid ✓');
+}
+
 function confirmOrder(id) {
   var ord = (DB.weeklyOrders || []).find(function(o) { return o.id === id; });
   if (!ord) return;
@@ -13142,7 +13286,11 @@ function confirmOrder(id) {
   save();
   renderOrdersPanel();
   renderMenu();
-  notify('Order confirmed ✓');
+  if (getPayStatus(ord) === 'unpaid') {
+    notify('Order confirmed ✓ — still 💳 unpaid. Tap the badge when payment lands (or cycle to 🎁 Comped).');
+  } else {
+    notify('Order confirmed ✓');
+  }
 }
 
 function cancelOrder(id) {
@@ -13442,6 +13590,7 @@ function renderOrderCard(ord, dishes) {
         '<div style="display:flex;gap:4px">' +
           '<span class="order-session-badge '+sessCls+'">'+sessLabel+'</span>' +
           '<span class="order-status-badge '+status+'">'+orderStatusLabel(status)+'</span>' +
+          (status!=='cancelled' ? '<span class="order-status-badge pay-'+getPayStatus(ord)+'" onclick="cyclePayStatus(\''+ord.id+'\')" title="Tap to cycle: Unpaid → Paid → Comped">'+payStatusLabel(getPayStatus(ord))+'</span>' : '') +
         '</div>' +
         '<span class="order-source-badge '+source+'">'+source.toUpperCase()+'</span>' +
         '<div style="display:flex;gap:6px">' +
