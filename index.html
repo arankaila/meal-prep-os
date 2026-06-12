@@ -13266,9 +13266,10 @@ function getWeekStageState() {
     Object.keys(o.allocation || {}).forEach(function(did) {
       if (!(o.allocation[did] > 0)) return;
       if (!dishes.some(function(d){ return d.id === did; })) return;
-      packTotal++;
+      var q = Math.max(1, Math.round(n(o.allocation[did])));
+      packTotal += q; // boxes, not order×dish pairs — consistent with the Box Board
       var pp = (o.packProgress || {})[did];
-      if (pp && pp.packed) packDone++;
+      if (pp && pp.packed) packDone += q;
     });
   });
 
@@ -13579,14 +13580,24 @@ function renderTvBoard() {
 
   // Production list (uses prodRows if production page computed them; else compute)
   if (!prodRows.length) { try { renderProduction(); } catch(e) {} }
-  var rows = prodRows.map(function(r) {
+  var prodDone = prodRows.filter(function(r){ return getComponentStatus(r.name) === 'complete'; }).length;
+  // Fit on screen: with many components, completed rows collapse to one summary
+  // line and the remainder render in two columns at a smaller size.
+  var pending = prodRows.filter(function(r){ return getComponentStatus(r.name) !== 'complete'; });
+  var showRows = prodRows.length > 10 ? pending : prodRows;
+  var twoCol = showRows.length > 8;
+  var rows = showRows.map(function(r) {
     var cst = getComponentStatus(r.name);
-    return '<div class="tv-prod-row ' + (cst === 'complete' ? 'tv-done' : cst === 'in_progress' ? 'tv-active' : '') + '">' +
+    return '<div class="tv-prod-row ' + (cst === 'complete' ? 'tv-done' : cst === 'in_progress' ? 'tv-active' : '') + '"' +
+      (twoCol ? ' style="font-size:17px;padding:6px 0"' : '') + '>' +
       '<span class="tv-dot d-' + cst + '"></span><span class="nm">' + r.name + '</span>' +
-      '<span style="font-family:var(--mono);font-size:16px;color:#888">' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(1) + 'kg' : r.batchCooked + 'g') + '</span>' +
+      '<span style="font-family:var(--mono);font-size:' + (twoCol ? 13 : 16) + 'px;color:#888">' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(1) + 'kg' : r.batchCooked + 'g') + '</span>' +
     '</div>';
   }).join('');
-  var prodDone = prodRows.filter(function(r){ return getComponentStatus(r.name) === 'complete'; }).length;
+  if (prodRows.length > 10 && prodDone > 0) {
+    rows = '<div class="tv-prod-row tv-done" style="font-size:17px;padding:6px 0"><span class="tv-dot d-complete"></span><span class="nm">✓ ' + prodDone + ' component' + (prodDone > 1 ? 's' : '') + ' done</span></div>' + rows;
+  }
+  if (twoCol) rows = '<div style="column-count:2;column-gap:30px">' + rows + '</div>';
 
   // Box board summary
   var groups = bbBoxGroups();
@@ -13604,20 +13615,13 @@ function renderTvBoard() {
     });
   });
   var missing = groups.filter(function(g){ return !g.comps.every(function(c){ return bbIsFilled(g.ord, g.dish.id, c); }); })
-    .slice(0, 6).map(function(g) {
+    .slice(0, 7).map(function(g) {
       var cust = getCustById(g.ord.customerId);
       var who = g.ord.recipientName || (cust ? cust.name : '');
-      // Components ARE the information: grey = still cooking, gold = cooked & ready to fill, green = in the box
-      var chips = g.comps.map(function(c) {
-        var filled = bbIsFilled(g.ord, g.dish.id, c);
-        var cooked = compState[c] && compState[c].cooked;
-        var cls = filled ? 'c-filled' : cooked ? 'c-cooked' : '';
-        return '<span class="tv-comp ' + cls + '" title="' + n2h(c) + '">' + (filled ? '✓ ' : '') + n2h(bbShortComp(c)) + '</span>';
-      }).join('');
-      return '<div class="tv-missing" style="display:block;padding:8px 0">' +
-        '<div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:3px"><strong>' + n2h(who) + '</strong>' +
-        '<span style="font-family:var(--mono);font-size:14px;color:#666">×' + g.qty + '</span></div>' +
-        '<div>' + chips + '</div></div>';
+      var waiting = g.comps.filter(function(c){ return !bbIsFilled(g.ord, g.dish.id, c); }).length;
+      return '<div class="tv-missing"><span>' + n2h(who) + ' · ' + n2h(g.dish.name) +
+        (g.qty > 1 ? ' <span style="color:#666">×' + g.qty + '</span>' : '') + '</span>' +
+        '<span style="color:#f2c233;flex-shrink:0">' + waiting + ' to go</span></div>';
     }).join('');
 
   // Tracker stages
@@ -15106,6 +15110,15 @@ function bbDishComps(dish) {
 function bbBoxGroups() {
   var dishes = getProductionDishes();
   var orders = getProductionOrders();
+  // Respect the global session filter — boxes shown must match the orders view
+  var gs = (typeof getGlobalSession === 'function') ? getGlobalSession() : 'all';
+  if (gs !== 'all') {
+    // Case-insensitive — the portal stores lowercase sessions
+    orders = orders.filter(function(o) {
+      var os = (o.session || '').toLowerCase();
+      return os === gs || os === 'both';
+    });
+  }
   var groups = [];
   orders.forEach(function(o) {
     Object.keys(o.allocation || {}).forEach(function(did) {
@@ -15168,15 +15181,28 @@ function renderBoxBoard() {
   var totalBoxesCnt = groups.reduce(function(sum, g){ return sum + g.qty; }, 0);
   var doneBoxesCnt  = doneBoxes.reduce(function(sum, g){ return sum + g.qty; }, 0);
 
-  // Ready-to-fill chips: cooked components with boxes still waiting
-  var chips = Object.keys(compState).map(function(c) {
-    var st = compState[c];
-    var waiting = st.needed - st.filled;
-    var ready = st.cooked && waiting > 0;
-    var active = _bbFillComp === c;
-    var cls = ready || active ? 'bb-chip' : 'bb-chip bb-chip-off';
-    var lab = (st.cooked ? '🍳 ' : '⏳ ') + c + (waiting > 0 ? ' · ' + waiting + ' to fill' : ' ✓');
-    return '<span class="' + cls + '" ' + (active ? 'style="outline:2px solid var(--gold)"' : '') + ' onclick="bbSelectComp(\'' + c.replace(/'/g, "\\'") + '\')">' + lab + '</span>';
+  // Ready-to-fill chips, grouped by component type so the chef scans by station
+  var typeOrder = ['Protein','Carb','Veg','Condiment','Complete','Other'];
+  var byType = {};
+  Object.keys(compState).forEach(function(c) {
+    var rec = (DB.recipes || []).find(function(r){ return r.name === c; });
+    var ty = (rec && rec.type) || 'Other';
+    if (!byType[ty]) byType[ty] = [];
+    byType[ty].push(c);
+  });
+  var chips = typeOrder.filter(function(ty){ return byType[ty] && byType[ty].length; }).map(function(ty) {
+    var row = byType[ty].sort().map(function(c) {
+      var st = compState[c];
+      var waiting = st.needed - st.filled;
+      var ready = st.cooked && waiting > 0;
+      var active = _bbFillComp === c;
+      var cls = ready || active ? 'bb-chip' : 'bb-chip bb-chip-off';
+      var lab = (waiting <= 0 ? '✅ ' : st.cooked ? '🍳 ' : '⏳ ') + c + (waiting > 0 ? ' · ' + waiting + ' to fill' : '');
+      return '<span class="' + cls + '" ' + (active ? 'style="outline:2px solid var(--gold)"' : '') + ' onclick="bbSelectComp(\'' + c.replace(/'/g, "\\'") + '\')">' + lab + '</span>';
+    }).join('');
+    return '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:4px">' +
+      '<span style="font-family:var(--mono);font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--text3);width:74px;flex-shrink:0;padding-top:11px">' + ty + '</span>' +
+      '<div style="flex:1">' + row + '</div></div>';
   }).join('');
 
   var html =
@@ -15236,8 +15262,12 @@ function renderFulfillmentStation() {
   // Session filter on orders
   var filteredOrders = orders;
   if (_ffSession !== 'all') {
-    var cap = _ffSession.charAt(0).toUpperCase() + _ffSession.slice(1);
-    filteredOrders = orders.filter(function(o) { return o.session === cap || o.session === 'Both'; });
+    // Case-insensitive — the portal stores lowercase sessions
+    var want = _ffSession.toLowerCase();
+    filteredOrders = orders.filter(function(o) {
+      var os = (o.session || '').toLowerCase();
+      return os === want || os === 'both';
+    });
   }
 
   // Count totals for global progress
@@ -15273,12 +15303,13 @@ function renderFulfillmentStation() {
     var heatCls  = conflictCount === 0 ? 'ff-heat-green' : conflictCount <= 2 ? 'ff-heat-amber' : 'ff-heat-red';
     var heatText = conflictCount === 0 ? '✓ No conflicts' : conflictCount + ' customer' + (conflictCount>1?'s':'') + ' flagged';
 
-    // Progress
+    // Progress — qty-weighted so "packed" counts BOXES, matching the Box Board
     var dishTotal  = 0, dishPacked = 0;
     dishOrders.forEach(function(o) {
-      dishTotal++;
+      var q = Math.max(1, Math.round(n(o.allocation[dish.id]) || 0));
+      dishTotal += q;
       var pp = (o.packProgress || {})[dish.id];
-      if (pp && pp.packed) dishPacked++;
+      if (pp && pp.packed) dishPacked += q;
     });
     totalSlots  += dishTotal;
     packedSlots += dishPacked;
