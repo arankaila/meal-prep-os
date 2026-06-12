@@ -1816,6 +1816,11 @@ select.route-confirm-input option { background:var(--surface2); }
 .tv-stage.s-done{color:#4ade80;}
 .tv-stage.s-active{color:#f2c233;}
 .tv-exit{position:absolute;top:18px;right:22px;background:none;border:1px solid #333;color:#666;border-radius:7px;padding:6px 13px;cursor:pointer;font-size:13px;}
+.tv-comp{display:inline-block;font-size:15px;font-weight:700;padding:3px 11px;border-radius:7px;margin:2px 6px 2px 0;background:#1c1c1c;border:1px solid #333;color:#777;}
+.tv-comp.c-cooked{border-color:rgba(242,194,51,.5);color:#f2c233;background:rgba(242,194,51,.08);}
+.tv-comp.c-filled{border-color:rgba(74,222,128,.5);color:#4ade80;background:rgba(74,222,128,.1);}
+.bb-comp{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;margin:2px 4px 2px 0;background:var(--surface2);border:1px solid var(--border2);color:var(--text3);}
+.bb-comp.c-filled{border-color:rgba(74,222,128,.5);color:#4ade80;background:rgba(74,222,128,.08);}
 .qb-flavour-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;}
 .qb-flavour-chip{display:inline-flex;align-items:center;gap:6px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:4px 10px 4px 13px;font-size:12px;font-family:var(--sans);font-weight:600;}
 .qb-chip-meta{font-size:10px;color:var(--text3);font-weight:400;font-family:var(--mono);}
@@ -1991,12 +1996,10 @@ select.route-confirm-input option { background:var(--surface2); }
       <div class="nav-label">Library</div>
       <div class="nav-item" onclick="showPage('ingredients')"><span class="icon">🧪</span>Ingredients</div>
       <div class="nav-item" onclick="showPage('recipes')"><span class="icon">📐</span>Recipes</div>
-      <div class="nav-item" onclick="showPage('components')"><span class="icon">🍱</span>Components</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Business</div>
       <div class="nav-item" onclick="showPage('labour')"><span class="icon">👷</span>Labour</div>
-      <div class="nav-item" onclick="showPage('athletes')"><span class="icon">🏅</span>Athletes</div>
       <div class="nav-item" onclick="showPage('coststack')"><span class="icon">💰</span>Cost Stack</div>
       <div class="nav-item" onclick="showPage('history')"><span class="icon">📅</span>Weekly Archive</div>
     </div>
@@ -2054,6 +2057,11 @@ select.route-confirm-input option { background:var(--surface2); }
   <div class="wk-tracker no-print" id="week-tracker"></div>
   <div class="content">
 
+    <!-- MOBILE HOME (Phase 3) — phone-first launcher -->
+    <div class="page" id="page-mobilehome">
+      <div id="mh-tiles" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+    </div>
+
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
       <!-- Getting Started Banner (hidden after dismiss or once data exists) -->
@@ -2072,6 +2080,9 @@ select.route-confirm-input option { background:var(--surface2); }
         </div>
         <button class="gs-banner-close" onclick="dismissGsBanner()" title="Dismiss">✕</button>
       </div>
+      <!-- Scorecard: the 5 numbers that matter + exceptions (Phase 3) -->
+      <div id="dash-scorecard"></div>
+
       <!-- Row 1: 6 KPI heroes -->
       <div class="dash-kpi-row" id="dash-kpi-row"></div>
 
@@ -2079,7 +2090,7 @@ select.route-confirm-input option { background:var(--surface2); }
       <div id="dash-ops-strip" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px"></div>
 
       <!-- Row 2: Revenue trend + P&L waterfall -->
-      <div class="dash-row cols-6535">
+      <div class="dash-row cols-6535" id="dash-row-1">
         <div class="dash-card">
           <div class="dash-card-hdr">
             <span class="dash-card-title">Revenue Trend</span>
@@ -2099,7 +2110,7 @@ select.route-confirm-input option { background:var(--surface2); }
       </div>
 
       <!-- Row 3: Dish performance table + Opportunity engine -->
-      <div class="dash-row cols-6535">
+      <div class="dash-row cols-6535" id="dash-row-2">
         <div class="dash-card">
           <div class="dash-card-hdr">
             <span class="dash-card-title">Dish Performance</span>
@@ -2128,7 +2139,7 @@ select.route-confirm-input option { background:var(--surface2); }
       </div>
 
       <!-- Row 4: Price sensitivity + Menu scorecard + Status -->
-      <div class="dash-row cols-3">
+      <div class="dash-row cols-3" id="dash-row-3">
         <div class="dash-card">
           <div class="dash-card-hdr">
             <span class="dash-card-title">Price Sensitivity</span>
@@ -2153,7 +2164,7 @@ select.route-confirm-input option { background:var(--surface2); }
       </div>
 
       <!-- Row 5: Component popularity -->
-      <div class="dash-row" style="grid-template-columns:1fr;margin-bottom:12px">
+      <div class="dash-row" id="dash-row-4" style="grid-template-columns:1fr;margin-bottom:12px">
         <div class="dash-card">
           <div class="dash-card-hdr">
             <span class="dash-card-title">Component Popularity</span>
@@ -2184,7 +2195,7 @@ select.route-confirm-input option { background:var(--surface2); }
       <div class="card">
         <div class="card-header"><div class="card-title">Ingredients</div><div class="card-count" id="ing-count">0</div><div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openCatModal()">🏷 Categories</button></div></div>
         <div class="table-wrap"><table>
-          <thead><tr><th>ID</th><th>Ingredient</th><th>Category</th><th>Supplier</th><th>AP Cost/100g</th><th>Yields</th><th>EP Cost/100g</th><th>Macros (per 100g raw)</th><th>Allergens</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Ingredient</th><th>Category</th><th>AP Cost/100g</th><th>EP Cost/100g</th><th>Allergens</th><th>Actions</th></tr></thead>
           <tbody id="ing-tbody"></tbody>
         </table></div>
       </div>
@@ -2211,6 +2222,7 @@ select.route-confirm-input option { background:var(--surface2); }
           <span>🔍</span><input type="text" placeholder="Search recipes..." oninput="filterRec(this.value)" id="rec-search">
         </div>
         <div class="tabs" style="margin-bottom:0">
+          <div class="tab" onclick="showPage('components')" style="border-style:dashed" title="Assembled-units view of the same recipes — RDA highlights">🍱 Components view</div>
           <div class="tab active" onclick="filterRecType('all',this)">All</div>
           <div class="tab" onclick="filterRecType('Protein',this)">Protein</div>
           <div class="tab" onclick="filterRecType('Carb',this)">Carb</div>
@@ -2238,6 +2250,7 @@ select.route-confirm-input option { background:var(--surface2); }
           <span>🔍</span><input type="text" placeholder="Search components..." oninput="filterComp(this.value)" id="comp-search">
         </div>
         <div class="tabs" style="margin-bottom:0">
+          <div class="tab" onclick="showPage('recipes')" style="border-style:dashed" title="Back to the recipe table">📐 Recipes view</div>
           <div class="tab active" onclick="filterCompType('all',this)">All</div>
           <div class="tab" onclick="filterCompType('Protein',this)">Protein</div>
           <div class="tab" onclick="filterCompType('Carb',this)">Carb</div>
@@ -2653,22 +2666,6 @@ select.route-confirm-input option { background:var(--surface2); }
       </div>
     </div>
 
-    <!-- ATHLETES -->
-    <div class="page" id="page-athletes">
-      <div class="section-header">
-        <div><div class="section-title">Athletes</div><div class="section-sub">Manage athlete roster for variant dish creation</div></div>
-        <button class="btn btn-gold" onclick="openAthleteModal()">+ Add Athlete</button>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Athlete Roster</div>
-          <div class="card-sub">Click any athlete to edit or delete</div>
-        </div>
-        <div style="padding:14px 16px">
-          <div id="athletes-list"></div>
-        </div>
-      </div>
-    </div>
 
     <!-- DISCOUNT CODES -->
     <div class="page" id="page-discounts">
@@ -2826,6 +2823,7 @@ select.route-confirm-input option { background:var(--surface2); }
       <div class="del-tabs no-print">
         <button class="del-tab active" id="del-tab-customers" onclick="showDeliveryTab('customers')">&#x1F465; Customer Database</button>
         <button class="del-tab" id="del-tab-route" onclick="showDeliveryTab('route')">&#x1F68C; Route Sheet</button>
+        <button class="del-tab" id="del-tab-athletes" onclick="showDeliveryTab('athletes')">&#x1F3C5; Athletes</button>
       </div>
 
       <!-- CUSTOMERS TAB -->
@@ -2874,6 +2872,14 @@ select.route-confirm-input option { background:var(--surface2); }
         <div id="route-sheet-body"></div>
       </div>
 
+      <!-- ATHLETES TAB (merged from the old Athletes page, Phase 3) -->
+      <div class="del-panel" id="del-panel-athletes">
+        <div class="del-toolbar no-print">
+          <div style="font-size:12px;color:var(--text3)">Athlete roster · bespoke-macro variant dishes · partnership cost tracking</div>
+          <button class="btn btn-gold btn-sm" style="margin-left:auto" onclick="openAthleteModal()">+ Add Athlete</button>
+        </div>
+        <div id="athletes-list"></div>
+      </div>
 
     </div><!-- /page-delivery -->
 
@@ -3173,6 +3179,9 @@ select.route-confirm-input option { background:var(--surface2); }
 
             <h2 class="gs-h2">The kitchen surfaces (Phase 2)</h2>
             <p class="gs-p"><strong>Production now has three faces.</strong> 🔪 <strong>Prep Day</strong> (Dad, day before): every ingredient with its total in real units ("≈10 peppers · 1.5kg raw"), how to process it, and exactly how many grams go into each component's container — tick each split as it's weighed out. 🍳 <strong>Cook Board</strong> (Mum, cook day): every component as a card — tap one for the full-screen recipe with batch quantities in huge type, a target finish weight up front, and checkable steps; run as many cards at once as the hobs allow. 📋 <strong>Planner</strong> is the original management table. On the Packing page, the new 📥 <strong>Box Board</strong> handles progressive boxing: when a component finishes cooking, tap its chip and tick it into each customer's boxes — boxes turn green when everything has landed, and the board must be all green by fridge time. Cast the <strong>📺 TV Board</strong> (sidebar button) to the kitchen TV: live production list, box count, drop countdown, and the week's stages — it updates itself. The Route Sheet now has 🧭 Navigate (opens Maps) and one-tap ✓ Delivered per stop.</p>
+
+            <h2 class="gs-h2">Simpler everywhere (Phase 3)</h2>
+            <p class="gs-p">The Dashboard now opens on a <strong>Weekly Scorecard</strong> — five numbers (revenue, food cost %, sold vs planned, labour hours, repeat rate) plus an exceptions list that only shows things needing a decision (low-margin dishes, unpaid orders, lapsed top customers, below-PAR staples). All the charts still exist behind the 📊 Stats toggle. On a phone, the app opens on a <strong>big-tile launcher</strong> — Orders, Shopping, Route, Menu, Cook Board, Scorecard. <strong>Athletes</strong> now live as a tab inside Delivery &amp; Customers, <strong>Components</strong> is reachable from a tab on the Recipes page (one Library entry fewer), and the ingredients table is down to six columns — yields and supplier now show in the cost cell's tooltip.</p>
 
             <h2 class="gs-h2">Quality of life</h2>
             <p class="gs-p"><strong>⌘K / Ctrl-K</strong> searches everything (dishes, ingredients, recipes, customers, orders) and jumps straight there. Deletes now show a 10-second <strong>↶ Undo</strong> instead of a confirm popup. The ingredient form hides the 33 micronutrient fields unless you need them, warns on duplicate names, and has "Save &amp; Add Another" for batch entry. Click any ingredient's £ cost in the table to edit it in place. Orders show a live total as you type quantities. The 📊 Stats strips on ops pages are collapsed by default — click to expand. Each ops page shows a 👉 hint telling you what to do now and what comes next. Production completion now asks for the <strong>actual cooked weight</strong> and flags variance against the plan (⚖ chip), so under-production is caught before packing. In Inventory, <strong>📥 Track this week's menu</strong> flags every ingredient the menu uses in one click.</p>
@@ -5300,13 +5309,13 @@ const PAGE_CFG = {
   production:{title:'Production Planner',sub:'Batch quantities · Editable labour · Step-by-step instructions'},
   purchasing:{title:'Purchasing',sub:'Supplier-sorted · PAR from Inventory · Print-friendly'},
   labour:{title:'Labour Planner',sub:'Staff roster · Shift scheduling · Weekly labour costs'},
-  athletes:{title:'Athletes',sub:'Manage athlete roster for variant dishes'},
   discounts:{title:'Discount Codes',sub:'Promotional codes · Usage tracking · Portal integration'},
   coststack:{title:'Cost Stack',sub:'Full editable cost build-up · Custom cost lines · Live margin'},
   history:{title:'Weekly Archive',sub:'Menu + Labour · Consolidated P&L · Trend analysis'},
   orders:{title:'Orders',sub:'Incoming customer orders · Review · Confirm · Athlete variants'},
   delivery:{title:'Delivery',sub:'Customer database · Route sheet · Labels'},
   guide:{title:'User Guide',sub:'How to use 29 Performance Meal Prep OS'},
+  mobilehome:{title:'29 Performance',sub:'What do you need?'},
 };
 
 let lastPage = 'dashboard';
@@ -5315,6 +5324,7 @@ let lastPage = 'dashboard';
 // STATS COLLAPSE — analytics strips fold away; ops pages open in work view
 // ═══════════════════════════════════════════════════════════════
 var STATS_SECTIONS = {
+  dashboard:  { els: ['dash-kpi-row','dash-row-1','dash-row-2','dash-row-3','dash-row-4'], def: false },
   menu:       { els: ['menu-kpi-grid','menu-stats-bar'], def: true  },
   orders:     { els: ['orders-kpi-strip'],               def: true  },
   purchasing: { els: ['purch-kpi-grid'],                 def: false },
@@ -5413,6 +5423,12 @@ function showPage(id) {
     setPackView('station');
     return;
   }
+  // Legacy alias — Athletes merged into Delivery & Customers (Phase 3)
+  if (id === 'athletes') {
+    showPage('delivery');
+    showDeliveryTab('athletes');
+    return;
+  }
   lastPage = id;
   if (window.innerWidth <= 768) closeSidebar();
 
@@ -5440,7 +5456,6 @@ function showPage(id) {
     packsheet: ()=>`<div class="flex gap-8 items-center no-print"><div class="tabs" style="margin-bottom:0" id="pack-session-tabs-top"><div class="tab ${packSessionFilter==='all'?'active':''}" onclick="setPackSession('all',this);document.querySelectorAll('[id^=pack-session]').forEach(t=>{t.querySelectorAll('.tab').forEach((tt,i)=>{tt.classList.toggle('active',i==0)})})">All</div><div class="tab ${packSessionFilter==='sunday'?'active':''}" onclick="setPackSession('sunday',this)">Sunday</div><div class="tab ${packSessionFilter==='wednesday'?'active':''}" onclick="setPackSession('wednesday',this)">Wednesday</div></div><button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Print</button></div>`,
     coststack: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-gold" onclick="addCostItem()">+ Add Cost Item</button></div>`,
     labour: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-ghost btn-sm" onclick="quickArchive()">💾 Archive Week</button><button class="btn btn-gold" onclick="openLabourModal()">+ Add Staff</button></div>`,
-    athletes: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-gold" onclick="openAthleteModal()">+ Add Athlete</button></div>`,
     discounts: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-gold" onclick="openDiscountModal()">+ New Code</button></div>`,
     history: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-gold" onclick="quickArchive()">💾 Archive Week</button></div>`,
   };
@@ -5451,11 +5466,11 @@ function showPage(id) {
     components: renderComponents, menu: renderMenu, quickbuild: renderQuickBuild, packsheet: renderPackSheet,
     production: renderProduction, purchasing: renderPurchasing, coststack: renderCostStack,
     history: renderHistory, guide: ()=>{ showGuideSection('gs-start'); }, labour: renderLabour,
-    athletes: renderAthletes,
     discounts: renderDiscounts,
     inventory: renderInventory,
     orders: renderOrdersPanel,
     delivery: renderDelivery,
+    mobilehome: renderMobileHome,
   };
   if (renders[id]) renders[id]();
   renderWeekTracker();
@@ -5482,7 +5497,133 @@ function showPage(id) {
 // ── Dashboard chart instance ─────────────────────────────
 let dashTrendChart = null;
 
+// ═══════════════════════════════════════════════════════════════
+// WEEKLY SCORECARD (Phase 3) — the five numbers + exceptions.
+// Management by exception: everything else lives behind 📊 Stats.
+// ═══════════════════════════════════════════════════════════════
+/* Mobile home — five away-from-desk jobs as big tiles */
+function renderMobileHome() {
+  var el = document.getElementById('mh-tiles');
+  if (!el) return;
+  var st;
+  try { st = getWeekStageState(); } catch(e) { st = null; }
+  var tiles = [
+    { i: '📬', t: 'Orders', sub: st ? (st.pending ? st.pending + ' pending' : st.orders.length + ' in') : '', go: "showPage('orders')" },
+    { i: '🛒', t: 'Shopping', sub: 'tick off in the shop', go: "showPage('purchasing')" },
+    { i: '🚐', t: 'Route', sub: st ? st.delivered + '/' + st.orders.length + ' delivered' : '', go: "showPage('delivery');showDeliveryTab('route')" },
+    { i: '📋', t: 'Menu', sub: st && st.nx ? (st.nx.ready ? 'next week ready' : 'next: ' + (st.nx.dishes || 0) + ' dishes') : '', go: "showPage('menu')" },
+    { i: '🍳', t: 'Cook Board', sub: st && st.compNames.length ? st.compDone + '/' + st.compNames.length + ' done' : '', go: "showPage('production');setProdView('cook')" },
+    { i: '📊', t: 'Scorecard', sub: 'the 5 numbers', go: "showPage('dashboard')" }
+  ];
+  el.innerHTML = tiles.map(function(t) {
+    return '<div onclick="' + t.go + '" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 16px;cursor:pointer;text-align:center">' +
+      '<div style="font-size:34px;margin-bottom:8px">' + t.i + '</div>' +
+      '<div style="font-size:15px;font-weight:800">' + t.t + '</div>' +
+      (t.sub ? '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:4px">' + t.sub + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+function renderScorecard() {
+  var el = document.getElementById('dash-scorecard');
+  if (!el) return;
+  var orders = getProductionOrders();
+  var dishes = getProductionDishes();
+
+  // 1. Revenue (confirmed+, after discounts)
+  var revenue = 0, portionsSold = 0;
+  orders.forEach(function(o) {
+    if (getOrderStatus(o) === 'pending') return;
+    var t = 0;
+    Object.keys(o.allocation || {}).forEach(function(did) {
+      var d = dishes.find(function(x){ return x.id === did; });
+      var q = n(o.allocation[did]);
+      portionsSold += q;
+      t += q * (d ? (n(d.sellPrice) || DB.defaultSellPrice || 0) : 0);
+    });
+    if (o.discount && o.discount.amount) t = Math.max(0, t - parseFloat(o.discount.amount));
+    if ((o.payStatus || '') !== 'comped') revenue += t;
+  });
+
+  // 2. Food cost %
+  var fcPct = 0, fcN = 0;
+  dishes.forEach(function(d) {
+    try {
+      var t = calcDishTotals(d);
+      if (t.sell > 0) { fcPct += t.cost / t.sell * 100; fcN++; }
+    } catch(e) {}
+  });
+  fcPct = fcN ? fcPct / fcN : 0;
+
+  // 3. Portions planned vs sold
+  var planned = dishes.reduce(function(sum, d){ return sum + n(d.drop1) + n(d.drop2); }, 0);
+
+  // 4. Labour hours this week
+  var hours = (DB.labourShifts || []).reduce(function(sum, sh){ return sum + (typeof shiftHours === 'function' ? shiftHours(sh.start, sh.end) : 0); }, 0);
+
+  // 5. Repeat rate (lifetime: customers with 2+ orders)
+  var custOrders = {};
+  (DB.weeklyOrders || []).concat(
+    (DB.weeklyArchives || []).reduce(function(acc, ar){ return acc.concat(ar.orders || []); }, [])
+  ).forEach(function(o) { if (o.customerId && getOrderStatus(o) !== 'cancelled') custOrders[o.customerId] = (custOrders[o.customerId] || 0) + 1; });
+  var withOrders = Object.keys(custOrders).length;
+  var repeat = withOrders ? Math.round(Object.values(custOrders).filter(function(c){ return c >= 2; }).length / withOrders * 100) : 0;
+
+  // Exceptions — only things needing a decision
+  var ex = [];
+  dishes.forEach(function(d) {
+    try {
+      var t = calcDishTotals(d);
+      var margin = t.sell > 0 ? (t.sell - t.cost) / t.sell * 100 : 100;
+      if (t.sell > 0 && margin < 60) ex.push({ icon: '📉', txt: '<strong>' + d.name + '</strong> margin ' + margin.toFixed(0) + '% — review price or recipe', page: 'menu' });
+    } catch(e) {}
+  });
+  var unpaid = orders.filter(function(o){ return getOrderStatus(o) !== 'pending' && getOrderStatus(o) !== 'cancelled' && (o.payStatus || 'unpaid') === 'unpaid'; }).length;
+  if (unpaid) ex.push({ icon: '💳', txt: '<strong>' + unpaid + ' confirmed order' + (unpaid > 1 ? 's' : '') + ' unpaid</strong>', page: 'orders' });
+  // Lapsed top customers (top 10 by lifetime value, no order in 30d)
+  var custVal = {}, custLast = {};
+  (DB.weeklyOrders || []).concat((DB.weeklyArchives || []).reduce(function(acc, ar){ return acc.concat(ar.orders || []); }, []))
+    .forEach(function(o) {
+      if (!o.customerId || getOrderStatus(o) === 'cancelled') return;
+      custVal[o.customerId] = (custVal[o.customerId] || 0) + 1;
+      var ts = o.confirmedAt || o.createdAt || '';
+      if (!custLast[o.customerId] || ts > custLast[o.customerId]) custLast[o.customerId] = ts;
+    });
+  var cutoff = new Date(Date.now() - 30 * 86400000).toISOString();
+  Object.keys(custVal).sort(function(a, b){ return custVal[b] - custVal[a]; }).slice(0, 10).forEach(function(cid) {
+    if (custLast[cid] && custLast[cid] < cutoff) {
+      var c = getCustById(cid);
+      if (c) ex.push({ icon: '👋', txt: '<strong>' + c.name + '</strong> (top-10 customer) hasn\'t ordered in 30+ days', page: 'delivery' });
+    }
+  });
+  (DB.ingredients || []).forEach(function(ing) {
+    if (!ing.trackInventory) return;
+    var inv = DB.inventory && DB.inventory[ing.id];
+    if (inv && n(ing.par) > 0 && n(inv.onHand) < n(ing.par)) ex.push({ icon: '📦', txt: '<strong>' + ing.name + '</strong> below PAR (' + Math.round(n(inv.onHand)) + 'g / ' + Math.round(n(ing.par)) + 'g)', page: 'inventory' });
+  });
+
+  function card(v, l, sub, col) {
+    return '<div class="qbi-score"><div class="v"' + (col ? ' style="color:' + col + '"' : '') + '>' + v + '</div><div class="l">' + l + '</div>' + (sub ? '<div class="s">' + sub + '</div>' : '') + '</div>';
+  }
+  el.innerHTML =
+    '<div class="qbi-score-strip" style="margin:0 0 12px">' +
+      card('£' + revenue.toFixed(0), 'Revenue (wk)', portionsSold + ' meals sold') +
+      card(fcPct ? fcPct.toFixed(0) + '%' : '—', 'Avg food cost', 'of sell price', fcPct > 40 ? '#ff9f0a' : 'var(--green)') +
+      card(portionsSold + '<span style="font-size:13px;color:var(--text3)"> / ' + planned + '</span>', 'Sold vs planned', 'portions') +
+      card(hours ? hours.toFixed(1) + 'h' : '—', 'Labour hours', 'this week') +
+      card(repeat + '%', 'Repeat customers', withOrders + ' total') +
+    '</div>' +
+    (ex.length
+      ? '<div class="card" style="padding:10px 14px;margin-bottom:12px;border-color:rgba(255,159,10,.3)">' +
+        ex.slice(0, 6).map(function(x) {
+          return '<div style="display:flex;gap:9px;align-items:center;padding:4px 0;font-size:12px;color:var(--text2)"><span>' + x.icon + '</span><span style="flex:1">' + x.txt + '</span>' +
+            '<a href="javascript:void(0)" onclick="showPage(\'' + x.page + '\')" style="color:var(--gold);font-size:10px;text-decoration:none">view →</a></div>';
+        }).join('') + '</div>'
+      : '<div style="font-size:11px;color:var(--green);font-family:var(--mono);margin-bottom:12px">✓ No exceptions — nothing needs a decision today</div>');
+}
+
 function renderDashboard() {
+  renderScorecard();
   const dishes     = DB.menuDishes || [];
   const hist       = DB.weeklyArchives || [];
   const totalPorts = dishes.reduce((s,d) => s + n(d.drop1) + n(d.drop2), 0);
@@ -6287,18 +6428,14 @@ function renderIngredients(){
         ? ing.allergens.map(a=>`<span class="allergen-tag">${a.split(' ')[0]}</span>`).join('')
         : '<span class="muted small" style="color:var(--amber);font-size:10px;" title="Allergen status not confirmed">⚠ Not set</span>';
     return `<tr>
-      <td><span class="mono muted">${ing.id}</span></td>
       <td><strong>${ing.name}</strong>${ing.brand?`<br><span class="small muted">${ing.brand}</span>`:''}</td>
       <td>${catBadgeHtml(ing.cat)}</td>
-      <td class="small muted">${ing.supplier||'—'}</td>
-      <td class="mono ing-cost-cell" onclick="ingInlineCost(event,'${ing.id}')" title="Click to edit cost" style="cursor:pointer">£${n(ing.ap).toFixed(2)} <span style="opacity:.35;font-size:9px">✏</span></td>
-      <td class="mono">${ing.proc}% / ${ing.cook}%</td>
-      <td class="mono text-gold"><strong>£${ep.toFixed(2)}</strong></td>
-      <td><div class="macro-bar"><span class="mp mp-kcal">${n(ing.kcal).toFixed(0)}kcal</span><span class="mp mp-prot">${n(ing.prot).toFixed(1)}P</span><span class="mp mp-carb">${n(ing.carb).toFixed(1)}C</span><span class="mp mp-fat">${n(ing.fat).toFixed(1)}F</span><span class="mp mp-fibre">${n(ing.fibre).toFixed(1)}Fi</span></div></td>
+      <td class="mono ing-cost-cell" onclick="ingInlineCost(event,'${ing.id}')" title="Click to edit AP cost · yields ${ing.proc}%/${ing.cook}% · ${ing.supplier||'no supplier'}" style="cursor:pointer">£${n(ing.ap).toFixed(2)} <span style="opacity:.35;font-size:9px">✏</span></td>
+      <td class="mono text-gold" title="EP cost per 100g (after ${ing.proc}% trim)"><strong>£${ep.toFixed(2)}</strong></td>
       <td>${allerStr}</td>
       <td><button class="action-btn" onclick="openIngModal('${ing.id}')" title="Edit">✏️</button><button class="action-btn" onclick="openCostHistory('${ing.id}')" title="Price history" style="color:${ing.costHistory&&ing.costHistory.length>0?'#f59e0b':'var(--text3)'}">📈</button><button class="action-btn r" onclick="deleteIng('${ing.id}')" title="Delete">🗑</button></td>
     </tr>`;
-  }).join('') || `<tr><td colspan="10"><div class="empty-state"><div class="big">🧪</div><div class="msg">No ingredients yet — add your first one to get started</div><button class="btn btn-gold" onclick="openIngModal()">+ Add Ingredient</button></div></td></tr>`;
+  }).join('') || `<tr><td colspan="6"><div class="empty-state"><div class="big">🧪</div><div class="msg">No ingredients yet — add your first one to get started</div><button class="btn btn-gold" onclick="openIngModal()">+ Add Ingredient</button></div></td></tr>`;
 }
 
 // ── Category helpers ──────────────────────────────────────────
@@ -6637,7 +6774,10 @@ function renderRecIngLines(){
       </div>
       <input type="number" style="flex:0 0 70px" placeholder="qty g" value="${l.qty||''}" onchange="updateRL(${idx},'qty',this.value)" min="0" step="0.1">
       <span class="small muted">g raw</span>
-      <input type="text" style="flex:0 0 150px" placeholder="prep — e.g. sliced 5mm" value="${(l.prep||'').replace(/"/g,'&quot;')}" onchange="updateRL(${idx},'prep',this.value)" title="How this ingredient is processed for this component (drives the Prep Card)">
+      <label style="display:flex;align-items:center;gap:4px;flex:0 0 auto;font-size:10px;color:var(--text3);cursor:pointer" title="Tick if this is weighed/processed on prep day. Untick for spices, oils, seasonings added during cooking.">
+        <input type="checkbox" ${l.prepNeeded!==false?'checked':''} onchange="updateRL(${idx},'prepNeeded',this.checked)" style="width:15px;height:15px;accent-color:var(--gold);cursor:pointer">prep
+      </label>
+      <input type="text" style="flex:0 0 140px;${l.prepNeeded===false?'opacity:.35':''}" placeholder="prep — e.g. sliced 5mm" value="${(l.prep||'').replace(/"/g,'&quot;')}" onchange="updateRL(${idx},'prep',this.value)" title="How this ingredient is processed for this component (drives the Prep Card)">
       <button class="action-btn r" onclick="removeRL(${idx})">×</button>
     </div>`;
   }).join('');
@@ -6701,9 +6841,9 @@ function addPhaseStep(phase){
 // Legacy shims (keep working if anything calls them)
 
 
-function updateRL(idx,f,v){recLines[idx][f]=f==='qty'?n(v):v;updateRecPreview();}
+function updateRL(idx,f,v){recLines[idx][f]=f==='qty'?n(v):v;if(f==='prepNeeded')renderRecIngLines();updateRecPreview();}
 function removeRL(idx){recLines.splice(idx,1);renderRecIngLines();updateRecPreview();}
-function addIngLine(){recLines.push({ingId:'',qty:100});renderRecIngLines();}
+function addIngLine(){recLines.push({ingId:'',qty:100,prepNeeded:true});renderRecIngLines();}
 
 function rlSearch(idx,q){
   const drop=document.getElementById('rl-drop-'+idx);
@@ -8478,6 +8618,25 @@ function tickPrepSplit(id, checked) {
   renderPrepView();
 }
 
+/* One-tap grooming from the Prep view: mark an ingredient as never-prepped
+   across ALL recipes (spices, oils etc.). Undoable for 10s. */
+function prepExcludeIngredient(ingId) {
+  var ing = (DB.ingredients || []).find(function(i){ return i.id === ingId; });
+  var touched = [];
+  (DB.recipes || []).forEach(function(r) {
+    (r.lines || []).forEach(function(l) {
+      if (l.ingId === ingId && l.prepNeeded !== false) { l.prepNeeded = false; touched.push(l); }
+    });
+  });
+  if (!touched.length) return;
+  save(); renderPrepView();
+  notifyUndo((ing ? ing.name : 'Ingredient') + ' removed from prep — added during cooking instead', function() {
+    touched.forEach(function(l){ l.prepNeeded = true; });
+    save(); renderPrepView();
+    notify('Restored to prep list ✓');
+  });
+}
+
 /* Build ingredient-major prep data from the production slot */
 function buildPrepData() {
   var map = {};
@@ -8492,6 +8651,7 @@ function buildPrepData() {
       var rec = DB.recipes.find(function(r){ return r.name === compName && r.status === 'Active'; });
       if (!rec || !rec.lines) return;
       rec.lines.forEach(function(l) {
+        if (l.prepNeeded === false) return; // spices/oils/seasonings — added during cooking, not prepped
         var ing = DB.ingredients.find(function(i){ return i.id === l.ingId; });
         if (!ing) return;
         var edible = n(l.qty) * pair[1] * overall * ports;
@@ -8543,6 +8703,7 @@ function renderPrepView() {
     }).join('');
     return '<div class="card" style="margin-bottom:10px;padding:14px 16px;' + (allDone ? 'opacity:.55;border-color:rgba(74,222,128,.4)' : '') + '">' +
       '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">' +
+        '<button class="qbi-icon-btn no-print" style="order:99;margin-left:auto" onclick="prepExcludeIngredient(\'' + ing.id + '\')" title="Not a prep item (spice/oil/seasoning) — remove from prep lists permanently">✕ not prepped</button>' +
         '<span style="font-size:16px;font-weight:800">' + (allDone ? '✅ ' : '') + ing.name + '</span>' +
         '<span style="font-family:var(--mono);font-size:15px;color:var(--gold);font-weight:700">' + totalTxt + '</span>' +
         (prepSet.length ? '<span style="font-size:12px;color:var(--text2);background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:2px 8px">🔪 ' + prepSet.join(' · ') + '</span>' : '') +
@@ -12180,7 +12341,8 @@ function initTheme() {
   initTheme();
   ensureCategories();
   migrateMenuHistory();
-  showPage('dashboard');
+  // Phones land on the big-tile launcher; desktops on the scorecard
+  showPage(window.innerWidth <= 768 ? 'mobilehome' : 'dashboard');
   initGsBanner();
 
   // 2. Initialise Firebase (reads config from localStorage)
@@ -12314,6 +12476,7 @@ function showDeliveryTab(tab) {
   if (panel) panel.classList.add('active');
   if (tab === 'customers') renderCustomersTable();
   if (tab === 'route')     renderRouteSheet();
+  if (tab === 'athletes')  renderAthletes();
   if (tab === 'labels')    renderLabels();
 }
 
@@ -13360,12 +13523,31 @@ function renderTvBoard() {
   var totalBx = groups.reduce(function(sum, g){ return sum + g.qty; }, 0);
   var doneG = groups.filter(function(g){ return g.comps.every(function(c){ return bbIsFilled(g.ord, g.dish.id, c); }); });
   var doneBx = doneG.reduce(function(sum, g){ return sum + g.qty; }, 0);
+  // Cooked-state lookup for component chips
+  var compState = {};
+  var _bbWk = getProductionWeekLabel() || DB.menuWeekLabel || '';
+  groups.forEach(function(g) {
+    g.comps.forEach(function(c) {
+      if (compState[c]) return;
+      var log = (DB.productionLog || []).find(function(pp){ return pp.week === _bbWk && pp.component === c; });
+      compState[c] = { cooked: !!(log && log.status === 'complete') };
+    });
+  });
   var missing = groups.filter(function(g){ return !g.comps.every(function(c){ return bbIsFilled(g.ord, g.dish.id, c); }); })
-    .slice(0, 7).map(function(g) {
+    .slice(0, 6).map(function(g) {
       var cust = getCustById(g.ord.customerId);
       var who = g.ord.recipientName || (cust ? cust.name : '');
-      var waiting = g.comps.filter(function(c){ return !bbIsFilled(g.ord, g.dish.id, c); });
-      return '<div class="tv-missing"><span>' + n2h(who) + ' · ' + n2h(g.dish.name) + '</span><span style="color:#f2c233">' + waiting.length + ' to go</span></div>';
+      // Components ARE the information: grey = still cooking, gold = cooked & ready to fill, green = in the box
+      var chips = g.comps.map(function(c) {
+        var filled = bbIsFilled(g.ord, g.dish.id, c);
+        var cooked = compState[c] && compState[c].cooked;
+        var cls = filled ? 'c-filled' : cooked ? 'c-cooked' : '';
+        return '<span class="tv-comp ' + cls + '" title="' + n2h(c) + '">' + (filled ? '✓ ' : '') + n2h(bbShortComp(c)) + '</span>';
+      }).join('');
+      return '<div class="tv-missing" style="display:block;padding:8px 0">' +
+        '<div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:3px"><strong>' + n2h(who) + '</strong>' +
+        '<span style="font-family:var(--mono);font-size:14px;color:#666">×' + g.qty + '</span></div>' +
+        '<div>' + chips + '</div></div>';
     }).join('');
 
   // Tracker stages
@@ -14841,6 +15023,13 @@ function isDishProductionReady(dish) {
 // ═══════════════════════════════════════════════════════════════
 var _bbFillComp = null; // component currently being distributed
 
+/* Compact component display name: "Jerk (Chicken)" → "Jerk", strip brackets, cap length */
+function bbShortComp(name) {
+  var m = (name || '').match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+  var short = m && m[1].trim() ? m[1].trim() : (name || '');
+  return short.length > 18 ? short.slice(0, 17) + '…' : short;
+}
+
 function bbDishComps(dish) {
   return ['protein','carb','veg','condiment','complete'].map(function(sl){ return dish[sl]; }).filter(Boolean);
 }
@@ -14947,7 +15136,7 @@ function renderBoxBoard() {
     var done = g.comps.every(function(cc){ return bbIsFilled(g.ord, g.dish.id, cc); });
     var dots = g.comps.map(function(cc) {
       var f = bbIsFilled(g.ord, g.dish.id, cc);
-      return '<span class="bb-dot' + (f ? ' on' : '') + '">' + (f ? '●' : '○') + ' ' + cc.split(' ')[0] + '</span>';
+      return '<span class="bb-comp' + (f ? ' c-filled' : '') + '" title="' + n2h(cc) + '">' + (f ? '✓ ' : '') + n2h(bbShortComp(cc)) + '</span>';
     }).join('');
     var dietary = cust && cust.dietary ? '<div style="font-size:10px;color:#f87171;margin-top:4px">⚠ ' + n2h(cust.dietary) + '</div>' : '';
     return '<div class="bb-tile' + (done ? ' bb-done' : '') + '">' +
