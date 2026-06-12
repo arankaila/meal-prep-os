@@ -99,6 +99,30 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);height:100vh
 .topbar-subtitle{font-size:11px;color:var(--text3);font-family:var(--mono);}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
 .content{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;}
+
+/* WEEK TRACKER — persistent workflow stage strip */
+.wk-tracker{display:flex;align-items:stretch;gap:0;background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
+.wk-tracker::-webkit-scrollbar{display:none;}
+.wk-stage{display:flex;align-items:center;gap:7px;padding:7px 12px;cursor:pointer;position:relative;white-space:nowrap;border-bottom:2px solid transparent;transition:background .15s;}
+.wk-stage:hover{background:var(--surface2);}
+.wk-stage .wk-dot{width:8px;height:8px;border-radius:50%;background:var(--surface3);border:1.5px solid var(--border2);flex-shrink:0;}
+.wk-stage .wk-name{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.2px;}
+.wk-stage .wk-sub{font-family:var(--mono);font-size:9px;color:var(--text3);}
+.wk-stage.done .wk-dot{background:var(--green);border-color:var(--green);}
+.wk-stage.done .wk-name{color:var(--text2);}
+.wk-stage.active{border-bottom-color:var(--gold);}
+.wk-stage.active .wk-dot{background:var(--gold);border-color:var(--gold);box-shadow:0 0 0 3px rgba(242,194,51,.18);}
+.wk-stage.active .wk-name{color:var(--text);}
+.wk-stage.warn .wk-dot{background:#ff9f0a;border-color:#ff9f0a;}
+.wk-stage.warn .wk-name{color:#ffb340;}
+.wk-stage .wk-badge{font-family:var(--mono);font-size:9px;font-weight:700;background:rgba(255,159,10,.15);color:#ff9f0a;border:1px solid rgba(255,159,10,.3);border-radius:8px;padding:0 6px;line-height:14px;}
+.wk-arrow{display:flex;align-items:center;color:var(--border2);font-size:10px;flex-shrink:0;user-select:none;}
+.wk-next-chip{margin-left:auto;display:flex;align-items:center;gap:7px;padding:7px 12px;cursor:pointer;white-space:nowrap;border-left:1px solid var(--border);}
+.wk-next-chip:hover{background:var(--surface2);}
+.wk-week-label{display:flex;align-items:center;gap:6px;padding:7px 0 7px 2px;margin-right:8px;white-space:nowrap;}
+.wk-week-label .wk-wk{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--text3);text-transform:uppercase;}
+.wk-week-label .wk-lbl{font-size:11px;font-weight:700;color:var(--gold);}
+@media (max-width:768px){.wk-week-label{display:none;}.wk-stage{padding:7px 8px;}.wk-stage .wk-sub{display:none;}}
 .content>#page-guide.active{flex:1;overflow:hidden;margin:-20px;padding:0;}
 
 /* BUTTONS */
@@ -1834,7 +1858,7 @@ select.route-confirm-input option { background:var(--surface2); }
       <div class="nav-item" onclick="showPage('inventory')"><span class="icon">🗄️</span>Inventory</div>
       <div class="nav-item" onclick="showPage('purchasing')"><span class="icon">🚚</span>Purchasing</div>
       <div class="nav-item" onclick="showPage('production')"><span class="icon">🏭</span>Production</div>
-      <div class="nav-item" onclick="showPage('packsheet')"><span class="icon">📦</span>Packaging</div>
+      <div class="nav-item" onclick="showPage('packsheet')"><span class="icon">📦</span>Packing & Fulfilment</div>
       <div class="nav-item" onclick="showPage('delivery')"><span class="icon">🚐</span>Delivery</div>
       <div class="nav-item" onclick="showPage('labour')"><span class="icon">👷</span>Labour</div>
       <div class="nav-item" onclick="showPage('athletes')"><span class="icon">🏅</span>Athletes</div>
@@ -1847,10 +1871,6 @@ select.route-confirm-input option { background:var(--surface2); }
     <div class="nav-section">
       <div class="nav-label">Analytics</div>
       <div class="nav-item" onclick="showPage('history')"><span class="icon">📅</span>Weekly Archive</div>
-    </div>
-    <div class="nav-section">
-      <div class="nav-label">Operations</div>
-      <div class="nav-item" onclick="showPage('fulfillment')"><span class="icon">📦</span>Fulfillment</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Help</div>
@@ -1894,6 +1914,7 @@ select.route-confirm-input option { background:var(--surface2); }
     </div>
     <div class="topbar-right" id="topbar-right"></div>
   </div>
+  <div class="wk-tracker no-print" id="week-tracker"></div>
   <div class="content">
 
     <!-- DASHBOARD -->
@@ -2121,7 +2142,8 @@ select.route-confirm-input option { background:var(--surface2); }
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:200px">
           <span style="font-size:10px;color:var(--text3);font-family:var(--mono);white-space:nowrap">Week label:</span>
-          <input type="text" id="menu-slot-week-label" style="background:var(--surface3);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-size:11px;padding:4px 10px;outline:none;flex:1;max-width:180px;font-family:var(--mono)" placeholder="e.g. 06 Apr – 12 Apr" onchange="saveSlotWeekLabel(this.value)">
+          <input type="text" id="menu-slot-week-label" style="background:var(--surface3);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-size:11px;padding:4px 10px;outline:none;flex:1;max-width:180px;font-family:var(--mono)" placeholder="auto-derives from drop dates" onchange="saveSlotWeekLabel(this.value)">
+          <button class="btn btn-ghost btn-sm" onclick="autoFillWeekLabel()" title="Derive label from drop dates">↻ Auto</button>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="advanceWeek()" style="margin-left:auto" title="Archive current week, promote next week → current. Run after Wednesday drop completes.">⏭ Advance Week</button>
       </div>
@@ -2157,11 +2179,12 @@ select.route-confirm-input option { background:var(--surface2); }
     <!-- PACKAGING -->
     <div class="page" id="page-packsheet">
       <div class="section-header">
-        <div><div class="section-title">Packaging</div><div class="section-sub">Pack sheet · Label printing · Kitchen staff guide</div></div>
+        <div><div class="section-title">Packing &amp; Fulfilment</div><div class="section-sub">Pack sheet · Label printing · Tick-off station</div></div>
         <div class="flex gap-8 items-center no-print">
           <div class="tabs" style="margin-bottom:0" id="pack-view-tabs">
-            <div class="tab active" onclick="setPackView('sheet',this)">📦 Pack Sheet</div>
-            <div class="tab" onclick="setPackView('labels',this)">🏷 Print Labels</div>
+            <div class="tab active" data-view="sheet" onclick="setPackView('sheet',this)">📦 Pack Sheet</div>
+            <div class="tab" data-view="labels" onclick="setPackView('labels',this)">🏷 Print Labels</div>
+            <div class="tab" data-view="station" onclick="setPackView('station',this)">✅ Tick-off Station</div>
           </div>
         </div>
       </div>
@@ -2213,6 +2236,33 @@ select.route-confirm-input option { background:var(--surface2); }
           </div>
         </div>
         <div id="labels-body"></div>
+      </div>
+
+      <!-- TICK-OFF STATION VIEW (merged from the old Fulfillment page) -->
+      <div id="pack-station-view" style="display:none">
+        <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <div class="tabs" style="margin-bottom:0" id="ff-session-tabs">
+            <div class="tab active" onclick="setFulfillmentSession('all',this)">All Drops</div>
+            <div class="tab" onclick="setFulfillmentSession('sunday',this)">☀ Sunday</div>
+            <div class="tab" onclick="setFulfillmentSession('wednesday',this)">🌙 Wednesday</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="downloadAllPackedLabels()">🖨 All Labels</button>
+            <button class="btn btn-gold btn-sm" onclick="packAllSafe()">✓ Pack All Safe</button>
+          </div>
+        </div>
+        <div class="ff-global-progress" id="ff-global-progress" style="margin-bottom:16px"></div>
+        <div class="ff-gate" id="ff-gate-no-orders" style="display:none">
+          <div class="ff-gate-icon">📦</div>
+          <div class="ff-gate-title">No orders this week</div>
+          <div class="ff-gate-sub">Add orders in the Orders tab first.</div>
+        </div>
+        <div class="ff-gate" id="ff-gate-no-menu" style="display:none">
+          <div class="ff-gate-icon">📋</div>
+          <div class="ff-gate-title">No menu this week</div>
+          <div class="ff-gate-sub">Build the weekly menu first, then return here to pack.</div>
+        </div>
+        <div class="ff-dish-grid" id="ff-dish-grid"></div>
       </div>
     </div>
 
@@ -4129,41 +4179,6 @@ select.route-confirm-input option { background:var(--surface2); }
 
 
     <!-- FULFILLMENT STATION -->
-    <div class="page" id="page-fulfillment">
-
-      <div class="section-header">
-        <div>
-          <div class="section-title">Fulfillment Station</div>
-          <div class="section-sub">Tick off dishes · Print labels · Track pack progress</div>
-        </div>
-        <div class="tabs" style="margin-bottom:0" id="ff-session-tabs">
-          <div class="tab active" onclick="setFulfillmentSession('all',this)">All Drops</div>
-          <div class="tab" onclick="setFulfillmentSession('sunday',this)">☀ Sunday</div>
-          <div class="tab" onclick="setFulfillmentSession('wednesday',this)">🌙 Wednesday</div>
-        </div>
-      </div>
-
-      <div class="ff-global-progress" id="ff-global-progress" style="margin-bottom:16px"></div>
-
-      <!-- Gate: no orders -->
-      <div class="ff-gate" id="ff-gate-no-orders" style="display:none">
-        <div class="ff-gate-icon">📦</div>
-        <div class="ff-gate-title">No orders this week</div>
-        <div class="ff-gate-sub">Add orders in the Delivery tab first.</div>
-      </div>
-
-      <!-- Gate: no menu -->
-      <div class="ff-gate" id="ff-gate-no-menu" style="display:none">
-        <div class="ff-gate-icon">📋</div>
-        <div class="ff-gate-title">No menu this week</div>
-        <div class="ff-gate-sub">Build the weekly menu first, then return here to pack.</div>
-      </div>
-
-      <!-- Dish cards grid -->
-      <div class="ff-dish-grid" id="ff-dish-grid"></div>
-
-    </div>
-
     <!-- QUICK BUILD PLANNER -->
     <div class="page" id="page-quickbuild">
       <div id="qb-root" style="padding:4px 0"></div>
@@ -4171,6 +4186,21 @@ select.route-confirm-input option { background:var(--surface2); }
 
   </div><!-- /content -->
 </div><!-- /main -->
+
+<!-- Advance Week Pre-flight Checklist Modal -->
+<div class="modal-overlay" id="advance-modal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">⏭ Advance Week — pre-flight check</div>
+      <button class="modal-close" onclick="closeModal('advance-modal')">×</button>
+    </div>
+    <div class="modal-body" id="advance-modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('advance-modal')">Cancel</button>
+      <button class="btn btn-gold" id="adv-go-btn" onclick="advChecklistConfirm()">⏭ Advance Week</button>
+    </div>
+  </div>
+</div>
 
 <!-- Category Manager Modal -->
 <div class="modal-overlay" id="cat-modal">
@@ -5060,7 +5090,7 @@ const PAGE_CFG = {
   menu:{title:'Weekly Menu',sub:'Drop management · Pricing · Photos · Portal publish'},
   quickbuild:{title:'Quick Build',sub:'Flavour-first menu planning · Auto-suggest components · Push to menu'},
   inventory:{title:'Inventory Management',sub:'Live stock · PAR control · Transactions · Source of truth for Purchasing'},
-  packsheet:{title:'Packaging',sub:'Kitchen staff guide · Exactly what goes in each box'},
+  packsheet:{title:'Packing & Fulfilment',sub:'Pack sheet · Labels · Tick-off station'},
   production:{title:'Production Planner',sub:'Batch quantities · Editable labour · Step-by-step instructions'},
   purchasing:{title:'Purchasing',sub:'Supplier-sorted · PAR from Inventory · Print-friendly'},
   labour:{title:'Labour Planner',sub:'Staff roster · Shift scheduling · Weekly labour costs'},
@@ -5070,13 +5100,18 @@ const PAGE_CFG = {
   history:{title:'Weekly Archive',sub:'Menu + Labour · Consolidated P&L · Trend analysis'},
   orders:{title:'Orders',sub:'Incoming customer orders · Review · Confirm · Athlete variants'},
   delivery:{title:'Delivery',sub:'Customer database · Route sheet · Labels'},
-  fulfillment:{title:'Fulfillment Station',sub:'Pack · Allergen check · Labels · 29 Performance'},
   guide:{title:'User Guide',sub:'How to use 29 Performance Meal Prep OS'},
 };
 
 let lastPage = 'dashboard';
 
 function showPage(id) {
+  // Legacy alias — Fulfillment merged into Packing & Fulfilment (June 2026)
+  if (id === 'fulfillment') {
+    showPage('packsheet');
+    setPackView('station');
+    return;
+  }
   lastPage = id;
   if (window.innerWidth <= 768) closeSidebar();
 
@@ -5107,7 +5142,6 @@ function showPage(id) {
     athletes: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="renderAthletes()">⟳ Refresh</button><button class="btn btn-gold" onclick="openAthleteModal()">+ Add Athlete</button></div>`,
     discounts: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="renderDiscounts()">⟳ Refresh</button><button class="btn btn-gold" onclick="openDiscountModal()">+ New Code</button></div>`,
     history: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-gold" onclick="quickArchive()">💾 Archive Week</button></div>`,
-    fulfillment: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="renderFulfillmentStation()">⟳ Refresh</button><button class="btn btn-ghost btn-sm" onclick="downloadAllPackedLabels()">🖨 All Labels</button><button class="btn btn-gold" onclick="packAllSafe()">✓ Pack All Safe</button></div>`,
   };
   document.getElementById('topbar-right').innerHTML = topActions[id] ? topActions[id]() : '';
 
@@ -5121,9 +5155,9 @@ function showPage(id) {
     inventory: renderInventory,
     orders: renderOrdersPanel,
     delivery: renderDelivery,
-    fulfillment: renderFulfillmentStation,
   };
   if (renders[id]) renders[id]();
+  renderWeekTracker();
 
   // Stamp print-date into whichever print header exists on this page
   const printDateStr = new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -6571,11 +6605,14 @@ function setMenuSession(v, el) {
   renderMenu();
 }
 function setPackView(view, el) {
-  document.querySelectorAll('#pack-view-tabs .tab').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('pack-sheet-view').style.display  = view === 'sheet'  ? '' : 'none';
-  document.getElementById('pack-labels-view').style.display = view === 'labels' ? '' : 'none';
-  if (view === 'labels') renderLabels();
+  document.querySelectorAll('#pack-view-tabs .tab').forEach(t => {
+    t.classList.toggle('active', el ? t === el : t.getAttribute('data-view') === view);
+  });
+  document.getElementById('pack-sheet-view').style.display   = view === 'sheet'   ? '' : 'none';
+  document.getElementById('pack-labels-view').style.display  = view === 'labels'  ? '' : 'none';
+  document.getElementById('pack-station-view').style.display = view === 'station' ? '' : 'none';
+  if (view === 'labels')  renderLabels();
+  if (view === 'station') renderFulfillmentStation();
 }
 function setPackSession(v, el) {
   packSessionFilter = v;
@@ -6683,23 +6720,25 @@ function switchMenuSlot(slot) {
 // that appears in at least one non-cancelled order.
 // Dishes with zero orders are left at their manually-set values.
 function syncPortionsFromOrders() {
-  var week = getSlotLabel();
   var dishes = getSlotDishes();
+  var dishIds = {};
+  dishes.forEach(function(d) { dishIds[d.id] = 1; });
 
+  // Match orders to THIS slot by (a) slot and (b) whether they contain dishes that
+  // are actually on the current menu. We deliberately do NOT match on the week-label
+  // string — that brittle comparison left production/purchasing empty whenever a
+  // label differed slightly. Dish-ID membership is exact and self-correcting: orders
+  // from other weeks reference different dish IDs and are naturally excluded.
   var activeOrders = (DB.weeklyOrders || []).filter(function(o) {
-    if (o.slot) {
-      if (o.slot !== menuActiveSlot) return false;
-      if (week && o.week && o.week !== week) return false;
-    } else {
-      if (!week || o.week !== week) return false;
-    }
-    return getOrderStatus(o) !== 'cancelled';
+    if (o.slot && o.slot !== menuActiveSlot) return false;
+    if (getOrderStatus(o) === 'cancelled') return false;
+    return Object.keys(o.allocation || {}).some(function(id) { return dishIds[id]; });
   });
   var pending = activeOrders.filter(function(o) { return getOrderStatus(o) === 'pending'; });
   var confirmed = activeOrders.filter(function(o) { return getOrderStatus(o) !== 'pending'; });
 
   if (!confirmed.length) {
-    notify('No confirmed orders for this week — confirm orders first'); return;
+    notify('No confirmed orders for the dishes on this menu — confirm orders first'); return;
   }
 
   // Tally qty per dish per session across all non-cancelled, non-pending orders
@@ -6707,6 +6746,7 @@ function syncPortionsFromOrders() {
   confirmed.forEach(function(o) {
     var sess = (o.session || '').toLowerCase();
     Object.keys(o.allocation || {}).forEach(function(dishId) {
+      if (!dishIds[dishId]) return;            // only count dishes on this menu
       var qty = (o.allocation[dishId]) || 0;
       if (!qty) return;
       if (sess === 'sunday'    || sess === 's1')   s1[dishId] = (s1[dishId] || 0) + qty;
@@ -6752,24 +6792,21 @@ function recalcDishPortions(slotOrLabel) {
     // Legacy: determine slot from week label
     slot = (DB.nextMenuWeekLabel && slotOrLabel === DB.nextMenuWeekLabel) ? 'next' : 'current';
   }
-  var week = slot === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
   var dishes = slot === 'next' ? (DB.nextMenuDishes||[]) : (DB.menuDishes||[]);
+  var dishIds = {};
+  dishes.forEach(function(d){ dishIds[d.id] = 1; });
+  // Match by slot + dish-ID membership in the menu (not the brittle week-label
+  // string). Orders from other weeks reference different dish IDs and are excluded.
   var orders = (DB.weeklyOrders||[]).filter(function(o){
-    // Match by slot+week to prevent old orders from previous weeks bleeding into
-    // current production counts.
-    if (o.slot) {
-      if (o.slot !== slot) return false;
-      if (week && o.week && o.week !== week) return false;
-    } else {
-      if (!week || o.week !== week) return false;
-    }
-    return getOrderStatus(o) !== 'cancelled' &&
-           getOrderStatus(o) !== 'pending';
+    if (o.slot && o.slot !== slot) return false;
+    if (getOrderStatus(o)==='cancelled' || getOrderStatus(o)==='pending') return false;
+    return Object.keys(o.allocation||{}).some(function(id){ return dishIds[id]; });
   });
   var s1={}, s2={};
   orders.forEach(function(o){
     var sess=(o.session||'').toLowerCase();
     Object.keys(o.allocation||{}).forEach(function(dId){
+      if(!dishIds[dId]) return;
       var qty=o.allocation[dId]||0; if(!qty) return;
       if(sess==='sunday')    s1[dId]=(s1[dId]||0)+qty;
       if(sess==='wednesday') s2[dId]=(s2[dId]||0)+qty;
@@ -6805,10 +6842,49 @@ function saveDropDate(session, val) {
     if (session === 'sunday')    DB.s1Deadline = val ? calcDropDeadline(val, 'sunday') : null;
     if (session === 'wednesday') DB.s2Deadline = val ? calcDropDeadline(val, 'wednesday') : null;
   }
+  // Auto-derive the week label from drop dates when the label is still empty.
+  // Kills the brittle free-text step — manual override via the input still wins.
+  if (!getSlotLabel()) {
+    var derived = deriveWeekLabel(getSlotDropDates());
+    if (derived) {
+      setSlotLabel(derived);
+      var lblInput = document.getElementById('menu-slot-week-label');
+      if (lblInput) lblInput.value = derived;
+    }
+  }
   save();
   renderPortalPublishStrip();
   updateDropDateDeadlineDisplay();
   notify('Drop date saved · deadline auto-set ✓');
+}
+
+/* Derive a week label like "14th & 17th Jun" from drop dates.
+   Different months → "30th Jun & 3rd Jul". One date → "14th Jun". */
+function deriveWeekLabel(dd) {
+  function part(iso) {
+    if (!iso) return null;
+    var d = new Date(iso + 'T00:00:00');
+    if (isNaN(d)) return null;
+    return { day: d.getDate(), mon: d.toLocaleDateString('en-GB', { month: 'short' }) };
+  }
+  function ord(n) { var s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); }
+  var a = part(dd && dd.sunday), b = part(dd && dd.wednesday);
+  if (a && b) return a.mon === b.mon
+    ? ord(a.day) + ' & ' + ord(b.day) + ' ' + a.mon
+    : ord(a.day) + ' ' + a.mon + ' & ' + ord(b.day) + ' ' + b.mon;
+  var one = a || b;
+  return one ? ord(one.day) + ' ' + one.mon : '';
+}
+
+/* "↻ Auto" button next to the week-label input */
+function autoFillWeekLabel() {
+  var derived = deriveWeekLabel(getSlotDropDates());
+  if (!derived) { notify('Set drop dates first — the label derives from them'); return; }
+  setSlotLabel(derived);
+  var lblInput = document.getElementById('menu-slot-week-label');
+  if (lblInput) lblInput.value = derived;
+  save();
+  notify('Week label set: ' + derived);
 }
 
 /* Update the inline deadline labels next to each drop date input */
@@ -10976,6 +11052,11 @@ function save() {
   try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
   // 2. Debounced write to Firebase
   saveToFirebase();
+  // 3. Keep the week tracker in step with every data change (cheap, debounced to next frame)
+  if (!window._wkTrackerQueued) {
+    window._wkTrackerQueued = true;
+    requestAnimationFrame(function(){ window._wkTrackerQueued = false; try { renderWeekTracker(); } catch(e) {} });
+  }
 }
 
 function migrateData() {
@@ -12119,24 +12200,211 @@ function checkAndAutoPublish() {
 setInterval(checkAndAutoPublish, 5 * 60 * 1000);
 
 /* Advance week: archive current → promote next → current → clear next slot */
-function advanceWeek() {
+// ═══════════════════════════════════════════════════════════════
+// WEEK TRACKER — workflow stage derivation + strip (June 2026)
+// Pure render layer: reads existing DB state, writes nothing.
+// ═══════════════════════════════════════════════════════════════
+
+/* Compute the full state of the current production week + next-slot readiness */
+function getWeekStageState() {
+  var dishes = getProductionDishes();
+  var week   = getProductionWeekLabel();
+  var orders = getProductionOrders(); // non-cancelled, production slot
+  var portal = getPortalSessionStatus();
+
+  var pending   = orders.filter(function(o){ return getOrderStatus(o) === 'pending'; }).length;
+  var delivered = orders.filter(function(o){ return getOrderStatus(o) === 'delivered'; }).length;
+
+  // Production: distinct components on dishes with portions this week
+  var comps = {};
+  dishes.forEach(function(d) {
+    if ((n(d.drop1) + n(d.drop2)) <= 0) return;
+    ['protein','carb','veg','condiment','complete'].forEach(function(s){ if (d[s]) comps[d[s]] = 1; });
+  });
+  var compNames = Object.keys(comps);
+  var compDone  = compNames.filter(function(c) {
+    var log = (DB.productionLog || []).find(function(p){ return p.week === week && p.component === c; });
+    return log && log.status === 'complete';
+  }).length;
+  var anyProdLog = (DB.productionLog || []).some(function(p){ return p.week === week; });
+
+  // Packing: order × dish slots ticked in the fulfilment station
+  var packTotal = 0, packDone = 0;
+  orders.forEach(function(o) {
+    Object.keys(o.allocation || {}).forEach(function(did) {
+      if (!(o.allocation[did] > 0)) return;
+      if (!dishes.some(function(d){ return d.id === did; })) return;
+      packTotal++;
+      var pp = (o.packProgress || {})[did];
+      if (pp && pp.packed) packDone++;
+    });
+  });
+
+  var archived = !!(week && (DB.weeklyArchives || []).some(function(a){ return a.label === week; }));
+
+  // Next-slot readiness
+  var nx = {
+    dishes:    (DB.nextMenuDishes || []).length,
+    label:     (DB.nextMenuWeekLabel || '').trim(),
+    dates:     !!(DB.nextDropDates && (DB.nextDropDates.sunday || DB.nextDropDates.wednesday)),
+    published: !!DB.nextMenuPublished
+  };
+  nx.ready = nx.dishes > 0 && !!nx.label && nx.dates;
+
+  return { week: week, dishes: dishes, orders: orders, portal: portal, pending: pending,
+           delivered: delivered, compNames: compNames, compDone: compDone, anyProdLog: anyProdLog,
+           packTotal: packTotal, packDone: packDone, archived: archived, nx: nx };
+}
+
+function renderWeekTracker() {
+  var el = document.getElementById('week-tracker');
+  if (!el) return;
+  var s;
+  try { s = getWeekStageState(); } catch (e) { el.innerHTML = ''; return; }
+
+  var stages = [
+    { name: 'Menu',     page: 'menu',
+      done: s.dishes.length > 0,
+      sub:  s.dishes.length ? s.dishes.length + ' dishes' : 'not built' },
+    { name: 'Orders',   page: 'orders',
+      done: s.dishes.length > 0 && !s.portal.anyOpen && s.pending === 0 && s.orders.length > 0,
+      warn: s.pending > 0, badge: s.pending > 0 ? s.pending + ' pending' : null,
+      sub:  s.portal.anyOpen ? 'portal open · ' + s.orders.length : s.orders.length + ' in' },
+    { name: 'Purchase', page: 'purchasing',
+      done: s.anyProdLog,
+      sub:  s.anyProdLog ? 'bought' : 'order list ready' },
+    { name: 'Produce',  page: 'production',
+      done: s.compNames.length > 0 && s.compDone === s.compNames.length,
+      sub:  s.compNames.length ? s.compDone + '/' + s.compNames.length : '—' },
+    { name: 'Pack',     page: 'packsheet',
+      done: s.packTotal > 0 && s.packDone === s.packTotal,
+      sub:  s.packTotal ? s.packDone + '/' + s.packTotal : '—' },
+    { name: 'Deliver',  page: 'delivery',
+      done: s.orders.length > 0 && s.delivered === s.orders.length,
+      sub:  s.orders.length ? s.delivered + '/' + s.orders.length : '—' },
+    { name: 'Close',    page: '_advance',
+      done: s.archived,
+      sub:  s.archived ? 'archived' : 'advance week' }
+  ];
+
+  // First not-done stage is the active one
+  var activeIdx = stages.length;
+  for (var i = 0; i < stages.length; i++) { if (!stages[i].done) { activeIdx = i; break; } }
+
+  var html = '<div class="wk-week-label"><span class="wk-wk">Week</span><span class="wk-lbl">' +
+             (s.week || '—') + '</span></div>';
+
+  stages.forEach(function(st, i) {
+    var cls = st.done ? 'done' : (i === activeIdx ? 'active' : '');
+    if (st.warn) cls += ' warn';
+    html += '<div class="wk-stage ' + cls + '" onclick="wkStageGo(\'' + st.page + '\')" title="' + st.name + '">' +
+      '<span class="wk-dot"></span><span class="wk-name">' + st.name + '</span>' +
+      (st.badge ? '<span class="wk-badge">' + st.badge + '</span>'
+                : (st.sub ? '<span class="wk-sub">' + st.sub + '</span>' : '')) +
+      '</div>';
+    if (i < stages.length - 1) html += '<span class="wk-arrow">›</span>';
+  });
+
+  // Next-week readiness chip
+  var nxCol = s.nx.ready ? 'var(--green)' : (s.nx.dishes > 0 ? '#ff9f0a' : 'var(--text3)');
+  var nxTxt = s.nx.dishes === 0 ? 'not started'
+            : !s.nx.label       ? s.nx.dishes + ' dishes · label missing'
+            : !s.nx.dates       ? s.nx.label + ' · dates missing'
+            : s.nx.published    ? s.nx.label + ' · selling'
+            : s.nx.label + ' · ready';
+  html += '<div class="wk-next-chip" onclick="wkStageGo(\'_next\')" title="Next week build status">' +
+    '<span class="wk-dot" style="background:' + nxCol + ';border-color:' + nxCol + '"></span>' +
+    '<span class="wk-name" style="color:' + nxCol + '">Next</span>' +
+    '<span class="wk-sub">' + nxTxt + '</span></div>';
+
+  el.innerHTML = html;
+}
+
+function wkStageGo(page) {
+  if (page === '_advance') { openAdvanceChecklist(); return; }
+  if (page === '_next')    { showPage('menu'); switchMenuSlot('next'); return; }
+  showPage(page);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADVANCE WEEK — pre-flight checklist (replaces the old confirm())
+// ═══════════════════════════════════════════════════════════════
+
+function openAdvanceChecklist() {
+  var s = getWeekStageState();
+  var currLabel = (DB.menuWeekLabel || '').trim();
+
+  // Criticals block the advance; warnings don't.
+  var checks = [
+    { ok: s.nx.dishes > 0, critical: true,
+      label: 'Next week has dishes', detail: s.nx.dishes ? s.nx.dishes + ' dishes built' : 'Build the menu on the "Building Next" slot', page: '_next' },
+    { ok: !!s.nx.label, critical: true,
+      label: 'Next week label set', detail: s.nx.label || 'Missing — set drop dates and it derives automatically',
+      page: '_next', fix: !s.nx.label && deriveWeekLabel(DB.nextDropDates || {}) ? 'advFixNextLabel()' : null },
+    { ok: s.nx.dates, critical: true,
+      label: 'Next drop dates set', detail: s.nx.dates ? 'Sunday / Wednesday dates in place' : 'Set them on the "Building Next" slot', page: '_next' },
+    { ok: s.pending === 0, critical: false,
+      label: 'No pending orders', detail: s.pending ? s.pending + ' order(s) still pending — confirm or cancel them' : 'All orders confirmed', page: 'orders' },
+    { ok: s.compNames.length === 0 || s.compDone === s.compNames.length, critical: false,
+      label: 'Production complete', detail: s.compNames.length ? s.compDone + '/' + s.compNames.length + ' components complete' : 'No components tracked', page: 'production' },
+    { ok: s.packTotal === 0 || s.packDone === s.packTotal, critical: false,
+      label: 'Packing complete', detail: s.packTotal ? s.packDone + '/' + s.packTotal + ' portions ticked off' : 'Nothing to pack', page: 'packsheet' },
+    { ok: s.orders.length === 0 || s.delivered === s.orders.length, critical: false,
+      label: 'Deliveries done', detail: s.orders.length ? s.delivered + '/' + s.orders.length + ' delivered' : 'No orders', page: 'delivery' }
+  ];
+
+  var criticalFail = checks.some(function(c){ return c.critical && !c.ok; });
+
+  var rows = checks.map(function(c) {
+    var icon = c.ok ? '<span style="color:var(--green);font-weight:700">✓</span>'
+                    : '<span style="color:' + (c.critical ? 'var(--red)' : '#ff9f0a') + ';font-weight:700">' + (c.critical ? '✕' : '!') + '</span>';
+    var jump = !c.ok ? ' <a href="javascript:void(0)" onclick="closeModal(\'advance-modal\');wkStageGo(\'' + c.page + '\')" style="color:var(--gold);font-size:10px;text-decoration:none">fix →</a>' : '';
+    var fixBtn = (!c.ok && c.fix) ? ' <a href="javascript:void(0)" onclick="' + c.fix + '" style="color:var(--green);font-size:10px;text-decoration:none">auto-fill →</a>' : '';
+    return '<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border)">' +
+      '<div style="width:16px;text-align:center;flex-shrink:0">' + icon + '</div>' +
+      '<div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--text)">' + c.label +
+      (c.critical ? ' <span style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.5px">REQUIRED</span>' : '') +
+      '</div><div style="font-size:11px;color:var(--text3)">' + c.detail + jump + fixBtn + '</div></div></div>';
+  }).join('');
+
+  var body = document.getElementById('advance-modal-body');
+  body.innerHTML =
+    '<div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5">' +
+      'Archives <strong>' + (currLabel || '(unlabelled)') + '</strong>, promotes <strong>' + (s.nx.label || '(no label)') + '</strong> to current, and closes that slot for new orders.' +
+    '</div>' + rows +
+    '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-size:11px;color:var(--text3)' + (criticalFail ? '' : ';display:none') + '">' +
+      '<input type="checkbox" id="adv-override" onchange="document.getElementById(\'adv-go-btn\').disabled = !this.checked" style="accent-color:var(--gold)">' +
+      'Advance anyway — I understand required checks are failing</label>';
+
+  var goBtn = document.getElementById('adv-go-btn');
+  goBtn.disabled = criticalFail;
+  openModal('advance-modal');
+}
+
+function advFixNextLabel() {
+  var derived = deriveWeekLabel(DB.nextDropDates || {});
+  if (!derived) { notify('Next drop dates missing — set those first'); return; }
+  DB.nextMenuWeekLabel = derived;
+  save();
+  notify('Next week label set: ' + derived);
+  openAdvanceChecklist(); // re-render checklist with the fix applied
+}
+
+function advChecklistConfirm() {
+  closeModal('advance-modal');
+  _doAdvanceWeek();
+}
+
+function advanceWeek() { openAdvanceChecklist(); }
+
+function _doAdvanceWeek() {
   var nextLabel = (DB.nextMenuWeekLabel || '').trim();
   var currLabel = (DB.menuWeekLabel || '').trim();
 
-  if (!nextLabel) {
-    notify('Set a week label on the "Building Next" slot first'); return;
-  }
+  // Hard safety net — the checklist normally catches these
   if (!DB.nextMenuDishes || DB.nextMenuDishes.length === 0) {
     notify('Next week has no dishes — build the menu on the "Building Next" slot first'); return;
   }
-
-  var msg = 'Advance week?\n\n'
-    + '• Archive current week: ' + (currLabel || '(unlabelled)') + '\n'
-    + '• Promote next week → current: ' + nextLabel + '\n'
-    + '• Close next-week portal and clear that slot\n\n'
-    + 'Make sure all current-week orders are confirmed and portions synced before advancing.';
-
-  if (!confirm(msg)) return;
 
   // 1. Archive current week (if it has dishes)
   if (currLabel && DB.menuDishes && DB.menuDishes.length > 0) {
