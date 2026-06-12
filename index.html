@@ -1709,6 +1709,29 @@ select.route-confirm-input option { background:var(--surface2); }
 .qb-top-spacer{flex:1;}
 .qb-section{margin-bottom:22px;}
 .qb-section-title{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
+/* MENU IDEATION */
+.qbi-controls{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:9px;}
+.qbi-ctrl label{display:block;font-family:var(--mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;}
+.qbi-ctrl input{width:90px;background:var(--surface3);border:1px solid var(--border2);border-radius:5px;color:var(--text);font-size:13px;padding:6px 10px;outline:none;font-family:var(--mono);}
+.qbi-score-strip{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;}
+.qbi-score{flex:1;min-width:110px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+.qbi-score .v{font-size:20px;font-weight:800;font-family:var(--display);}
+.qbi-score .l{font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-top:2px;}
+.qbi-score .s{font-size:9px;color:var(--text3);font-family:var(--mono);}
+.qbi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:12px;}
+.qbi-card{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:11px 13px;position:relative;}
+.qbi-card.locked{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold-dim);}
+.qbi-card .fmt{font-family:var(--mono);font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);}
+.qbi-card .nm{font-size:13.5px;font-weight:700;color:var(--text);margin:3px 0 6px;line-height:1.25;}
+.qbi-card .cmp{font-size:10.5px;color:var(--text2);line-height:1.5;}
+.qbi-card .cmp b{color:var(--text3);font-weight:600;font-family:var(--mono);font-size:9px;}
+.qbi-card .cost{font-family:var(--mono);font-size:10px;color:var(--gold);margin-top:6px;}
+.qbi-card-actions{position:absolute;top:8px;right:10px;display:flex;gap:4px;}
+.qbi-icon-btn{background:none;border:1px solid var(--border2);border-radius:5px;color:var(--text3);font-size:11px;cursor:pointer;padding:2px 7px;transition:all .15s;}
+.qbi-icon-btn:hover{color:var(--text);border-color:var(--border);}
+.qbi-icon-btn.on{background:var(--gold);color:#000;border-color:var(--gold);}
+.qbi-psych{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:12px;}
+.qbi-psych-row{display:flex;gap:8px;align-items:flex-start;padding:4px 0;font-size:11.5px;color:var(--text2);}
 .qb-flavour-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px;}
 .qb-flavour-chip{display:inline-flex;align-items:center;gap:6px;background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:4px 10px 4px 13px;font-size:12px;font-family:var(--sans);font-weight:600;}
 .qb-chip-meta{font-size:10px;color:var(--text3);font-weight:400;font-family:var(--mono);}
@@ -14320,6 +14343,414 @@ function qbRenderReuse() {
   }).join('');
 }
 
+// ═══════════════════════════════════════════════════════════════
+// MENU IDEATION ENGINE (June 2026)
+// Component-matrix generation: menus that read expansive to customers
+// while staying operationally minimal. Ephemeral until "Apply to slots".
+// ═══════════════════════════════════════════════════════════════
+var _qbi = { menu: null, locked: {} };
+
+function qbiSettings() {
+  if (!DB.qbIdeate) DB.qbIdeate = { dishCount: 12, maxComponents: 14 };
+  return DB.qbIdeate;
+}
+function qbiSetSetting(key, val) {
+  var st = qbiSettings();
+  st[key] = Math.max(key === 'dishCount' ? 4 : 6, Math.min(parseInt(val) || 0, key === 'dishCount' ? 24 : 40));
+  save();
+}
+
+/* component name -> weeks-ago last seen (0 = on a live menu now) */
+function qbiRecentUse() {
+  var seen = {};
+  function mark(d, w) {
+    ['protein','carb','veg','condiment'].forEach(function(k) {
+      var nm = d[k]; if (!nm) return;
+      if (seen[nm] == null || w < seen[nm]) seen[nm] = w;
+    });
+  }
+  (DB.menuDishes || []).forEach(function(d){ mark(d, 0); });
+  (DB.nextMenuDishes || []).forEach(function(d){ mark(d, 0); });
+  (DB.weeklyArchives || []).slice(-4).reverse().forEach(function(a, i) {
+    (a.dishes || []).forEach(function(d){ mark(d, i + 1); });
+  });
+  return seen;
+}
+
+/* component name -> avg portions per menu appearance (proven sellers) */
+function qbiPopularity() {
+  var tot = {}, cnt = {};
+  (DB.weeklyArchives || []).forEach(function(a) {
+    (a.dishes || []).forEach(function(d) {
+      var ports = n(d.drop1) + n(d.drop2);
+      ['protein','carb','veg','condiment'].forEach(function(k) {
+        var nm = d[k]; if (!nm) return;
+        tot[nm] = (tot[nm] || 0) + ports; cnt[nm] = (cnt[nm] || 0) + 1;
+      });
+    });
+  });
+  var pop = {};
+  Object.keys(tot).forEach(function(k){ pop[k] = tot[k] / Math.max(1, cnt[k]); });
+  return pop;
+}
+
+/* Pick the constrained component pool — THE operational-simplicity lever */
+function qbiPickPool(lockedComps) {
+  var st = qbiSettings(), recent = qbiRecentUse(), pop = qbiPopularity();
+  var maxPop = 1; Object.keys(pop).forEach(function(k){ if (pop[k] > maxPop) maxPop = pop[k]; });
+
+  function compScore(r) {
+    var sc = Math.random() * 1.2;                       // exploration / shuffle
+    var w = recent[r.name];
+    if (w == null) sc += 2;                             // fresh — not seen in 4+ weeks
+    else { sc += Math.min(w, 4) * 0.5; if (w === 0) sc -= 1.5; } // penalise on-menu-now
+    sc += (pop[r.name] || 0) / maxPop;                  // proven sellers
+    if (lockedComps && lockedComps[r.name]) sc += 100;  // locked dishes keep their comps
+    return sc;
+  }
+  function top(type, count) {
+    return qbGetComps(type).slice()
+      .sort(function(a, b){ return compScore(b) - compScore(a); })
+      .slice(0, Math.max(1, count));
+  }
+
+  var dc = st.dishCount;
+  var counts = {
+    P: Math.min(Math.max(3, Math.round(dc / 3)), qbGetComps('Protein').length),
+    K: Math.min(Math.max(2, Math.round(dc / 3)), qbGetComps('Condiment').length),
+    V: Math.min(Math.max(2, Math.round(dc / 4)), qbGetComps('Veg').length),
+    C: Math.min(Math.max(2, Math.round(dc / 5)), qbGetComps('Carb').length)
+  };
+  // Trim to the chef-capacity budget — carbs first (lowest perceived-variety impact)
+  var order = ['C','V','K','P'], floors = { P:3, K:2, V:2, C:2 }, guard = 0;
+  while ((counts.P + counts.K + counts.V + counts.C) > st.maxComponents && guard < 60) {
+    var key = order[guard % order.length];
+    if (counts[key] > floors[key]) counts[key]--;
+    guard++;
+  }
+
+  var pool = {
+    protein:   top('Protein', counts.P),
+    carb:      top('Carb', counts.C),
+    veg:       top('Veg', counts.V),
+    condiment: top('Condiment', counts.K)
+  };
+
+  // Coverage fix: formats with protein hints (salmon/fish/vegan) must be servable.
+  // If the pool misses a hint group, swap the weakest non-hinted protein for the
+  // strongest hinted one from the full library.
+  var allProts = qbGetComps('Protein');
+  var hintGroups = [['salmon'], ['salmon','basa','fish'], ['tofu','vegan','plant']];
+  hintGroups.forEach(function(hints) {
+    var has = pool.protein.some(function(p){ var nm = p.name.toLowerCase(); return hints.some(function(h){ return nm.indexOf(h) !== -1; }); });
+    if (has) return;
+    var candidate = allProts.filter(function(p) {
+      var nm = p.name.toLowerCase();
+      return hints.some(function(h){ return nm.indexOf(h) !== -1; });
+    }).sort(function(a, b){ return compScore(b) - compScore(a); })[0];
+    if (!candidate) return; // library simply has none — format will fall back
+    for (var i = pool.protein.length - 1; i >= 0; i--) {
+      var nm2 = pool.protein[i].name.toLowerCase();
+      var isHinted = hintGroups.some(function(g){ return g.some(function(h){ return nm2.indexOf(h) !== -1; }); });
+      var isLocked = lockedComps && lockedComps[pool.protein[i].name];
+      if (!isHinted && !isLocked) { pool.protein[i] = candidate; break; }
+    }
+  });
+  return pool;
+}
+
+/* Compose one dish for a format from the pool, maximising distinctness */
+function qbiBuildDish(format, pool, existing) {
+  var hints = QB_PROTEIN_HINTS[format] || [];
+  var isSalad = format.indexOf('Salad') !== -1;
+  var prots = hints.length
+    ? pool.protein.filter(function(p){ var nm = p.name.toLowerCase(); return hints.some(function(h){ return nm.indexOf(h) !== -1; }); })
+    : pool.protein.filter(function(p) {
+        // non-hinted formats avoid fish & vegan proteins (reserved for their slots —
+        // otherwise one salmon floods the menu and kills perceived variety)
+        var nm = p.name.toLowerCase();
+        return !['tofu','vegan','plant','salmon','basa','fish'].some(function(h){ return nm.indexOf(h) !== -1; });
+      });
+  if (!prots.length) prots = pool.protein;
+  var prefs = QB_VEG_PREF[format] || [];
+  var best = null, bestScore = -1e9;
+
+  prots.forEach(function(p) {
+    (isSalad ? [null] : [null].concat(pool.carb)).forEach(function(c) {
+      pool.veg.forEach(function(v) {
+        [null].concat(pool.condiment).forEach(function(k) {
+          var combo = { protein: p.name, carb: c ? c.name : '', veg: v.name, condiment: k ? k.name : '' };
+          var sc = Math.random() * 0.5;
+          if (!isSalad && c) sc += 0.9;                       // bowls/wraps want a carb
+          var vi = prefs.indexOf(v.vegCategory);
+          if (vi !== -1) sc += (prefs.length - vi) * 0.8;     // format-appropriate veg
+          if (k) sc += isSalad ? 1.5 : 1.2;                   // condiment = flavour identity (dressing carries salads)
+          // balance: spread usage across the pool
+          sc -= (existing.useCount[combo.protein] || 0) * 0.9;
+          sc -= (existing.useCount[combo.veg] || 0) * 0.45;
+          if (combo.carb)      sc -= (existing.useCount[combo.carb] || 0) * 0.25;
+          if (combo.condiment) sc -= (existing.useCount[combo.condiment] || 0) * 0.6;
+          // distinctness: never let two dishes blur together
+          existing.dishes.forEach(function(d) {
+            var shared = 0, union = 0;
+            ['protein','carb','veg','condiment'].forEach(function(sl) {
+              if (combo[sl] || d[sl]) union++;
+              if (combo[sl] && combo[sl] === d[sl]) shared++;
+            });
+            if (shared === union && union > 0) sc -= 30;        // identical dish in a different box — never
+            if (combo.condiment && combo.protein === d.protein && combo.condiment === d.condiment) sc -= 6;
+            if (combo.protein === d.protein && combo.veg === d.veg) sc -= 4; // same hero pairing reads as a repeat
+            if (shared >= 3) sc -= 8;
+            sc -= shared * 0.5;
+          });
+          if (sc > bestScore) { bestScore = sc; best = combo; }
+        });
+      });
+    });
+  });
+  return best;
+}
+
+/* Appetising-but-honest dish name from components ("Tikka (Chicken)" → "Tikka Chicken Bowl") */
+function qbiName(combo, format) {
+  var p = combo.protein || '';
+  var m = p.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+  var flavour = m ? m[1].trim() : '';
+  var base    = m ? m[2].trim() : p;
+  var suffix  = QB_NAME_SUFFIX[format] || 'Bowl';
+  if (suffix === 'Wings') return (flavour || base) + ' Wings';
+  // "Salmon" + "Fish Box" → "Salmon Box"; avoid category-word doubling
+  var fishWords = ['salmon','basa','cod','fish','prawn'];
+  if (fishWords.indexOf(base.toLowerCase()) !== -1 && suffix.toLowerCase().indexOf('fish') === 0) {
+    suffix = suffix.replace(/^Fish\s*/i, '');
+  }
+  var parts = [];
+  if (flavour) parts.push(flavour);
+  if (base && suffix.toLowerCase().indexOf(base.toLowerCase()) === -1) parts.push(base);
+  parts.push(suffix);
+  return parts.join(' ').replace(/\s+/g, ' ').trim();
+}
+
+function qbiEstCost(combo) {
+  try {
+    return calcDishTotals({
+      protein: combo.protein, carb: combo.carb, veg: combo.veg, condiment: combo.condiment,
+      complete: '', scaleProtein: 1, scaleCarb: 1, scaleVeg: 1, scaleOverall: 1,
+      sellPrice: DB.defaultSellPrice || 9.99, drop1: 0, drop2: 0
+    }).cost;
+  } catch (e) { return 0; }
+}
+
+function qbiGenerate() {
+  var st = qbiSettings();
+  // Format plan: cycle the house template up to dishCount
+  var plan = [];
+  for (var i = 0; i < st.dishCount; i++) plan.push(QB_DEFAULT_TEMPLATE[i % QB_DEFAULT_TEMPLATE.length]);
+
+  // Locked dishes survive regeneration (and pin their components into the pool)
+  var lockedDishes = [], lockedComps = {};
+  if (_qbi.menu) {
+    _qbi.menu.forEach(function(d, i) {
+      if (_qbi.locked[i]) {
+        lockedDishes.push(d);
+        ['protein','carb','veg','condiment'].forEach(function(k){ if (d[k]) lockedComps[d[k]] = 1; });
+      }
+    });
+  }
+
+  var pool = qbiPickPool(lockedComps);
+  var existing = { dishes: lockedDishes.slice(), useCount: {} };
+  lockedDishes.forEach(function(d) {
+    ['protein','carb','veg','condiment'].forEach(function(k){ if (d[k]) existing.useCount[d[k]] = (existing.useCount[d[k]] || 0) + 1; });
+  });
+
+  var menu = lockedDishes.slice();
+  plan.slice(lockedDishes.length).forEach(function(format) {
+    var combo = qbiBuildDish(format, pool, existing);
+    if (!combo) return;
+    var dish = {
+      format: format, protein: combo.protein, carb: combo.carb, veg: combo.veg,
+      condiment: combo.condiment, name: qbiName(combo, format),
+      cost: qbiEstCost(combo), fuelLine: QB_FUEL[format] || 'Fuel Plus'
+    };
+    menu.push(dish);
+    existing.dishes.push(dish);
+    ['protein','carb','veg','condiment'].forEach(function(k){ if (combo[k]) existing.useCount[combo[k]] = (existing.useCount[combo[k]] || 0) + 1; });
+  });
+
+  // Re-index locks to the new array (locked dishes are at the front)
+  // Name dedup — two dishes may differ in components but collide on name
+  // (e.g. one salmon protein serving both the Salmon and Fish slots).
+  var seenNames = {};
+  menu.forEach(function(d) {
+    if (!seenNames[d.name]) { seenNames[d.name] = 1; return; }
+    var distinguisher = d.condiment || d.veg || '';
+    var m2 = distinguisher.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+    var tag = m2 ? (m2[1] + ' ' + m2[2]).trim() : distinguisher;
+    if (tag) d.name = d.name + ' — ' + tag;
+    else d.name = d.name + ' II';
+    seenNames[d.name] = 1;
+  });
+
+  var newLocked = {};
+  lockedDishes.forEach(function(_, i){ newLocked[i] = true; });
+  _qbi.locked = newLocked;
+  _qbi.menu = menu;
+  renderQuickBuild();
+}
+
+function qbiScoreMenu(menu) {
+  var st = qbiSettings();
+  var comps = {}, slotsUsed = 0;
+  menu.forEach(function(d) {
+    ['protein','carb','veg','condiment'].forEach(function(k){ if (d[k]) { comps[d[k]] = 1; slotsUsed++; } });
+  });
+  var compCount = Object.keys(comps).length;
+  var reuse = compCount ? slotsUsed / compCount : 0;
+
+  var dp = {}, dk = {}, df = {};
+  menu.forEach(function(d){ if (d.protein) dp[d.protein] = 1; if (d.condiment) dk[d.condiment] = 1; df[d.format] = 1; });
+  var pairs = 0, dist = 0;
+  for (var i = 0; i < menu.length; i++) for (var j = i + 1; j < menu.length; j++) {
+    var shared = 0, union = 0;
+    ['protein','carb','veg','condiment'].forEach(function(k) {
+      if (menu[i][k] || menu[j][k]) { union++; if (menu[i][k] && menu[i][k] === menu[j][k]) shared++; }
+    });
+    dist += 1 - (union ? shared / union : 0); pairs++;
+  }
+  var avgDist = pairs ? dist / pairs : 1;
+  var variety = Math.min(100, Math.round(
+    Math.min(Object.keys(dp).length / 5, 1) * 30 +
+    Math.min(Object.keys(dk).length / 4, 1) * 20 +
+    Math.min(Object.keys(df).length / 5, 1) * 15 +
+    avgDist * 35
+  ));
+  var ops = Math.max(0, Math.min(100, Math.round(
+    (compCount <= st.maxComponents ? 50 : Math.max(0, 50 - (compCount - st.maxComponents) * 10)) +
+    Math.min(reuse / 2.5, 1) * 50
+  )));
+  // freshness: % of pool components not on a live/recent menu
+  var recent = qbiRecentUse(), freshN = 0;
+  Object.keys(comps).forEach(function(c){ if (recent[c] == null || recent[c] > 2) freshN++; });
+  var fresh = compCount ? Math.round(freshN / compCount * 100) : 100;
+  var avgCost = menu.length ? menu.reduce(function(s, d){ return s + (d.cost || 0); }, 0) / menu.length : 0;
+  var sell = DB.defaultSellPrice || 9.99;
+  var margin = sell ? Math.round((sell - avgCost) / sell * 100) : 0;
+  var liteN = menu.filter(function(d){ return (d.fuelLine || '') === 'Fuel Lite'; }).length;
+  return { compCount: compCount, reuse: reuse, variety: variety, ops: ops, fresh: fresh,
+           avgCost: avgCost, margin: margin, liteN: liteN,
+           protN: Object.keys(dp).length, condN: Object.keys(dk).length };
+}
+
+function qbiPsychChecks(menu, sc) {
+  var anchor = menu.slice().sort(function(a, b){ return (b.cost || 0) - (a.cost || 0); })[0];
+  var named = menu.filter(function(d){ return d.condiment || (d.protein || '').indexOf('(') !== -1; }).length;
+  return [
+    { ok: menu.length >= 10 && menu.length <= 16,
+      label: 'Choice sweet spot', tip: menu.length + ' dishes — 10–16 reads expansive without choice overload' },
+    { ok: sc.protN >= 4,
+      label: 'Protein spread', tip: sc.protN + ' distinct proteins — customers scan menus by protein first' },
+    { ok: sc.liteN >= Math.ceil(menu.length * 0.2),
+      label: 'Fuel Lite presence', tip: sc.liteN + ' Lite dishes — the lighter line frames Plus dishes as the indulgent-but-controlled choice' },
+    { ok: named / Math.max(1, menu.length) >= 0.75,
+      label: 'Flavour identity', tip: Math.round(named / Math.max(1, menu.length) * 100) + '% of dishes carry a named flavour — flavour-led names sell better than ingredient lists' },
+    { ok: !!anchor,
+      label: 'Price anchor', tip: anchor ? ('"' + anchor.name + '" is your richest build (£' + (anchor.cost || 0).toFixed(2) + ' food cost) — price it £1.50–2 above the line and list it first; it makes the rest feel like value') : '' },
+    { ok: menu.some(function(d){ return d.format.indexOf('Vegan') !== -1; }) && menu.some(function(d){ return d.format.indexOf('Fish') !== -1 || d.format.indexOf('Salmon') !== -1; }),
+      label: 'Dietary breadth', tip: 'Vegan + fish options widen the audience without widening the kitchen' }
+  ];
+}
+
+function qbiToggleLock(i) { _qbi.locked[i] = !_qbi.locked[i]; renderQuickBuild(); }
+
+function qbiReroll(i) {
+  if (!_qbi.menu || !_qbi.menu[i]) return;
+  var pool = qbiPickPool({});
+  var existing = { dishes: [], useCount: {} };
+  _qbi.menu.forEach(function(d, j) {
+    if (j === i) return;
+    existing.dishes.push(d);
+    ['protein','carb','veg','condiment'].forEach(function(k){ if (d[k]) existing.useCount[d[k]] = (existing.useCount[d[k]] || 0) + 1; });
+  });
+  var combo = qbiBuildDish(_qbi.menu[i].format, pool, existing);
+  if (!combo) return;
+  var format = _qbi.menu[i].format;
+  _qbi.menu[i] = { format: format, protein: combo.protein, carb: combo.carb, veg: combo.veg,
+    condiment: combo.condiment, name: qbiName(combo, format), cost: qbiEstCost(combo),
+    fuelLine: QB_FUEL[format] || 'Fuel Plus' };
+  renderQuickBuild();
+}
+
+function qbiApply() {
+  if (!_qbi.menu || !_qbi.menu.length) { notify('Generate a menu first'); return; }
+  qbEnsureInit();
+  var hasWork = (DB.currentBuild.slots || []).some(function(sl){ return sl.dishName || sl.protein || sl.carb || sl.veg; });
+  if (hasWork && !confirm('Apply this generated menu to the build slots?\n\nThis replaces the current slot contents (locked or not). Save the current build as a menu first if you want to keep it.')) return;
+  DB.currentBuild.slots = _qbi.menu.map(function(d, i) {
+    return { id: 'qbs-' + (i + 1), format: d.format, flavour: '', protein: d.protein || '',
+      carb: d.carb || '', veg: d.veg || '', condiment: d.condiment || '', dishName: d.name || '',
+      fuelLine: d.fuelLine || 'Fuel Plus', pushed: false, scaleProtein: 1, scaleCarb: 1, scaleVeg: 1,
+      scaleOverall: 1, availSunday: false, availWednesday: false, drop1: 0, drop2: 0,
+      sellPrice: DB.defaultSellPrice || 9.99, boxType: (d.format || '').indexOf('Salad') !== -1 ? 'single' : '3-compartment',
+      condimentTubs: d.condiment ? 1 : 0, tags: [], serves: '', photoUrl: '' };
+  });
+  save(); renderQuickBuild();
+  notify('✨ ' + _qbi.menu.length + ' dishes applied to the build slots — review, tweak, then 💾 Save as Menu or push');
+}
+
+function qbiRenderSection() {
+  var st = qbiSettings();
+  var html = '<div class="qb-section">' +
+    '<div class="qb-section-title">✨ Menu Ideation — expansive for customers, minimal for the kitchen</div>' +
+    '<div class="qbi-controls">' +
+      '<div class="qbi-ctrl"><label>Dishes on menu</label><input type="number" min="4" max="24" value="' + st.dishCount + '" onchange="qbiSetSetting(\'dishCount\', this.value)"></div>' +
+      '<div class="qbi-ctrl"><label>Max components (chef capacity)</label><input type="number" min="6" max="40" value="' + st.maxComponents + '" onchange="qbiSetSetting(\'maxComponents\', this.value)"></div>' +
+      '<button class="btn btn-gold" onclick="qbiGenerate()">' + (_qbi.menu ? '↻ Regenerate (keeps 🔒)' : '✨ Generate Menu') + '</button>' +
+      (_qbi.menu ? '<button class="btn btn-green" onclick="qbiApply()">✓ Apply to build slots</button>' : '') +
+      '<span style="font-size:10px;color:var(--text3);font-family:var(--mono);flex:1;min-width:160px">Rotates against the last 4 archived weeks &amp; the live menu · favours proven sellers · 🔒 a dish to keep it through regenerations</span>' +
+    '</div>';
+
+  if (_qbi.menu && _qbi.menu.length) {
+    var sc = qbiScoreMenu(_qbi.menu);
+    var vCol = sc.variety >= 70 ? 'var(--green)' : sc.variety >= 50 ? '#ff9f0a' : 'var(--red)';
+    var oCol = sc.ops >= 70 ? 'var(--green)' : sc.ops >= 50 ? '#ff9f0a' : 'var(--red)';
+    html += '<div class="qbi-score-strip">' +
+      '<div class="qbi-score"><div class="v" style="color:' + vCol + '">' + sc.variety + '</div><div class="l">Perceived variety</div><div class="s">' + sc.protN + ' proteins · ' + sc.condN + ' sauces</div></div>' +
+      '<div class="qbi-score"><div class="v" style="color:' + oCol + '">' + sc.ops + '</div><div class="l">Kitchen simplicity</div><div class="s">' + sc.compCount + ' components · ' + sc.reuse.toFixed(1) + '× reuse</div></div>' +
+      '<div class="qbi-score"><div class="v">' + sc.fresh + '%</div><div class="l">Rotation freshness</div><div class="s">vs last 4 weeks</div></div>' +
+      '<div class="qbi-score"><div class="v">£' + sc.avgCost.toFixed(2) + '</div><div class="l">Avg food cost</div><div class="s">' + sc.margin + '% margin @ £' + (DB.defaultSellPrice || 9.99).toFixed(2) + '</div></div>' +
+    '</div>';
+
+    html += '<div class="qbi-grid">' + _qbi.menu.map(function(d, i) {
+      var locked = !!_qbi.locked[i];
+      return '<div class="qbi-card' + (locked ? ' locked' : '') + '">' +
+        '<div class="qbi-card-actions">' +
+          '<button class="qbi-icon-btn' + (locked ? ' on' : '') + '" onclick="qbiToggleLock(' + i + ')" title="' + (locked ? 'Unlock' : 'Lock — keep through regenerations') + '">' + (locked ? '🔒' : '🔓') + '</button>' +
+          '<button class="qbi-icon-btn" onclick="qbiReroll(' + i + ')" title="Reroll this dish only">↻</button>' +
+        '</div>' +
+        '<div class="fmt">' + escHtml(d.format) + ' · ' + escHtml(d.fuelLine || '') + '</div>' +
+        '<div class="nm">' + escHtml(d.name) + '</div>' +
+        '<div class="cmp">' +
+          (d.protein ? '<b>P</b> ' + escHtml(d.protein) + '<br>' : '') +
+          (d.carb ? '<b>C</b> ' + escHtml(d.carb) + '<br>' : '') +
+          (d.veg ? '<b>V</b> ' + escHtml(d.veg) + '<br>' : '') +
+          (d.condiment ? '<b>S</b> ' + escHtml(d.condiment) : '') +
+        '</div>' +
+        '<div class="cost">est £' + (d.cost || 0).toFixed(2) + ' food cost</div>' +
+      '</div>';
+    }).join('') + '</div>';
+
+    var checks = qbiPsychChecks(_qbi.menu, sc);
+    html += '<div class="qbi-psych"><div class="qb-section-title" style="margin-bottom:6px">Menu psychology</div>' +
+      checks.map(function(c) {
+        return '<div class="qbi-psych-row"><span style="color:' + (c.ok ? 'var(--green)' : '#ff9f0a') + ';font-weight:700;width:14px;flex-shrink:0">' + (c.ok ? '✓' : '!') + '</span>' +
+          '<span><strong>' + c.label + '</strong> — ' + c.tip + '</span></div>';
+      }).join('') + '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
 function renderQuickBuild() {
   qbEnsureInit();
 
@@ -14587,6 +15018,9 @@ function renderQuickBuild() {
 
   document.getElementById('qb-root').innerHTML =
     _quickStartBanner +
+
+    // Menu ideation (generator)
+    qbiRenderSection() +
 
     // Slot target selector
     '<div class="qb-section">' + slotSelector + '</div>' +
@@ -14857,16 +15291,17 @@ function qbHandlePhotoUpload(idx, input) {
 // ── Menu Templates ────────────────────────────────────────────────────
 
 function qbCalcTemplateSummary(tpl) {
-  var total = {kcal:0, prot:0, carb:0, fat:0, count:0};
+  var total = {kcal:0, prot:0, carb:0, fat:0, cost:0, count:0};
   (tpl.slots||[]).forEach(function(slot) {
     var m = qbCalcSlotMacros(slot);
     if (!m.ok) return;
     total.kcal += m.kcal; total.prot += m.prot;
     total.carb += m.carb; total.fat  += m.fat;
+    total.cost += (m.cost||0);
     total.count++;
   });
   if (!total.count) return null;
-  return { kcal:total.kcal/total.count, prot:total.prot/total.count, carb:total.carb/total.count, fat:total.fat/total.count, count:total.count };
+  return { kcal:total.kcal/total.count, prot:total.prot/total.count, carb:total.carb/total.count, fat:total.fat/total.count, cost:total.cost/total.count, count:total.count };
 }
 
 // ── Building-Next menu — isolated localStorage key ────────────────────────────────
@@ -14952,6 +15387,14 @@ function qbRenderTemplates() {
     var totalD2    = slots.reduce(function(s,sl){ return s + (n(sl.drop2)||0); }, 0);
     var summary    = qbCalcTemplateSummary(tpl);
 
+    // Component-matrix stats — the expansive-vs-simple ratio at a glance
+    var _tc = {}, _ts = 0;
+    named.forEach(function(sl) {
+      ['protein','carb','veg','condiment'].forEach(function(k){ if (sl[k]) { _tc[sl[k]] = 1; _ts++; } });
+    });
+    var compN  = Object.keys(_tc).length;
+    var reuseX = compN ? (_ts / compN) : 0;
+
     // Dish list — show up to 8, then "+N more"
     var SHOW = 8;
     var dishListHtml = named.length
@@ -14992,6 +15435,10 @@ function qbRenderTemplates() {
           + '<span>'+named.length+' dish'+(named.length!==1?'es':'')+(partial.length?' · '+partial.length+' partial':'')+' / '+slots.length+' slots</span>'
           + '<span>'+escHtml(tpl.savedAt||'—')+'</span>'
       + '</div>'
+      + (compN ? '<div style="font-size:10px;font-family:var(--mono);color:var(--text3);margin-top:2px">🧩 '
+          + compN + ' components · ' + reuseX.toFixed(1) + '× reuse'
+          + (summary ? ' · ~£' + (summary.cost||0).toFixed(2) + ' avg food' : '')
+          + '</div>' : '')
       + dishListHtml
       + (macroLine ? '<div class="qb-tpl-macros" style="margin-top:4px">'+macroLine+'</div>' : '')
       + portionLine
