@@ -7457,27 +7457,10 @@ function renderMenu(){
 
   // Slot context banner
   var bannerEl = document.getElementById('menu-slot-banner');
-  if (bannerEl) {
-    var hasNext = !!(DB.nextMenuDishes && DB.nextMenuDishes.length > 0);
-    if (menuActiveSlot === 'next') {
-      var portalState = hasNext
-        ? '<span style="color:#30d158">🟢 Portal is already showing this week\'s menu (dishes are live to browse)</span>'
-        : '<span style="color:var(--gold)">⚠ Portal will switch to this menu as soon as you add the first dish</span>';
-      bannerEl.innerHTML = '<div style="background:rgba(10,132,255,.08);border:1px solid rgba(10,132,255,.25);border-radius:7px;padding:9px 12px;font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.6">'
-        + '<strong style="color:#0a84ff;text-transform:uppercase;font-size:9px;letter-spacing:.8px">🔜 Building Next Week</strong><br>'
-        + 'Upload photos, set "Serves with", and configure tags <strong>here</strong> — this is the slot the portal reads. ' + portalState + '.<br>'
-        + '<span style="color:var(--text3)">When ready: open ordering via the portal strip above. When current week is done: hit ⏭ Advance Week.</span>'
-        + '</div>';
-    } else {
-      var currentMsg = hasNext
-        ? '<span style="color:var(--gold)">⚠ Portal is showing <strong>Building Next</strong> dishes — edits here are not portal-visible</span>'
-        : '<span style="color:#30d158">🟢 Portal is reading from this slot — photos and "Serves with" set here go live on the portal</span>';
-      bannerEl.innerHTML = '<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.6">'
-        + '<strong style="color:var(--text3);text-transform:uppercase;font-size:9px;letter-spacing:.8px">📦 Current Week — Production</strong><br>'
-        + 'Manage portions, confirm orders, and run the kitchen. ' + currentMsg + '.'
-        + '</div>';
-    }
-  }
+  // Slot context banner removed — its "this is the slot the portal reads"
+  // messaging became misleading once the portal started reading the published
+  // public/menu node rather than a slot directly.
+  if (bannerEl) bannerEl.innerHTML = '';
 
   const slotDishes = getSlotDishes();
   const dishes=slotDishes.filter(d=>!menuSearchFilter||d.name.toLowerCase().includes(menuSearchFilter.toLowerCase()));
@@ -10362,9 +10345,14 @@ function deleteArchive(id) {
   var arc = DB.weeklyArchives.find(a => a.id === id);
   if (!arc) return;
   DB.weeklyArchives = DB.weeklyArchives.filter(a => a.id !== id);
+  // Archives live in the separate /hist/ path (excluded from the main blob), so a
+  // plain save() does NOT delete them there — and the lazy loader re-adds them.
+  // Remove from /hist/ explicitly or the archive "comes back" on the next visit.
+  if (_fbDb) try { _fbDb.ref('29perfOS/hist/' + id).remove(); } catch(e) {}
   save(); renderHistory();
   notifyUndo('Archive "' + (arc.label || id) + '" deleted', function() {
     DB.weeklyArchives.push(arc);
+    if (_fbDb) try { _fbDb.ref('29perfOS/hist/' + id).set(arc); } catch(e) {}
     save(); renderHistory(); notify('Archive restored ✓');
   });
 }
