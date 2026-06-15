@@ -7202,17 +7202,17 @@ function getProductionWeekLabel() {
 }
 // Returns all non-cancelled orders for the production slot
 function getProductionOrders(includeStatuses) {
-  var slot  = getProductionSlot();
-  var week  = getProductionWeekLabel();
+  var slot   = getProductionSlot();
+  var dishes = slot === 'next' ? (DB.nextMenuDishes || []) : (DB.menuDishes || []);
+  var dishIds = {};
+  dishes.forEach(function(d){ dishIds[d.id] = 1; });
   return (DB.weeklyOrders || []).filter(function(o) {
-    if (o.slot) {
-      if (o.slot !== slot) return false;
-      // Also require week label match (when known) to prevent stale orders from past weeks
-      // showing up in production, packaging, and delivery once the week has advanced.
-      if (week && o.week && o.week !== week) return false;
-    } else {
-      if (!week || o.week !== week) return false;
-    }
+    if (o.slot && o.slot !== slot) return false;
+    // Match by dish-ID membership in the production menu, NOT the brittle week-label
+    // string (a tiny label difference used to leave production/packaging/delivery
+    // empty). Orders from other weeks reference different dish IDs and are excluded.
+    var alloc = o.allocation || {};
+    if (!Object.keys(alloc).some(function(id){ return dishIds[id]; })) return false;
     if (includeStatuses) return includeStatuses.indexOf(getOrderStatus(o)) !== -1;
     return getOrderStatus(o) !== 'cancelled';
   });
@@ -9726,7 +9726,10 @@ function renderPurchasing(){
   const sessionLabel=purchSessionFilter==='all'?'All Sessions':(purchSessionFilter==='s1'||purchSessionFilter==='sunday')?'Sunday only':'Wednesday only';
   document.getElementById('print-date-purch').textContent='Order for week: '+new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · '+sessionLabel;
   const ingDemand={};
-  getSlotDishes().forEach(dish=>{
+  // Purchasing reflects PRODUCTION (the live week with orders), not whichever slot
+  // happens to be selected on the Weekly Menu tab — otherwise viewing "Building Next"
+  // (which has no portions yet) made purchasing look empty.
+  getProductionDishes().forEach(dish=>{
     const slots=[{slot:'protein',scale:n(dish.scaleProtein)||1},{slot:'carb',scale:n(dish.scaleCarb)||1},{slot:'veg',scale:n(dish.scaleVeg)||1},{slot:'condiment',scale:1},{slot:'complete',scale:1}];
     const overall=n(dish.scaleOverall)||1;
     const totalPorts=dishPortions(dish,purchSessionFilter);
