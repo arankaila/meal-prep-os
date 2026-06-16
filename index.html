@@ -241,6 +241,9 @@ textarea{resize:vertical;min-height:80px;}
 /* UNIFIED CHIP SPEC (June 2026) — .tab, .del-filter-btn, .ord-status-tab,
    .inv-filter-btn, .prod-type-btn all share this look: surface chip, gold active. */
 .tabs{display:flex;gap:4px;margin-bottom:16px;width:fit-content;flex-wrap:wrap;}
+/* Per-tab Sun/Wed/All session toggles removed — the fixed header strip is the single master control. */
+#menu-session-tabs, #pack-session-tabs, #ff-session-tabs, #prod-session-tabs,
+#purch-session-tabs, #purch-session-tabs-top, #pack-session-tabs-top { display: none !important; }
 .tab{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text3);border:1px solid var(--border2);background:var(--surface2);transition:all .15s;white-space:nowrap;}
 .tab:hover{background:var(--surface3);color:var(--text);}
 .tab.active{background:var(--gold);color:#000;border-color:var(--gold);}
@@ -5204,25 +5207,12 @@ function seedData() {
   ];
   DB.nextCostId = 10;
 
-  DB.labourStaff = [
-    {id:'ST001',name:'Alex Rowan',role:'Head Chef',rate:16.50,status:'Active',notes:'Level 3 Food Safety'},
-    {id:'ST002',name:'Jordan Mills',role:'Prep Cook',rate:12.50,status:'Active',notes:''},
-    {id:'ST003',name:'Casey Patel',role:'Pack Operative',rate:11.44,status:'Active',notes:''},
-    {id:'ST004',name:'Riley Khan',role:'Driver',rate:12.00,status:'Part-Time',notes:'Own vehicle'},
-  ];
-  DB.nextStaffId = 5;
-
-  DB.labourShifts = [
-    {id:'SH001',staffId:'ST001',day:'Monday',start:'07:00',end:'15:00',notes:'Prep + cook'},
-    {id:'SH002',staffId:'ST002',day:'Monday',start:'08:00',end:'14:00',notes:'Prep only'},
-    {id:'SH003',staffId:'ST003',day:'Tuesday',start:'08:00',end:'12:00',notes:'Pack run'},
-    {id:'SH004',staffId:'ST001',day:'Tuesday',start:'07:00',end:'13:00',notes:'Cook'},
-    {id:'SH005',staffId:'ST004',day:'Wednesday',start:'10:00',end:'14:00',notes:'Delivery'},
-    {id:'SH006',staffId:'ST002',day:'Wednesday',start:'08:00',end:'16:00',notes:'Full prep day'},
-    {id:'SH007',staffId:'ST003',day:'Thursday',start:'09:00',end:'13:00',notes:'Pack'},
-    {id:'SH008',staffId:'ST001',day:'Saturday',start:'07:00',end:'15:00',notes:'Bulk cook day'},
-  ];
-  DB.nextShiftId = 9;
+  // Labour starts EMPTY — no seed/demo staff or shifts. (Previously this seeded
+  // fake staff like "Alex Rowan", which kept re-appearing as "auto-populated" data.)
+  DB.labourStaff  = [];
+  DB.nextStaffId  = 1;
+  DB.labourShifts = [];
+  DB.nextShiftId  = 1;
 }
 
 // ═══════════════════════════════════════════
@@ -5703,14 +5693,14 @@ function renderDashboard() {
   const wlEl = document.getElementById('dash-week-label');
   if (wlEl) wlEl.textContent = wLabel;
 
-  // ── 6 KPI heroes ─────────────────────────────────────────
+  // ── 4 KPI heroes ── the numbers that answer "is this week profitable and trending
+  // the right way?", each vs last week. Dropped Food Cost % (redundant with Food
+  // Margin) and Avg Sell Price (doesn't drive a weekly decision).
   const kpiData = [
-    { label:'Est. Revenue',     val:'£'+totalRev.toFixed(0),     sub:totalPorts+' portions',        color:'#C9A84C', delta: mkDelta(totalRev, last?.totalRev, true) },
-    { label:'Net Profit',       val:'£'+netProfit.toFixed(0),    sub:pct(netMargin)+' margin',      color:'#a78bfa', cls:netClass, delta: mkDelta(netProfit, last?.netProfit, true) },
-    { label:'Food Margin',      val:pct(margin),                 sub:'target ≥50%',                 color:'#22c55e', cls:mClass,   delta: mkDelta(margin, last?.gm, true) },
-    { label:'Food Cost %',      val:pct(foodPct),                sub:'avg £'+avgFood.toFixed(2)+'/dish', color:'#f87171', cls:fpClass, delta: mkDelta(foodPct, last ? last.totalFoodCost/last.totalRev : null, false) },
-    { label:'Labour %',         val:labourCost > 0 ? pct(labourPct) : '—', sub:'target ≤25%',      color:'#60a5fa', cls:labClass, delta: mkDelta(labourPct, last?.labourPct, false) },
-    { label:'Avg Sell Price',   val:'£'+avgSell.toFixed(2),      sub:dishes.length+' dishes',       color:'#fbbf24', delta: mkDelta(avgSell, last?.avgSell, true) },
+    { label:'Est. Revenue',  val:'£'+totalRev.toFixed(0),  sub:totalPorts+' portions',   color:'#C9A84C', delta: mkDelta(totalRev, last?.totalRev, true) },
+    { label:'Net Profit',    val:'£'+netProfit.toFixed(0), sub:pct(netMargin)+' margin', color:'#a78bfa', cls:netClass, delta: mkDelta(netProfit, last?.netProfit, true) },
+    { label:'Food Margin',   val:pct(margin),              sub:'target ≥50%',            color:'#22c55e', cls:mClass,   delta: mkDelta(margin, last?.gm, true) },
+    { label:'Labour %',      val:labourCost > 0 ? pct(labourPct) : '—', sub:'target ≤25%', color:'#60a5fa', cls:labClass, delta: mkDelta(labourPct, last?.labourPct, false) },
   ];
   document.getElementById('dash-kpi-row').innerHTML = kpiData.map(k => `
     <div class="dash-kpi" style="--accent-c:${k.color}">
@@ -7182,6 +7172,19 @@ function getSlotDishes() {
   return menuActiveSlot === 'next' ? (DB.nextMenuDishes || []) : (DB.menuDishes || []);
 }
 
+// Reorder a dish within the active slot. The array order IS the order customers see
+// on the portal (it's what gets published to public/menu), so this is the menu-
+// engineering control: move high-margin / hero dishes up.
+function moveDish(idx, dir) {
+  var arr = getSlotDishes();
+  var j = idx + dir;
+  if (j < 0 || j >= arr.length) return;
+  var t = arr[idx]; arr[idx] = arr[j]; arr[j] = t;
+  if (menuActiveSlot === 'next') { try { nextMenuWrite(DB.nextMenuDishes); } catch(e) {} }
+  save();        // flush republishes public/menu in the new order
+  renderMenu();
+}
+
 // ─── PRODUCTION SLOT AUTO-DETECTOR ───────────────────────────
 // Determines which slot is "ready for production" without the user
 // needing to click Advance Week first.
@@ -7474,6 +7477,30 @@ function renderMenu(){
   const s1Active = menuSessionFilter === 's1' || menuSessionFilter === 'sunday';
   const s2Active = menuSessionFilter === 's2' || menuSessionFilter === 'wednesday';
 
+  // ── Menu engineering ── classify each dish by margin × popularity (this week's
+  // orders). "High" = at/above the menu average; popularity uses the classic 70%-
+  // of-average threshold. Only meaningful once orders exist (portions > 0).
+  var _mePack = getPackagingCost();
+  var _meList = slotDishes.filter(function(d){ return !d.athleteVariant; }).map(function(d){
+    var tt = calcDishTotals(d);
+    return { m: tt.sell > 0 ? (tt.sell - tt.cost - _mePack) / tt.sell : 0, p: (n(d.drop1)||0) + (n(d.drop2)||0) };
+  });
+  var _meAvgM = _meList.length ? _meList.reduce(function(a,x){return a+x.m;},0)/_meList.length : 0;
+  var _meAvgP = _meList.length ? _meList.reduce(function(a,x){return a+x.p;},0)/_meList.length : 0;
+  var _mePopThresh = _meAvgP * 0.7;
+  var _meHasData = _meAvgP > 0;
+  function _meClassify(dish){
+    if (dish.athleteVariant || !_meHasData) return null;
+    var tt = calcDishTotals(dish);
+    var m  = tt.sell > 0 ? (tt.sell - tt.cost - _mePack) / tt.sell : 0;
+    var p  = (n(dish.drop1)||0) + (n(dish.drop2)||0);
+    var hiM = m >= _meAvgM, hiP = p >= _mePopThresh;
+    if (hiM && hiP)  return { k:'Star',         e:'⭐', style:'background:rgba(201,168,76,.18);color:var(--gold);border:1px solid rgba(201,168,76,.4)' };
+    if (hiM && !hiP) return { k:'Puzzle',       e:'🧩', style:'background:rgba(10,132,255,.14);color:#5a9eff;border:1px solid rgba(10,132,255,.32)' };
+    if (!hiM && hiP) return { k:'Plough-horse', e:'🐴', style:'background:rgba(245,158,11,.14);color:#f59e0b;border:1px solid rgba(245,158,11,.32)' };
+    return                  { k:'Dog',          e:'🐶', style:'background:rgba(239,68,68,.12);color:#ef6b6b;border:1px solid rgba(239,68,68,.3)' };
+  }
+
   document.getElementById('menu-card-grid').innerHTML = _compDlHtml + dishes.map((dish,idx)=>{
     const realIdx=slotDishes.indexOf(dish);
     const t=calcDishTotals(dish);
@@ -7482,6 +7509,10 @@ function renderMenu(){
     const marginClass=margin>=0.5?'menu-margin-green':margin>=0.35?'menu-margin-amber':'menu-margin-red';
     const allergenHtml=[...t.allergens].map(a=>`<span class="allergen-tag">${a.split(' ')[0]}</span>`).join('');
     const filteredTotal = dishPortions(dish, menuSessionFilter);
+    const _me = _meClassify(dish);
+    const meBadge = _me
+      ? `<span title="Menu engineering — ${_me.k}. Margin ${(margin*100).toFixed(0)}% (menu avg ${(_meAvgM*100).toFixed(0)}%) · ${(n(dish.drop1)||0)+(n(dish.drop2)||0)} ordered (avg ${_meAvgP.toFixed(1)}). Stars: feature top. Puzzles: high margin/low sales — feature to boost. Plough-horses: popular/low margin — nudge price. Dogs: consider dropping." style="flex-shrink:0;font-size:9px;font-family:var(--mono);font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;${_me.style}">${_me.e} ${_me.k}</span>`
+      : '';
 
     // Read-only component summary badges
     const compSummary = [
@@ -7586,8 +7617,13 @@ function renderMenu(){
         <!-- Row 1: index + name + action buttons (photo moved below) -->
         <div class="menu-card-header-row">
           <div class="menu-card-num">${realIdx+1}</div>
+          <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0" title="Reorder — this is the order customers see on the portal">
+            <button onclick="moveDish(${realIdx},-1)" ${realIdx===0?'disabled':''} aria-label="Move up" style="width:18px;height:13px;line-height:1;padding:0;font-size:8px;border-radius:3px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer">▲</button>
+            <button onclick="moveDish(${realIdx},1)" ${realIdx===slotDishes.length-1?'disabled':''} aria-label="Move down" style="width:18px;height:13px;line-height:1;padding:0;font-size:8px;border-radius:3px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer">▼</button>
+          </div>
           <input class="menu-card-name-input" value="${dish.name}" onchange="ud(${realIdx},'name',this.value)" spellcheck="false" placeholder="Dish name…" style="flex:1;min-width:0">
           <input type="file" accept="image/*" style="display:none" id="photo-file-${realIdx}" onchange="handlePhotoUpload(${realIdx},this)">
+          ${meBadge}
           <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
             <button class="menu-card-toggle-btn" id="menu-card-toggle-btn-${realIdx}" onclick="menuToggleCard(${realIdx})">▾ Info</button>
             <button class="menu-card-edit-btn" id="menu-card-edit-btn-${realIdx}" onclick="menuToggleCardEdit(${realIdx})">✎ Edit</button>
@@ -9269,12 +9305,13 @@ function renderInventory(){
   const nOk=trackedIngs.filter(ing=>{ const r=getInvRec(ing.id); const par=r.parLevel||ing.par||0; return ['ok','excess'].includes(invGetStatus(r.onHand,par)); }).length;
   const totalStockValue=trackedIngs.reduce((s,ing)=>{ const inv=getInvRec(ing.id); return s+(inv.onHand/100)*calcEP(ing); },0);
 
+  // First-principles: the inventory decision is "what must I reorder?" — show the
+  // exceptions that drive action + the capital tied up. Dropped "Tracked Items" and
+  // "Well Stocked" (the all's-fine count is noise, not a decision).
   document.getElementById('inv-kpi-strip').innerHTML=`
-    <div class="inv-kpi"><div class="inv-kpi-label">Tracked Items</div><div class="inv-kpi-val">${trackedIngs.length}</div><div class="inv-kpi-sub">in inventory</div></div>
-    <div class="inv-kpi"><div class="inv-kpi-label">Critical / Empty</div><div class="inv-kpi-val" style="color:#f87171">${nCritical}</div><div class="inv-kpi-sub">need immediate attention</div></div>
-    <div class="inv-kpi"><div class="inv-kpi-label">Low Stock</div><div class="inv-kpi-val" style="color:#fbbf24">${nLow}</div><div class="inv-kpi-sub">below 75% of PAR</div></div>
-    <div class="inv-kpi"><div class="inv-kpi-label">Well Stocked</div><div class="inv-kpi-val" style="color:#4ade80">${nOk}</div><div class="inv-kpi-sub">at or above PAR</div></div>
-    <div class="inv-kpi"><div class="inv-kpi-label">Est. Stock Value</div><div class="inv-kpi-val" style="color:var(--gold)">£${totalStockValue.toFixed(0)}</div><div class="inv-kpi-sub">at EP cost</div></div>
+    <div class="inv-kpi"><div class="inv-kpi-label">Reorder Now</div><div class="inv-kpi-val" style="color:#f87171">${nCritical}</div><div class="inv-kpi-sub">critical / empty</div></div>
+    <div class="inv-kpi"><div class="inv-kpi-label">Low Stock</div><div class="inv-kpi-val" style="color:#fbbf24">${nLow}</div><div class="inv-kpi-sub">below 75% of PAR — restock soon</div></div>
+    <div class="inv-kpi"><div class="inv-kpi-label">Est. Stock Value</div><div class="inv-kpi-val" style="color:var(--gold)">£${totalStockValue.toFixed(0)}</div><div class="inv-kpi-sub">capital tied up (EP cost)</div></div>
   `;
 
   document.getElementById('inv-count').textContent=rows.length+' items';
@@ -10949,13 +10986,17 @@ function renderLabour() {
   }, 0);
   const totalPortions = DB.menuDishes.reduce((s, d) => s + n(d.drop1) + n(d.drop2), 0);
   const labourPerDish = totalPortions > 0 ? totalCost / totalPortions : 0;
-  const activeStaff = DB.labourStaff.filter(s => s.status === 'Active' || s.status === 'Part-Time').length;
+  // Labour as a % of revenue is the metric that actually tells you if labour is in
+  // line (target ~25–30%). Revenue = this week's portions × sell price.
+  const labRevenue = DB.menuDishes.reduce((s, d) => s + (n(d.drop1) + n(d.drop2)) * (n(d.sellPrice) || 0), 0);
+  const labourPct = labRevenue > 0 ? totalCost / labRevenue : 0;
+  const labPctColor = labourPct < 0.25 ? 'var(--green)' : labourPct < 0.35 ? 'var(--amber)' : 'var(--red)';
 
   document.getElementById('labour-kpi-grid').innerHTML = `
-    <div class="kpi-card"><div class="kpi-label">Active Staff</div><div class="kpi-value">${activeStaff}</div><div class="kpi-sub">${DB.labourStaff.length} total roster</div></div>
-    <div class="kpi-card b"><div class="kpi-label">Total Hours</div><div class="kpi-value">${totalHrs.toFixed(1)}</div><div class="kpi-sub">this week</div></div>
     <div class="kpi-card"><div class="kpi-label">Labour Cost</div><div class="kpi-value">£${totalCost.toFixed(2)}</div><div class="kpi-sub">this week</div></div>
+    <div class="kpi-card"><div class="kpi-label">Labour % of Revenue</div><div class="kpi-value" style="color:${labPctColor}">${labRevenue > 0 ? (labourPct*100).toFixed(0) + '%' : '—'}</div><div class="kpi-sub">target under 30%</div></div>
     <div class="kpi-card g"><div class="kpi-label">Labour / Portion</div><div class="kpi-value">£${labourPerDish.toFixed(2)}</div><div class="kpi-sub">${totalPortions} portions</div></div>
+    <div class="kpi-card b"><div class="kpi-label">Total Hours</div><div class="kpi-value">${totalHrs.toFixed(1)}</div><div class="kpi-sub">scheduled this week</div></div>
   `;
 
   // Staff table
@@ -13668,7 +13709,8 @@ function setGlobalSession(v) {
   if (['all','sunday','wednesday'].indexOf(v) === -1) v = 'all';
   try { localStorage.setItem('29perf_session', v); } catch(e) {}
   var cap = v === 'all' ? 'all' : v.charAt(0).toUpperCase() + v.slice(1);
-  // All per-page filter variables follow the global value
+  // All per-page filter variables follow the global value (single source of truth)
+  menuSessionFilter   = v;
   packSessionFilter   = v;
   prodSessionFilter   = v;
   purchSessionFilter  = v;
@@ -13722,6 +13764,7 @@ function rerenderActivePage() {
 }
 
 // Every legacy per-page setter now delegates to the global context.
+setMenuSession        = function(v, el) { setGlobalSession(v); };
 setPackSession        = function(v, el) { setGlobalSession(v); };
 setProdSession        = function(v, el) { setGlobalSession(v); };
 setPurchSession       = function(v, el) { setGlobalSession(v); };
