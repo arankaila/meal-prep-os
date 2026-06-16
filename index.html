@@ -72,6 +72,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);height:100vh
   .main{width:100%;overflow:hidden;}
   .content{padding:14px;}
   .topbar{padding:0 14px;gap:10px;}
+  .topbar-search{min-width:0;padding:7px 10px;}
+  .topbar-search .ph,.topbar-search .kbd{display:none;}
   .kpi-grid{grid-template-columns:repeat(2,1fr);}
   .dash-kpi-row{grid-template-columns:repeat(2,1fr);}
   .dash-row.cols-2,.dash-row.cols-3,.dash-row.cols-6535,.dash-row.cols-4060{grid-template-columns:1fr;}
@@ -97,7 +99,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);height:100vh
 .topbar{height:50px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:14px;flex-shrink:0;}
 .topbar-title{font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:-0.3px;}
 .topbar-subtitle{font-size:11px;color:var(--text3);font-family:var(--mono);}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.topbar-search{margin-left:auto;display:flex;align-items:center;gap:9px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 12px;min-width:210px;cursor:text;color:var(--text3);font-size:12px;transition:border-color .15s,background .15s;}
+.topbar-search:hover{border-color:var(--border2);background:var(--surface);}
+.topbar-search .ph{flex:1;}
+.topbar-search .kbd{font-family:var(--mono);font-size:9px;border:1px solid var(--border2);border-radius:4px;padding:1px 5px;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
 .content{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;}
 
 /* WEEK TRACKER — persistent workflow stage strip */
@@ -2083,6 +2089,9 @@ table td{padding-top:9px;padding-bottom:9px;}
       <div class="topbar-title" id="topbar-title">Dashboard</div>
       <div class="topbar-subtitle" id="topbar-sub">Operational overview</div>
     </div>
+    <div class="topbar-search no-print" onclick="gsOpenPalette()" title="Search everything (⌘K)">
+      <span>🔍</span><span class="ph">Search…</span><span class="kbd">⌘K</span>
+    </div>
     <div class="topbar-right" id="topbar-right"></div>
   </div>
   <div class="wk-tracker no-print" id="week-tracker"></div>
@@ -3187,6 +3196,12 @@ table td{padding-top:9px;padding-bottom:9px;}
             <h1 class="gs-h1">✨ What's New — June 2026</h1>
             <p class="gs-p">The app was overhauled for simplicity. If you've used it before, here's everything that changed; if you're new, this is also the quickest tour of how the system thinks.</p>
 
+            <h2 class="gs-h2">Latest — leaner KPIs, header search &amp; menu engineering</h2>
+            <p class="gs-p"><strong>Every page's stat cards were cut down to the few numbers that actually change a decision.</strong> A KPI now earns its place only if it tells you to <em>do</em> something — so you'll see exceptions and money, not vanity counts. Dashboard: Revenue · Net Profit · Food Margin · Labour %, each with a ▲▼ vs last week. Weekly Menu: Est Revenue · Food Margin · <strong>dishes below 50% target</strong> (your re-price list). Orders: Pending (your to-do) · Confirmed · live revenue. Purchasing: <strong>Net to Order</strong> (real spend after stock) · lines · suppliers. Production: portions · est. time · dishes to make. Inventory: <strong>Reorder Now</strong> · Low Stock · Stock Value. Customers gained a <strong>Lapsed (30d+)</strong> count — your win-back list. History shows long-run averages (food margin, labour %) instead of growing totals.</p>
+            <p class="gs-p"><strong>Search now lives in the header.</strong> The search box at the top of every page (or <strong>⌘K / Ctrl-K</strong>) opens the command palette — type to jump straight to any page, dish, ingredient, recipe, customer or order. On a phone it collapses to the 🔍 icon.</p>
+            <p class="gs-p"><strong>Menu engineering on the Weekly Menu.</strong> Reorder how dishes appear on the customer portal with the ▲▼ buttons on each dish card — lead with your hero dishes. Each dish also carries a classification badge (⭐ Star, ❓ Puzzle, 🐴 Plough-horse, 🐶 Dog) from its margin × popularity, so you can see at a glance what to promote, re-price, or cut.</p>
+            <p class="gs-p"><strong>Quietly, the data layer got bulletproofed.</strong> A stale device can no longer overwrite the live database (version-guarded writes), deletes stay deleted, dish photos live in Firebase Storage (smaller, faster), and the customer portal only ever downloads a PII-free public menu. You don't need to do anything — it just won't lose data again.</p>
+
             <h2 class="gs-h2">The Week Tracker (top of every page)</h2>
             <p class="gs-p">The strip under the title bar shows the whole week: <strong>Menu → Orders → Purchase → Produce → Pack → Deliver → Close</strong>. Gold dot = where the week is now. Green = done. Amber badge = needs attention (e.g. pending orders). <strong>Click any stage to jump to its page.</strong> The "Next" chip on the right shows whether next week's menu is ready. If you only learn one thing: follow the gold dot left to right and the week runs itself.</p>
 
@@ -3215,7 +3230,7 @@ table td{padding-top:9px;padding-bottom:9px;}
             <p class="gs-p">The Dashboard now opens on a <strong>Weekly Scorecard</strong> — five numbers (revenue, food cost %, sold vs planned, labour hours, repeat rate) plus an exceptions list that only shows things needing a decision (low-margin dishes, unpaid orders, lapsed top customers, below-PAR staples). All the charts still exist behind the 📊 Stats toggle. On a phone, the app opens on a <strong>big-tile launcher</strong> — Orders, Shopping, Route, Menu, Cook Board, Scorecard. <strong>Athletes</strong> now live as a tab inside Delivery &amp; Customers, <strong>Components</strong> is reachable from a tab on the Recipes page (one Library entry fewer), and the ingredients table is down to six columns — yields and supplier now show in the cost cell's tooltip.</p>
 
             <h2 class="gs-h2">Quality of life</h2>
-            <p class="gs-p"><strong>⌘K / Ctrl-K</strong> searches everything (dishes, ingredients, recipes, customers, orders) and jumps straight there. Deletes now show a 10-second <strong>↶ Undo</strong> instead of a confirm popup. The ingredient form hides the 33 micronutrient fields unless you need them, warns on duplicate names, and has "Save &amp; Add Another" for batch entry. Click any ingredient's £ cost in the table to edit it in place. Orders show a live total as you type quantities. The 📊 Stats strips on ops pages are collapsed by default — click to expand. Each ops page shows a 👉 hint telling you what to do now and what comes next. Production completion now asks for the <strong>actual cooked weight</strong> and flags variance against the plan (⚖ chip), so under-production is caught before packing. In Inventory, <strong>📥 Track this week's menu</strong> flags every ingredient the menu uses in one click.</p>
+            <p class="gs-p">The <strong>header search box</strong> (or <strong>⌘K / Ctrl-K</strong>) searches everything (dishes, ingredients, recipes, customers, orders) and jumps straight there. Deletes now show a 10-second <strong>↶ Undo</strong> instead of a confirm popup. The ingredient form hides the 33 micronutrient fields unless you need them, warns on duplicate names, and has "Save &amp; Add Another" for batch entry. Click any ingredient's £ cost in the table to edit it in place. Orders show a live total as you type quantities. The 📊 Stats strips on ops pages are collapsed by default — click to expand. Each ops page shows a 👉 hint telling you what to do now and what comes next. Production completion now asks for the <strong>actual cooked weight</strong> and flags variance against the plan (⚖ chip), so under-production is caught before packing. In Inventory, <strong>📥 Track this week's menu</strong> flags every ingredient the menu uses in one click.</p>
           </div>
 
           <div class="guide-section active" id="gs-start">
@@ -7860,11 +7875,15 @@ function updateMenuKPIs(){
   const foodProfit=totalRev-totalCost;
   const foodMarginPct=totalRev>0?foodProfit/totalRev:0;
   const sessionLabel = menuSessionFilter==='sunday' || menuSessionFilter==='s1' ? ' · Sunday' : menuSessionFilter==='wednesday' || menuSessionFilter==='s2' ? ' · Wednesday' : '';
+  // First-principles: the Weekly Menu is where you engineer the line. The decision is
+  // "is the menu earning, and which dishes drag it down?" — so lead with revenue, the
+  // margin health, and the action list (dishes under target). Cut Total Portions and
+  // Total Food Cost (inputs, not decisions; portions kept as a sub on revenue).
+  const belowTarget = slotD.filter(d=>{const t=calcDishTotals(d);return t.sell>0 && (t.sell-t.cost)/t.sell < 0.5;}).length;
   document.getElementById('menu-kpi-grid').innerHTML=`
-    <div class="kpi-card"><div class="kpi-label">Total Portions${sessionLabel}</div><div class="kpi-value">${totalPorts}</div><div class="kpi-sub">${slotD.length} dishes</div></div>
-    <div class="kpi-card g"><div class="kpi-label">Est Revenue${sessionLabel}</div><div class="kpi-value">£${totalRev.toFixed(0)}</div><div class="kpi-sub">all portions × sell price</div></div>
-    <div class="kpi-card b"><div class="kpi-label">Total Food Cost${sessionLabel}</div><div class="kpi-value">£${totalCost.toFixed(0)}</div><div class="kpi-sub">ingredients only</div></div>
-    <div class="kpi-card ${foodProfit>=0?'g':'r'}"><div class="kpi-label">After Food Cost${sessionLabel}</div><div class="kpi-value ${foodProfit>=0?'text-green':'text-red'}">£${foodProfit.toFixed(0)}</div><div class="kpi-sub">${(foodMarginPct*100).toFixed(1)}% food margin</div></div>
+    <div class="kpi-card g"><div class="kpi-label">Est Revenue${sessionLabel}</div><div class="kpi-value">£${totalRev.toFixed(0)}</div><div class="kpi-sub">${slotD.length} dishes · ${totalPorts} portions</div></div>
+    <div class="kpi-card ${foodMarginPct>=0.5?'g':foodMarginPct>=0.35?'b':'r'}"><div class="kpi-label">Food Margin${sessionLabel}</div><div class="kpi-value ${foodMarginPct>=0.5?'text-green':foodMarginPct<0.35?'text-red':''}">${(foodMarginPct*100).toFixed(1)}%</div><div class="kpi-sub">target ≥50% · £${foodProfit.toFixed(0)} after food cost</div></div>
+    <div class="kpi-card ${belowTarget>0?'r':'g'}"><div class="kpi-label">Below Target Margin</div><div class="kpi-value ${belowTarget>0?'text-red':'text-green'}">${belowTarget}</div><div class="kpi-sub">dishes under 50% — re-price or re-cost</div></div>
   `;
 }
 
@@ -8600,11 +8619,13 @@ function renderProduction(){
   const totalPorts=prodRows.reduce((s,r)=>s+r.portions,0);
   const prodSessionLabel = (prodSessionFilter==='s1'||prodSessionFilter==='sunday') ? ' · Sunday' : (prodSessionFilter==='s2'||prodSessionFilter==='wednesday') ? ' · Wednesday' : '';
 
+  // First-principles for prep day: "how much am I making and will I get through it?"
+  // Portions = the load, Est. time = will it fit the day, Dishes = distinct cooks to plan.
+  // Cut Stations (layout, not a decision); Components folded into the time/dishes view.
   document.getElementById('prod-kpi-grid').innerHTML=`
-    <div class="kpi-card"><div class="kpi-label">Components${prodSessionLabel}</div><div class="kpi-value">${prodRows.length}</div><div class="kpi-sub">${prodDishes.length} dishes · ${prodWeek||'this week'}</div></div>
-    <div class="kpi-card b"><div class="kpi-label">Total Portions${prodSessionLabel}</div><div class="kpi-value">${totalPorts}</div></div>
-    <div class="kpi-card"><div class="kpi-label">Est. Total Time</div><div class="kpi-value">${Math.floor(totalMins/60)}h ${totalMins%60}m</div></div>
-    <div class="kpi-card g"><div class="kpi-label">Stations</div><div class="kpi-value">${new Set(prodRows.map(r=>r.station)).size}</div></div>
+    <div class="kpi-card b"><div class="kpi-label">Total Portions${prodSessionLabel}</div><div class="kpi-value">${totalPorts}</div><div class="kpi-sub">${prodWeek||'this week'}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Est. Total Time</div><div class="kpi-value">${Math.floor(totalMins/60)}h ${totalMins%60}m</div><div class="kpi-sub">prep + cook across all components</div></div>
+    <div class="kpi-card g"><div class="kpi-label">Dishes to Make</div><div class="kpi-value">${prodDishes.length}</div><div class="kpi-sub">${prodRows.length} components</div></div>
   `;
 
   // Build type filter buttons
@@ -9806,10 +9827,12 @@ function renderPurchasing(){
     return s+(netEdible/100)*calcEP(r.ing);
   },0);
   const coveredCount=netRows.filter(r=>r.onHand>=r.rawG).length;
+  // First-principles: the purchasing decision is "what do I actually need to buy and
+  // for how much?" Net to Order (after stock on hand) is the real spend — lead with it.
+  // Cut Total Required Cost (gross, ignores stock — misleading as the headline).
   document.getElementById('purch-kpi-grid').innerHTML=`
-    <div class="kpi-card"><div class="kpi-label">Ingredient Lines</div><div class="kpi-value">${orderRows.length}</div><div class="kpi-sub">${coveredCount} covered by stock</div></div>
-    <div class="kpi-card"><div class="kpi-label">Total Required Cost</div><div class="kpi-value">£${totalCost.toFixed(2)}</div><div class="kpi-sub">${(totalRawWt/1000).toFixed(1)}kg raw to buy</div></div>
-    <div class="kpi-card b"><div class="kpi-label">Net to Order</div><div class="kpi-value">£${netCost.toFixed(2)}</div><div class="kpi-sub">${(netRawWt/1000).toFixed(1)}kg after stock</div></div>
+    <div class="kpi-card b"><div class="kpi-label">Net to Order</div><div class="kpi-value">£${netCost.toFixed(2)}</div><div class="kpi-sub">${(netRawWt/1000).toFixed(1)}kg after stock on hand</div></div>
+    <div class="kpi-card"><div class="kpi-label">Ingredient Lines</div><div class="kpi-value">${orderRows.length}</div><div class="kpi-sub">${coveredCount} already covered by stock</div></div>
     <div class="kpi-card g"><div class="kpi-label">Suppliers</div><div class="kpi-value">${new Set(orderRows.map(r=>r.ing.supplier||'Misc')).size}</div><div class="kpi-sub">on this order</div></div>
     <div class="kpi-card"><div class="kpi-label">🛒 Basket (rounded to packs)</div><div class="kpi-value">£${netRows.reduce((sum,r)=>{const nr=Math.max(0,r.rawG-r.onHand);return sum+purchBuyInfo(r.ing,nr).cost;},0).toFixed(2)}</div><div class="kpi-sub">${Object.keys(purchChecks()).length}/${netRows.filter(r=>r.rawG>r.onHand).length} ticked off</div></div>
   `;
@@ -10472,11 +10495,16 @@ function renderHistory() {
     ? avg(hist.filter(h => h.labourArchived).map(h => n(h.labourPct))) : 0;
   const gmC = avgFoodMgn >= 0.5 ? 'text-green' : avgFoodMgn >= 0.35 ? 'text-amber' : 'text-red';
 
+  // First-principles: History answers "how are we doing over the long run?" — so show
+  // comparable health metrics (the two margin %s) alongside revenue, with weeks as
+  // context. Cut cumulative Total Labour Cost (a growing total isn't comparable; the
+  // avg % of revenue is the decision-relevant version).
+  const labC = avgLabPct > 0 ? (avgLabPct <= 0.3 ? 'text-green' : avgLabPct <= 0.4 ? 'text-amber' : 'text-red') : '';
   document.getElementById('hist-kpi-grid').innerHTML = `
     <div class="kpi-card"><div class="kpi-label">Weeks Archived</div><div class="kpi-value">${hist.length}</div><div class="kpi-sub">${totalPorts.toLocaleString()} total portions</div></div>
     <div class="kpi-card g"><div class="kpi-label">Total Revenue</div><div class="kpi-value">£${totalRev.toFixed(0)}</div><div class="kpi-sub">all archived weeks</div></div>
-    <div class="kpi-card b"><div class="kpi-label">Avg Food Margin</div><div class="kpi-value ${gmC}">${pct(avgFoodMgn)}</div><div class="kpi-sub">across all weeks</div></div>
-    <div class="kpi-card"><div class="kpi-label">Total Labour Cost</div><div class="kpi-value">£${totalLabour.toFixed(0)}</div><div class="kpi-sub">avg ${pct(avgLabPct)} of revenue</div></div>
+    <div class="kpi-card b"><div class="kpi-label">Avg Food Margin</div><div class="kpi-value ${gmC}">${pct(avgFoodMgn)}</div><div class="kpi-sub">target ≥50%</div></div>
+    <div class="kpi-card"><div class="kpi-label">Avg Labour %</div><div class="kpi-value ${labC}">${avgLabPct>0?pct(avgLabPct):'—'}</div><div class="kpi-sub">of revenue · target ≤30%</div></div>
   `;
 
   document.getElementById('hist-count').textContent = hist.length + ' week' + (hist.length !== 1 ? 's' : '');
@@ -12726,6 +12754,8 @@ function renderCustomersTable() {
   var allStats   = DB.customers.map(function(c) { return custOrderStats(c.id); });
   var totalRev   = allStats.reduce(function(s, x) { return s + x.total; }, 0);
   var withOrders = allStats.filter(function(x) { return x.count > 0; }).length;
+  // Lapsed = ordered before but nothing in the last 30 days — the win-back list.
+  var lapsed     = allStats.filter(function(x) { return x.count > 0 && x.last && (Date.now() - x.last) > 30 * 86400000; }).length;
   var sumEl = document.getElementById('cust-summary');
   if (sumEl) {
     function card(label, val) {
@@ -12735,7 +12765,8 @@ function renderCustomersTable() {
     }
     sumEl.innerHTML = card('Customers', DB.customers.length) +
       card('Lifetime Revenue', '&pound;' + totalRev.toFixed(2)) +
-      card('Avg / Customer', '&pound;' + (withOrders ? (totalRev / withOrders).toFixed(2) : '0.00'));
+      card('Avg / Customer', '&pound;' + (withOrders ? (totalRev / withOrders).toFixed(2) : '0.00')) +
+      card('Lapsed (30d+)', lapsed);
   }
 
   var countEl = document.getElementById('cust-count');
@@ -14160,12 +14191,13 @@ function renderOrdersPanel() {
 
   var kpiEl = document.getElementById('orders-kpi-strip');
   if (kpiEl) {
+    // First-principles: the Orders job is "clear the pending queue." Show the to-do
+    // (Pending), the progress (Confirmed), and the money (live revenue). Total Orders
+    // = pending+confirmed+cancelled (derivable); Cancelled rarely drives an action.
     kpiEl.innerHTML =
-      '<div class="kpi-card"><div class="kpi-label">Total Orders</div><div class="kpi-value">'+allSlotOrders.length+'</div></div>' +
-      '<div class="kpi-card"><div class="kpi-label">Pending</div><div class="kpi-value" style="color:var(--gold)">'+pending+'</div></div>' +
+      '<div class="kpi-card"><div class="kpi-label">Pending — action needed</div><div class="kpi-value" style="color:var(--gold)">'+pending+'</div></div>' +
       '<div class="kpi-card"><div class="kpi-label">Confirmed</div><div class="kpi-value" style="color:var(--green)">'+confirmed+'</div></div>' +
-      '<div class="kpi-card"><div class="kpi-label">Cancelled</div><div class="kpi-value" style="color:#f87171">'+cancelled+'</div></div>' +
-      '<div class="kpi-card"><div class="kpi-label">Confirmed Revenue</div><div class="kpi-value">£'+revenue.toFixed(2)+'</div></div>';
+      '<div class="kpi-card"><div class="kpi-label">Order Revenue</div><div class="kpi-value">£'+revenue.toFixed(2)+'</div><div class="kpi-sub" style="font-size:10px;color:var(--text3);margin-top:3px">pending + confirmed (excl. cancelled)</div></div>';
   }
 
   // Bulk bar
