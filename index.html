@@ -3207,7 +3207,7 @@ table td{padding-top:9px;padding-bottom:9px;}
             <p class="gs-p"><strong>Every page's stat cards were cut down to the few numbers that actually change a decision.</strong> A KPI now earns its place only if it tells you to <em>do</em> something — so you'll see exceptions and money, not vanity counts. Dashboard: Revenue · Net Profit · Food Margin · Labour %, each with a ▲▼ vs last week. Weekly Menu: Est Revenue · Food Margin · <strong>dishes below 50% target</strong> (your re-price list). Orders: Pending (your to-do) · Confirmed · live revenue. Purchasing: <strong>Net to Order</strong> (real spend after stock) · lines · suppliers. Production: portions · est. time · dishes to make. Inventory: <strong>Reorder Now</strong> · Low Stock · Stock Value. Customers gained a <strong>Lapsed (30d+)</strong> count — your win-back list. History shows long-run averages (food margin, labour %) instead of growing totals.</p>
             <p class="gs-p"><strong>Search now lives in the header.</strong> The search box at the top of every page (or <strong>⌘K / Ctrl-K</strong>) opens the command palette — type to jump straight to any page, dish, ingredient, recipe, customer or order. On a phone it collapses to the 🔍 icon.</p>
             <p class="gs-p"><strong>Menu engineering on the Weekly Menu.</strong> Reorder how dishes appear on the customer portal with the ▲▼ buttons on each dish card — lead with your hero dishes. Each dish also carries a classification badge (⭐ Star, ❓ Puzzle, 🐴 Plough-horse, 🐶 Dog) from its margin × popularity, so you can see at a glance what to promote, re-price, or cut.</p>
-            <p class="gs-p"><strong>Referral partners (PTs, gyms, affiliates).</strong> On the Discounts page, tick <strong>🤝 Referral / affiliate code</strong> when creating a code to attach a partner: their name, contact, a flat <strong>£ fee per new customer</strong>, and an optional <strong>£ cap</strong> on a % discount. Share the code with the partner; their customers get the discount at checkout. The <strong>Referral Partners</strong> panel then tracks each partner's new customers, revenue, and fees owed — the fee is only <em>earned</em> once a genuinely new customer's first order is marked <strong>Paid</strong> (returning customers still get the discount but earn no fee). Mark a partner's balance paid in one tap and export a CSV statement for your records.</p>
+            <p class="gs-p"><strong>Referral partners (PTs, gyms, affiliates).</strong> On the Discounts page, tick <strong>🤝 Referral / affiliate code</strong> when creating a code to attach a partner: their name, contact, a flat <strong>£ fee per new customer</strong>, and an optional <strong>£ cap</strong> on a % discount. Share the code with the partner; their customers get the discount at checkout. The discount is <strong>first-order only</strong>: if a returning customer reuses the code, the order card flags it red ("⚠ void — charge full price") and drops the discount, so you only ever honour it for genuinely new customers. The <strong>Referral Partners</strong> panel tracks each partner's new customers, revenue, and fees owed — the fee is earned once a new customer's first order is marked <strong>Paid</strong>. Tap <strong>Mark paid</strong> to settle the balance; each payment is logged as a dated line in the partner's <strong>payout history</strong> (so you can see month 1 vs month 2 at a glance), and you can export a CSV statement for your records.</p>
             <p class="gs-p"><strong>Quietly, the data layer got bulletproofed.</strong> A stale device can no longer overwrite the live database (version-guarded writes — now including the Building Next slot), deletes stay deleted, dish photos live in Firebase Storage (smaller, faster), and the customer portal only ever downloads a PII-free public menu. You don't need to do anything — it just won't lose data again.</p>
 
             <h2 class="gs-h2">The Week Tracker (top of every page)</h2>
@@ -5582,7 +5582,7 @@ function renderScorecard() {
       portionsSold += q;
       t += q * (d ? (n(d.sellPrice) || DB.defaultSellPrice || 0) : 0);
     });
-    if (o.discount && o.discount.amount) t = Math.max(0, t - parseFloat(o.discount.amount));
+    t = Math.max(0, t - _orderDiscountAmount(o)); // voided discounts (returning-customer reuse) don't reduce revenue
     if ((o.payStatus || '') !== 'comped') revenue += t;
   });
 
@@ -11594,6 +11594,21 @@ function _isFirstOrderForCustomer(o) {
   return chrono.length > 0 && chrono[0].id === o.id;
 }
 
+// First-order-only discounts are honoured for GENUINELY NEW customers only. If a returning
+// customer reuses a first-order referral code, the discount is VOID — the ERP shows full
+// price so you charge full price. (Portal can't check this — see PROJECT-STATE privacy notes.)
+function _orderDiscountVoid(o) {
+  if (!o || !o.discount || !o.discount.code) return false;
+  var dc = (DB.discountCodes || []).find(function(c) { return c.code === o.discount.code; });
+  if (!dc || !dc.isReferral || dc.firstOrderOnly === false) return false;
+  return !_isFirstOrderForCustomer(o); // returning customer → void the discount
+}
+// The discount £ actually applied to an order (0 when voided).
+function _orderDiscountAmount(o) {
+  if (!o || !o.discount || !(parseFloat(o.discount.amount) > 0)) return 0;
+  return _orderDiscountVoid(o) ? 0 : parseFloat(o.discount.amount);
+}
+
 function _refSettled(codeId, orderId) {
   return !!(DB.referralSettlements && DB.referralSettlements[codeId] && DB.referralSettlements[codeId][orderId]);
 }
@@ -11671,10 +11686,28 @@ function renderReferralLedger() {
       + '<button class="btn btn-ghost btn-xs" onclick="exportReferralStatement(\'' + dc.id + '\')">📄 Statement (CSV)</button>'
       + (r.feeOwed > 0 ? '<button class="btn btn-gold btn-xs" onclick="settleReferral(\'' + dc.id + '\')">✓ Mark £' + r.feeOwed.toFixed(2) + ' paid</button>' : '<span style="font-size:10px;color:var(--green);font-family:var(--mono)">✓ settled</span>')
       + '</div>'
-      + '</div></div>';
+      + '</div>'
+      + _referralPayoutHistory(dc.id)
+      + '</div>';
   }).join('');
 
   el.innerHTML = head + cards;
+}
+
+// Month-over-month payout history for a partner — one dated row per "Mark paid".
+function _referralPayoutHistory(codeId) {
+  var payouts = (DB.referralPayouts || []).filter(function(p) { return p.codeId === codeId; })
+    .sort(function(a, b) { return Date.parse(b.paidAt) - Date.parse(a.paidAt); });
+  if (!payouts.length) return '';
+  var paidTotal = payouts.reduce(function(s, p) { return s + (p.amount || 0); }, 0);
+  return '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)">'
+    + '<div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Payout history · £' + paidTotal.toFixed(2) + ' paid to date</div>'
+    + payouts.map(function(p) {
+        return '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);padding:2px 0">'
+          + '<span>' + new Date(p.paidAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' · ' + p.count + ' customer' + (p.count !== 1 ? 's' : '') + '</span>'
+          + '<span style="font-family:var(--mono)">£' + (p.amount || 0).toFixed(2) + '</span></div>';
+      }).join('')
+    + '</div>';
 }
 
 // Mark the currently-owed fees for a partner as settled (records date per order).
@@ -11685,7 +11718,11 @@ function settleReferral(codeId) {
   if (!DB.referralSettlements) DB.referralSettlements = {};
   if (!DB.referralSettlements[codeId]) DB.referralSettlements[codeId] = {};
   var now = new Date().toISOString();
-  row.owedOrders.forEach(function(o) { DB.referralSettlements[codeId][o.id] = now; });
+  var ids = row.owedOrders.map(function(o) { return o.id; });
+  ids.forEach(function(id) { DB.referralSettlements[codeId][id] = now; });
+  // Record a dated payout batch so each month's payment is tracked separately.
+  if (!Array.isArray(DB.referralPayouts)) DB.referralPayouts = [];
+  DB.referralPayouts.push({ id: 'RP' + Date.now(), codeId: codeId, partnerName: row.dc.referrerName || '', paidAt: now, orderIds: ids, count: ids.length, amount: row.feeOwed });
   save();
   renderReferralLedger();
   notify('Marked £' + row.feeOwed.toFixed(2) + ' paid to ' + (row.dc.referrerName || 'partner') + ' ✓');
@@ -14549,10 +14586,15 @@ function renderOrderCard(ord, dishes) {
           '<span class="order-dish-qty">&times;'+i.qty+'</span>'+
           '<span class="order-dish-price">£'+(i.unitPrice*i.qty).toFixed(2)+'</span></div>';
       }).join('') +
-      (ord.discount && ord.discount.amount > 0
-        ? '<div class="order-dish-row" style="font-size:11px;color:var(--text3)"><span style="flex:1">Subtotal</span><span></span><span>£'+total.toFixed(2)+'</span></div>' +
-          '<div class="order-dish-row" style="font-size:11px;color:var(--green)"><span style="flex:1">Discount ('+n2h(ord.discount.code||'')+')</span><span></span><span>−£'+parseFloat(ord.discount.amount).toFixed(2)+'</span></div>' +
-          '<div class="order-total-row"><span>Total</span><span>£'+Math.max(0,total-parseFloat(ord.discount.amount)).toFixed(2)+'</span></div>'
+      (ord.discount && parseFloat(ord.discount.amount) > 0
+        ? (_orderDiscountVoid(ord)
+            // Returning customer reused a first-order code → discount void, charge full price
+            ? '<div class="order-dish-row" style="font-size:11px;color:var(--text3)"><span style="flex:1">Subtotal</span><span></span><span>£'+total.toFixed(2)+'</span></div>' +
+              '<div class="order-dish-row" style="font-size:11px;color:#f87171"><span style="flex:1">⚠ '+n2h(ord.discount.code||'')+' void — returning customer, charge full price</span><span></span><span style="text-decoration:line-through;color:var(--text3)">−£'+parseFloat(ord.discount.amount).toFixed(2)+'</span></div>' +
+              '<div class="order-total-row"><span>Total</span><span>£'+total.toFixed(2)+'</span></div>'
+            : '<div class="order-dish-row" style="font-size:11px;color:var(--text3)"><span style="flex:1">Subtotal</span><span></span><span>£'+total.toFixed(2)+'</span></div>' +
+              '<div class="order-dish-row" style="font-size:11px;color:var(--green)"><span style="flex:1">Discount ('+n2h(ord.discount.code||'')+')</span><span></span><span>−£'+parseFloat(ord.discount.amount).toFixed(2)+'</span></div>' +
+              '<div class="order-total-row"><span>Total</span><span>£'+Math.max(0,total-parseFloat(ord.discount.amount)).toFixed(2)+'</span></div>')
         : '<div class="order-total-row"><span>Total</span><span>£'+total.toFixed(2)+'</span></div>'
       ) +
       cancelNote + notesNote +
