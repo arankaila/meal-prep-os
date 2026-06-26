@@ -2720,6 +2720,13 @@ table td{padding-top:9px;padding-bottom:9px;}
         </div>
         <div id="discounts-list" style="padding:14px 16px"></div>
       </div>
+      <div class="card" id="referrals-card" style="margin-top:14px">
+        <div class="card-header">
+          <div class="card-title">🤝 Referral Partners</div>
+          <div class="card-sub">PTs, gyms & affiliates · new customers brought · fees owed (earned once a new customer's first order is paid)</div>
+        </div>
+        <div id="referrals-list" style="padding:14px 16px"></div>
+      </div>
     </div>
 
     <!-- COST STACK -->
@@ -3200,7 +3207,8 @@ table td{padding-top:9px;padding-bottom:9px;}
             <p class="gs-p"><strong>Every page's stat cards were cut down to the few numbers that actually change a decision.</strong> A KPI now earns its place only if it tells you to <em>do</em> something — so you'll see exceptions and money, not vanity counts. Dashboard: Revenue · Net Profit · Food Margin · Labour %, each with a ▲▼ vs last week. Weekly Menu: Est Revenue · Food Margin · <strong>dishes below 50% target</strong> (your re-price list). Orders: Pending (your to-do) · Confirmed · live revenue. Purchasing: <strong>Net to Order</strong> (real spend after stock) · lines · suppliers. Production: portions · est. time · dishes to make. Inventory: <strong>Reorder Now</strong> · Low Stock · Stock Value. Customers gained a <strong>Lapsed (30d+)</strong> count — your win-back list. History shows long-run averages (food margin, labour %) instead of growing totals.</p>
             <p class="gs-p"><strong>Search now lives in the header.</strong> The search box at the top of every page (or <strong>⌘K / Ctrl-K</strong>) opens the command palette — type to jump straight to any page, dish, ingredient, recipe, customer or order. On a phone it collapses to the 🔍 icon.</p>
             <p class="gs-p"><strong>Menu engineering on the Weekly Menu.</strong> Reorder how dishes appear on the customer portal with the ▲▼ buttons on each dish card — lead with your hero dishes. Each dish also carries a classification badge (⭐ Star, ❓ Puzzle, 🐴 Plough-horse, 🐶 Dog) from its margin × popularity, so you can see at a glance what to promote, re-price, or cut.</p>
-            <p class="gs-p"><strong>Quietly, the data layer got bulletproofed.</strong> A stale device can no longer overwrite the live database (version-guarded writes), deletes stay deleted, dish photos live in Firebase Storage (smaller, faster), and the customer portal only ever downloads a PII-free public menu. You don't need to do anything — it just won't lose data again.</p>
+            <p class="gs-p"><strong>Referral partners (PTs, gyms, affiliates).</strong> On the Discounts page, tick <strong>🤝 Referral / affiliate code</strong> when creating a code to attach a partner: their name, contact, a flat <strong>£ fee per new customer</strong>, and an optional <strong>£ cap</strong> on a % discount. Share the code with the partner; their customers get the discount at checkout. The <strong>Referral Partners</strong> panel then tracks each partner's new customers, revenue, and fees owed — the fee is only <em>earned</em> once a genuinely new customer's first order is marked <strong>Paid</strong> (returning customers still get the discount but earn no fee). Mark a partner's balance paid in one tap and export a CSV statement for your records.</p>
+            <p class="gs-p"><strong>Quietly, the data layer got bulletproofed.</strong> A stale device can no longer overwrite the live database (version-guarded writes — now including the Building Next slot), deletes stay deleted, dish photos live in Firebase Storage (smaller, faster), and the customer portal only ever downloads a PII-free public menu. You don't need to do anything — it just won't lose data again.</p>
 
             <h2 class="gs-h2">The Week Tracker (top of every page)</h2>
             <p class="gs-p">The strip under the title bar shows the whole week: <strong>Menu → Orders → Purchase → Produce → Pack → Deliver → Close</strong>. Gold dot = where the week is now. Green = done. Amber badge = needs attention (e.g. pending orders). <strong>Click any stage to jump to its page.</strong> The "Next" chip on the right shows whether next week's menu is ready. If you only learn one thing: follow the gold dot left to right and the week runs itself.</p>
@@ -11364,12 +11372,13 @@ function renderDiscounts() {
   var codes = DB.discountCodes || [];
   var el = document.getElementById('discounts-list');
   if (!el) return;
+  renderReferralLedger(); // keep the partner ledger in sync whenever codes render
   if (!codes.length) {
     el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:28px">No discount codes yet — create your first code to start rewarding customers</div>';
     return;
   }
   el.innerHTML = codes.map(function(dc) {
-    var valueLabel = dc.type === 'percent' ? dc.value + '% off' : '£' + parseFloat(dc.value).toFixed(2) + ' off';
+    var valueLabel = dc.type === 'percent' ? (dc.value + '% off' + (dc.maxDiscount > 0 ? ' (max £' + parseFloat(dc.maxDiscount).toFixed(2) + ')' : '')) : '£' + parseFloat(dc.value).toFixed(2) + ' off';
     var expiry = dc.expiresAt ? new Date(dc.expiresAt).toLocaleDateString('en-GB') : 'No expiry';
     var usageLabel = dc.usageLimit ? (dc.usedCount + ' / ' + dc.usageLimit + ' uses') : (dc.usedCount + ' uses · unlimited');
     var minLabel = dc.minOrderValue > 0 ? 'Min £' + parseFloat(dc.minOrderValue).toFixed(2) : 'No minimum';
@@ -11385,6 +11394,7 @@ function renderDiscounts() {
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">'
       + '<span style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--gold);letter-spacing:1.5px">' + escHtml(dc.code) + '</span>'
       + '<span style="font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:10px;background:' + statusBg + ';color:' + statusColor + '">' + statusLabel + '</span>'
+      + (dc.isReferral ? '<span style="font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(201,168,76,.15);color:var(--gold)">🤝 ' + escHtml(dc.referrerName || 'Referral') + ' · £' + (parseFloat(dc.referralFee) || 0).toFixed(2) + '/cust</span>' : '')
       + '</div>'
       + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px 16px">'
       + '<div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px">Discount</div><div style="font-size:13px;font-weight:600">' + valueLabel + '</div></div>'
@@ -11439,6 +11449,28 @@ function openDiscountModal(id) {
       + '<input type="checkbox" id="dm-active" checked style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">'
       + '<label for="dm-active" style="font-size:13px;cursor:pointer;color:var(--text)">Active — customers can use this code immediately</label>'
       + '</div>'
+      // ── Referral / affiliate layer ──────────────────────────────────────────
+      + '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:2px">'
+      + '<div style="display:flex;align-items:center;gap:10px">'
+      + '<input type="checkbox" id="dm-referral" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer" onchange="_dmToggleReferral()">'
+      + '<label for="dm-referral" style="font-size:13px;cursor:pointer;color:var(--text);font-weight:600">🤝 Referral / affiliate code (pays a partner per new customer)</label>'
+      + '</div>'
+      + '<div id="dm-referral-fields" style="display:none;flex-direction:column;gap:14px;margin-top:12px;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:6px">'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Partner name *</label><input type="text" id="dm-ref-name" placeholder="e.g. Push Gym / Jane (PT)" style="' + inputStyle + '"></div>'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Partner contact</label><input type="text" id="dm-ref-contact" placeholder="email / phone for payout" style="' + inputStyle + '"></div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Referral fee — £ per new customer *</label><input type="number" id="dm-ref-fee" min="0" step="0.01" placeholder="e.g. 10" style="' + inputStyle + '"></div>'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Max discount cap (£) — % codes</label><input type="number" id="dm-ref-cap" min="0" step="0.01" placeholder="blank = no cap" style="' + inputStyle + '"></div>'
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:10px">'
+      + '<input type="checkbox" id="dm-ref-firstonly" checked style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">'
+      + '<label for="dm-ref-firstonly" style="font-size:13px;cursor:pointer;color:var(--text)">First order only — fee earned once per genuinely new customer</label>'
+      + '</div>'
+      + '<div style="font-size:11px;color:var(--text3);line-height:1.5">The discount applies at checkout for anyone using the code. The referral fee is only <b>owed</b> once the new customer’s first order is marked <b>Paid</b> in Orders. Returning customers still get the discount but earn the partner no fee.</div>'
+      + '</div>'
+      + '</div>'
       + '</div></div>'
       + '<div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal(\'discount-modal\')">Cancel</button><button class="btn btn-gold" onclick="saveDiscount()">Save Code</button></div>'
       + '</div>';
@@ -11453,7 +11485,19 @@ function openDiscountModal(id) {
   document.getElementById('dm-expiry').value  = existing && existing.expiresAt ? existing.expiresAt.slice(0,10) : '';
   document.getElementById('dm-desc').value    = existing ? (existing.description || '') : '';
   document.getElementById('dm-active').checked = existing ? !!existing.active : true;
+  document.getElementById('dm-referral').checked     = existing ? !!existing.isReferral : false;
+  document.getElementById('dm-ref-name').value       = existing ? (existing.referrerName || '') : '';
+  document.getElementById('dm-ref-contact').value    = existing ? (existing.referrerContact || '') : '';
+  document.getElementById('dm-ref-fee').value        = existing ? (existing.referralFee || '') : '';
+  document.getElementById('dm-ref-cap').value        = existing ? (existing.maxDiscount || '') : '';
+  document.getElementById('dm-ref-firstonly').checked = existing ? (existing.firstOrderOnly !== false) : true;
+  _dmToggleReferral();
   openModal('discount-modal');
+}
+
+function _dmToggleReferral() {
+  var on = document.getElementById('dm-referral').checked;
+  document.getElementById('dm-referral-fields').style.display = on ? 'flex' : 'none';
 }
 
 function saveDiscount() {
@@ -11465,24 +11509,35 @@ function saveDiscount() {
   var expiry = document.getElementById('dm-expiry').value || null;
   var desc  = (document.getElementById('dm-desc').value || '').trim();
   var active = document.getElementById('dm-active').checked;
+  // Referral / affiliate fields
+  var isReferral  = document.getElementById('dm-referral').checked;
+  var refName     = (document.getElementById('dm-ref-name').value || '').trim();
+  var refContact  = (document.getElementById('dm-ref-contact').value || '').trim();
+  var refFee      = parseFloat(document.getElementById('dm-ref-fee').value) || 0;
+  var refCap      = parseFloat(document.getElementById('dm-ref-cap').value) || 0;
+  var refFirstOnly = document.getElementById('dm-ref-firstonly').checked;
 
   if (!code) { notify('Code name is required', 'warn'); return; }
   if (!/^[A-Z0-9_-]+$/.test(code)) { notify('Code can only contain letters, numbers, hyphens and underscores', 'warn'); return; }
   if (isNaN(value) || value <= 0)  { notify('Please enter a valid discount value', 'warn'); return; }
   if (type === 'percent' && value > 100) { notify('Percentage discount cannot exceed 100%', 'warn'); return; }
+  if (isReferral && !refName) { notify('Referral codes need a partner name', 'warn'); return; }
+  if (isReferral && refFee <= 0) { notify('Set a referral fee (£ per new customer)', 'warn'); return; }
   if (!Array.isArray(DB.discountCodes)) DB.discountCodes = [];
 
   // Duplicate check
   var dupe = DB.discountCodes.find(function(c) { return c.code === code && c.id !== _editingDiscountId; });
   if (dupe) { notify('A code with that name already exists', 'warn'); return; }
 
+  var refFields = { isReferral: isReferral, referrerName: isReferral ? refName : '', referrerContact: isReferral ? refContact : '', referralFee: isReferral ? refFee : 0, maxDiscount: refCap, firstOrderOnly: isReferral ? refFirstOnly : false };
+
   if (_editingDiscountId) {
     var idx = DB.discountCodes.findIndex(function(c) { return c.id === _editingDiscountId; });
     if (idx >= 0) {
-      Object.assign(DB.discountCodes[idx], { code, type, value, minOrderValue: minVal, usageLimit: limit, expiresAt: expiry ? expiry + 'T23:59:59Z' : null, description: desc, active });
+      Object.assign(DB.discountCodes[idx], { code, type, value, minOrderValue: minVal, usageLimit: limit, expiresAt: expiry ? expiry + 'T23:59:59Z' : null, description: desc, active }, refFields);
     }
   } else {
-    DB.discountCodes.push({ id: 'DC' + Date.now(), code, type, value, minOrderValue: minVal, usageLimit: limit, usedCount: 0, expiresAt: expiry ? expiry + 'T23:59:59Z' : null, description: desc, active, createdAt: new Date().toISOString() });
+    DB.discountCodes.push(Object.assign({ id: 'DC' + Date.now(), code, type, value, minOrderValue: minVal, usageLimit: limit, usedCount: 0, expiresAt: expiry ? expiry + 'T23:59:59Z' : null, description: desc, active, createdAt: new Date().toISOString() }, refFields));
   }
   save();
   closeModal('discount-modal');
@@ -11505,6 +11560,158 @@ function deleteDiscount(id) {
   save();
   renderDiscounts();
   notify('Code deleted');
+}
+
+// ═══════════════════════════════════════════
+// REFERRAL / AFFILIATE ENGINE  (Phase 1)
+// ───────────────────────────────────────────
+// A referral code is an ordinary discount code with isReferral=true. The customer
+// discount applies at checkout (portal); the partner referral fee is earned only
+// when a GENUINELY NEW customer's FIRST order is marked Paid. Qualification is derived
+// live from orders — never a mutable per-order flag — so it can't drift. Settlement
+// (which fees have been paid out) is tracked in DB.referralSettlements keyed by code.
+// ═══════════════════════════════════════════
+
+function _refOrderDate(o) { return Date.parse(o.createdAt || o.submittedAt || o.confirmedAt || '') || 0; }
+
+// All non-cancelled orders for a customer, earliest first (live + archived).
+function _custOrdersChrono(custId) {
+  var all = (DB.weeklyOrders || []).concat(_custArchOrders || []);
+  var seen = {}, mine = [];
+  all.forEach(function(o) {
+    if (!o || o.customerId !== custId || !o.id || seen[o.id]) return;
+    if (getOrderStatus(o) === 'cancelled') return;
+    seen[o.id] = 1; mine.push(o);
+  });
+  mine.sort(function(a, b) { return _refOrderDate(a) - _refOrderDate(b); });
+  return mine;
+}
+
+// Is this order the customer's first (earliest non-cancelled) order?
+function _isFirstOrderForCustomer(o) {
+  if (!o || !o.customerId) return false;
+  var chrono = _custOrdersChrono(o.customerId);
+  return chrono.length > 0 && chrono[0].id === o.id;
+}
+
+function _refSettled(codeId, orderId) {
+  return !!(DB.referralSettlements && DB.referralSettlements[codeId] && DB.referralSettlements[codeId][orderId]);
+}
+
+// Build the per-partner ledger. Each qualified order = one new customer (it's their first).
+function buildReferralLedger() {
+  var refCodes = (DB.discountCodes || []).filter(function(c) { return c.isReferral; });
+  var allOrders = (DB.weeklyOrders || []).concat(_custArchOrders || []);
+  return refCodes.map(function(dc) {
+    var seen = {};
+    var used = allOrders.filter(function(o) {
+      if (!o || !o.discount || o.discount.code !== dc.code) return false;
+      if (getOrderStatus(o) === 'cancelled') return false;
+      if (seen[o.id]) return false; seen[o.id] = 1; return true;
+    });
+    // Qualified = first-order-only ? this is the customer's first order : any use
+    var qualified = used.filter(function(o) { return dc.firstOrderOnly === false || _isFirstOrderForCustomer(o); });
+    var paid      = qualified.filter(function(o) { return getPayStatus(o) === 'paid'; });       // fee earned
+    var pending   = qualified.filter(function(o) { return getPayStatus(o) !== 'paid'; });        // referred, awaiting payment
+    var fee       = parseFloat(dc.referralFee) || 0;
+    var owedOrders = paid.filter(function(o) { return !_refSettled(dc.id, o.id); });
+    return {
+      dc: dc,
+      newCustomers: paid.length,
+      pending: pending.length,
+      revenue: paid.reduce(function(s, o) { return s + _orderValue(o); }, 0),
+      fee: fee,
+      feeEarned: paid.length * fee,
+      feeOwed: owedOrders.length * fee,
+      paidOrders: paid,
+      owedOrders: owedOrders
+    };
+  });
+}
+
+function renderReferralLedger() {
+  var el = document.getElementById('referrals-list');
+  if (!el) return;
+  _ensureArchivedOrders(); // pull archived orders so historic first-orders count
+  var ledger = buildReferralLedger();
+  if (!ledger.length) {
+    el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:22px">No referral partners yet — create a discount code and tick <b>🤝 Referral / affiliate code</b> to set one up.</div>';
+    return;
+  }
+  // Summary line
+  var totOwed = ledger.reduce(function(s, r) { return s + r.feeOwed; }, 0);
+  var totNew  = ledger.reduce(function(s, r) { return s + r.newCustomers; }, 0);
+  var head = '<div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)">'
+    + '<div><div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px">New customers</div><div style="font-size:18px;font-weight:700;font-family:var(--mono)">' + totNew + '</div></div>'
+    + '<div><div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Fees owed now</div><div style="font-size:18px;font-weight:700;font-family:var(--mono);color:' + (totOwed > 0 ? 'var(--gold)' : 'var(--text)') + '">£' + totOwed.toFixed(2) + '</div></div>'
+    + '<div><div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Partners</div><div style="font-size:18px;font-weight:700;font-family:var(--mono)">' + ledger.length + '</div></div>'
+    + '</div>';
+
+  var cards = ledger.map(function(r) {
+    var dc = r.dc;
+    function stat(label, val, col) {
+      return '<div><div style="font-size:9px;color:var(--text3);font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px">' + label + '</div><div style="font-size:14px;font-weight:700' + (col ? ';color:' + col : '') + '">' + val + '</div></div>';
+    }
+    return '<div style="padding:14px;border:1px solid var(--border);border-radius:8px;margin-bottom:10px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">'
+      + '<span style="font-size:14px;font-weight:700">🤝 ' + escHtml(dc.referrerName || 'Partner') + '</span>'
+      + '<span style="font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:1px">' + escHtml(dc.code) + '</span>'
+      + (dc.referrerContact ? '<span style="font-size:11px;color:var(--text3)">· ' + escHtml(dc.referrerContact) + '</span>' : '')
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px 16px">'
+      + stat('New customers', r.newCustomers)
+      + stat('Awaiting payment', r.pending, r.pending > 0 ? 'var(--text2)' : '')
+      + stat('First-order rev', '£' + r.revenue.toFixed(2))
+      + stat('Fee / customer', '£' + r.fee.toFixed(2))
+      + stat('Owed now', '£' + r.feeOwed.toFixed(2), r.feeOwed > 0 ? 'var(--gold)' : 'var(--green)')
+      + '</div></div>'
+      + '<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">'
+      + '<button class="btn btn-ghost btn-xs" onclick="exportReferralStatement(\'' + dc.id + '\')">📄 Statement (CSV)</button>'
+      + (r.feeOwed > 0 ? '<button class="btn btn-gold btn-xs" onclick="settleReferral(\'' + dc.id + '\')">✓ Mark £' + r.feeOwed.toFixed(2) + ' paid</button>' : '<span style="font-size:10px;color:var(--green);font-family:var(--mono)">✓ settled</span>')
+      + '</div>'
+      + '</div></div>';
+  }).join('');
+
+  el.innerHTML = head + cards;
+}
+
+// Mark the currently-owed fees for a partner as settled (records date per order).
+function settleReferral(codeId) {
+  var row = buildReferralLedger().find(function(r) { return r.dc.id === codeId; });
+  if (!row || !row.owedOrders.length) { notify('Nothing owed for this partner'); return; }
+  if (!confirm('Mark £' + row.feeOwed.toFixed(2) + ' as paid to ' + (row.dc.referrerName || 'this partner') + '? (' + row.owedOrders.length + ' new customer' + (row.owedOrders.length !== 1 ? 's' : '') + ')')) return;
+  if (!DB.referralSettlements) DB.referralSettlements = {};
+  if (!DB.referralSettlements[codeId]) DB.referralSettlements[codeId] = {};
+  var now = new Date().toISOString();
+  row.owedOrders.forEach(function(o) { DB.referralSettlements[codeId][o.id] = now; });
+  save();
+  renderReferralLedger();
+  notify('Marked £' + row.feeOwed.toFixed(2) + ' paid to ' + (row.dc.referrerName || 'partner') + ' ✓');
+}
+
+// Download a CSV statement of every qualified new customer for a partner.
+function exportReferralStatement(codeId) {
+  var row = buildReferralLedger().find(function(r) { return r.dc.id === codeId; });
+  if (!row) return;
+  var rows = [['Partner', 'Code', 'Date', 'Customer', 'Email', 'First order £', 'Fee £', 'Paid out']];
+  row.paidOrders.slice().sort(function(a, b) { return _refOrderDate(a) - _refOrderDate(b); }).forEach(function(o) {
+    rows.push([
+      row.dc.referrerName || '', row.dc.code,
+      new Date(_refOrderDate(o)).toLocaleDateString('en-GB'),
+      (o.recipientName || '').replace(/,/g, ' '), (o.email || '').replace(/,/g, ' '),
+      _orderValue(o).toFixed(2), row.fee.toFixed(2),
+      _refSettled(codeId, o.id) ? 'Yes' : 'No'
+    ]);
+  });
+  var csv = rows.map(function(r) { return r.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'referral-statement-' + (row.dc.code || 'partner') + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
 }
 
 // ═══════════════════════════════════════════
@@ -11755,7 +11962,11 @@ function _startFbListener() {
         ? remote.nextMenuDishes.length > 0
         : Object.keys(remote.nextMenuDishes).length > 0
     ));
-    if (fbMissingNext && Array.isArray(DB.nextMenuDishes) && DB.nextMenuDishes.length > 0) {
+    // Only the LEGACY no-version writer (the retired mobile app) can wipe Next without
+    // bumping the version. If the remote carries a version, an empty Next is an INTENTIONAL
+    // advance/clear — pushing our stale local dishes back would resurrect an advanced-away
+    // menu on a second device (the "Next 16 dishes · label missing" bug). Gate on no-version.
+    if (remoteVer === null && fbMissingNext && Array.isArray(DB.nextMenuDishes) && DB.nextMenuDishes.length > 0) {
       // Write our local dishes back to Firebase so the portal stays open
       setTimeout(saveToFirebaseNow, 150);
     }
@@ -11793,8 +12004,14 @@ function _startFbListener() {
       if (localNextMenuDishes && (!DB.nextMenuDishes || !DB.nextMenuDishes.length)) {
         DB.nextMenuDishes = localNextMenuDishes;
       }
-      // Restore nextMenuDishes from isolated localStorage key if mobile app wiped it
-      nextMenuGuard();
+      // Restore from the isolated Next backup ONLY for the legacy no-version wipe. When the
+      // cloud is version-authoritative, mirror it instead (including clearing on advance) so a
+      // stale backup can never resurrect an advanced-away Next menu.
+      if (remoteVer === null) {
+        nextMenuGuard();
+      } else {
+        nextMenuWrite((DB.nextMenuDishes && DB.nextMenuDishes.length) ? DB.nextMenuDishes : []);
+      }
       // Check auto-publish on every incoming sync (another device may have built the next menu)
       checkAndAutoPublish();
       // Refresh the currently visible page
@@ -12075,12 +12292,18 @@ function loadFromFirebase(callback) {
         DB.nextMenuDishes = localNextMenuDishes;
       }
       migrateData(); // backfill any fields added since this data was last saved
-      // Restore nextMenuDishes from isolated localStorage key if Firebase was wiped by mobile app
-      nextMenuGuard();
-      // Critical: if Firebase was missing nextMenuDishes but our local state has them,
-      // write back immediately so the customer portal sees the correct (open) state.
-      if (!remoteHasNext && Array.isArray(DB.nextMenuDishes) && DB.nextMenuDishes.length > 0) {
-        setTimeout(saveToFirebaseNow, 300);
+      // Restore from the isolated Next backup ONLY for the legacy no-version wipe. When the
+      // cloud carries a version it is authoritative — mirror it (including clearing on advance)
+      // so a stale isolated backup can never resurrect an advanced-away Next menu.
+      if (remoteVer === null) {
+        nextMenuGuard();
+        // Critical: if Firebase was missing nextMenuDishes but our local state has them,
+        // write back immediately so the customer portal sees the correct (open) state.
+        if (!remoteHasNext && Array.isArray(DB.nextMenuDishes) && DB.nextMenuDishes.length > 0) {
+          setTimeout(saveToFirebaseNow, 300);
+        }
+      } else {
+        nextMenuWrite((DB.nextMenuDishes && DB.nextMenuDishes.length) ? DB.nextMenuDishes : []);
       }
       callback(true);
     } else {
@@ -12664,6 +12887,7 @@ function _ensureArchivedOrders() {
     var v = snap.val() || {};
     _custArchOrders = Object.keys(v).map(function(k) { return v[k]; }).filter(Boolean);
     renderCustomersTable();
+    if (typeof renderReferralLedger === 'function') renderReferralLedger();
   }).catch(function(e) { console.warn('archived orders load failed', e); _custArchOrders = []; });
 }
 function _orderValue(o) {
