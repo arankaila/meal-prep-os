@@ -2339,7 +2339,6 @@ table td{padding-top:9px;padding-bottom:9px;}
       </div>
 
       <div class="kpi-grid" id="menu-kpi-grid"></div>
-      <div id="menu-stats-bar" style="display:flex;flex-wrap:wrap;row-gap:10px;margin-bottom:14px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;align-items:stretch;"></div>
       <!-- Drop dates + deadlines strip -->
       <div class="no-print" style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:12px;flex-wrap:wrap;">
         <span style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;padding-top:6px">Drop Dates</span>
@@ -2882,7 +2881,9 @@ table td{padding-top:9px;padding-bottom:9px;}
             <button class="del-filter-btn" onclick="setCustFilter(this,'top')">Top Spenders</button>
             <button class="del-filter-btn" onclick="setCustFilter(this,'recent')">Recently Ordered</button>
             <button class="del-filter-btn" onclick="setCustFilter(this,'lapsed')">Lapsed</button>
+            <button class="del-filter-btn" onclick="setCustFilter(this,'marketing')">&#x2705; Consented</button>
           </div>
+          <button class="btn btn-ghost btn-sm no-print" onclick="exportConsentedCustomers()" title="Download the marketing-consent list as CSV">&#x2B07; Export consent list</button>
           <div id="cust-count" style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:auto"></div>
         </div>
         <div id="cust-summary" class="no-print" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"></div>
@@ -2898,6 +2899,7 @@ table td{padding-top:9px;padding-bottom:9px;}
                 <th onclick="sortCustomers('total')" style="cursor:pointer" title="Sort by total value">Total Value &#x21C5;</th>
                 <th onclick="sortCustomers('avg')" style="cursor:pointer" title="Sort by average value">Avg Value &#x21C5;</th>
                 <th onclick="sortCustomers('last')" style="cursor:pointer" title="Sort by last ordered">Last Ordered &#x21C5;</th>
+                <th onclick="sortCustomers('marketing')" style="cursor:pointer" title="Sort by marketing consent">Marketing &#x21C5;</th>
                 <th class="no-print">Actions</th>
               </tr>
             </thead>
@@ -3203,11 +3205,12 @@ table td{padding-top:9px;padding-bottom:9px;}
             <h1 class="gs-h1">✨ What's New — June 2026</h1>
             <p class="gs-p">The app was overhauled for simplicity. If you've used it before, here's everything that changed; if you're new, this is also the quickest tour of how the system thinks.</p>
 
-            <h2 class="gs-h2">Latest — leaner KPIs, header search &amp; menu engineering</h2>
+            <h2 class="gs-h2">Latest — leaner KPIs, header search &amp; referral partners</h2>
             <p class="gs-p"><strong>Every page's stat cards were cut down to the few numbers that actually change a decision.</strong> A KPI now earns its place only if it tells you to <em>do</em> something — so you'll see exceptions and money, not vanity counts. Dashboard: Revenue · Net Profit · Food Margin · Labour %, each with a ▲▼ vs last week. Weekly Menu: Est Revenue · Food Margin · <strong>dishes below 50% target</strong> (your re-price list). Orders: Pending (your to-do) · Confirmed · live revenue. Purchasing: <strong>Net to Order</strong> (real spend after stock) · lines · suppliers. Production: portions · est. time · dishes to make. Inventory: <strong>Reorder Now</strong> · Low Stock · Stock Value. Customers gained a <strong>Lapsed (30d+)</strong> count — your win-back list. History shows long-run averages (food margin, labour %) instead of growing totals.</p>
             <p class="gs-p"><strong>Search now lives in the header.</strong> The search box at the top of every page (or <strong>⌘K / Ctrl-K</strong>) opens the command palette — type to jump straight to any page, dish, ingredient, recipe, customer or order. On a phone it collapses to the 🔍 icon.</p>
-            <p class="gs-p"><strong>Menu engineering on the Weekly Menu.</strong> Reorder how dishes appear on the customer portal with the ▲▼ buttons on each dish card — lead with your hero dishes. Each dish also carries a classification badge (⭐ Star, ❓ Puzzle, 🐴 Plough-horse, 🐶 Dog) from its margin × popularity, so you can see at a glance what to promote, re-price, or cut.</p>
+            <p class="gs-p"><strong>Reorder the menu for the portal.</strong> Use the ▲▼ buttons on each dish card to set the order customers see on the portal — lead with your hero dishes.</p>
             <p class="gs-p"><strong>Referral partners (PTs, gyms, affiliates).</strong> On the Discounts page, tick <strong>🤝 Referral / affiliate code</strong> when creating a code to attach a partner: their name, contact, a flat <strong>£ fee per new customer</strong>, and an optional <strong>£ cap</strong> on a % discount. Share the code with the partner; their customers get the discount at checkout. The discount is <strong>first-order only</strong>: if a returning customer reuses the code, the order card flags it red ("⚠ void — charge full price") and drops the discount, so you only ever honour it for genuinely new customers. The <strong>Referral Partners</strong> panel tracks each partner's new customers, revenue, and fees owed — the fee is earned once a new customer's first order is marked <strong>Paid</strong>. Tap <strong>Mark paid</strong> to settle the balance; each payment is logged as a dated line in the partner's <strong>payout history</strong> (so you can see month 1 vs month 2 at a glance), and you can export a CSV statement for your records.</p>
+            <p class="gs-p"><strong>Marketing consent capture.</strong> The portal now has an optional opt-in checkbox (email/SMS/WhatsApp) on the details step — unticked by default, with early-access framing and a link to your privacy policy. When a customer ticks it, the consent and the exact wording they agreed to are recorded on the order. In the ERP, the <strong>Customers</strong> tab has a new <strong>Marketing</strong> column (✅ Yes + date), a <strong>Marketing opt-ins</strong> count, a <strong>✅ Consented</strong> filter, an inline <strong>opt-out</strong> control for when someone asks to stop, and an <strong>Export consent list</strong> button (CSV) to feed your email/SMS tool. Existing customers show as "—" until they opt in on a future order.</p>
             <p class="gs-p"><strong>Quietly, the data layer got bulletproofed.</strong> A stale device can no longer overwrite the live database (version-guarded writes — now including the Building Next slot), deletes stay deleted, dish photos live in Firebase Storage (smaller, faster), and the customer portal only ever downloads a PII-free public menu. You don't need to do anything — it just won't lose data again.</p>
 
             <h2 class="gs-h2">The Week Tracker (top of every page)</h2>
@@ -5366,7 +5369,7 @@ let lastPage = 'dashboard';
 // ═══════════════════════════════════════════════════════════════
 var STATS_SECTIONS = {
   dashboard:  { els: ['dash-kpi-row','dash-row-1','dash-row-2','dash-row-3','dash-row-4'], def: false },
-  menu:       { els: ['menu-kpi-grid','menu-stats-bar'], def: true  },
+  menu:       { els: ['menu-kpi-grid'],                  def: true  },
   orders:     { els: ['orders-kpi-strip'],               def: true  },
   purchasing: { els: ['purch-kpi-grid'],                 def: false },
   production: { els: ['prod-kpi-grid'],                  def: false },
@@ -7500,30 +7503,6 @@ function renderMenu(){
   const s1Active = menuSessionFilter === 's1' || menuSessionFilter === 'sunday';
   const s2Active = menuSessionFilter === 's2' || menuSessionFilter === 'wednesday';
 
-  // ── Menu engineering ── classify each dish by margin × popularity (this week's
-  // orders). "High" = at/above the menu average; popularity uses the classic 70%-
-  // of-average threshold. Only meaningful once orders exist (portions > 0).
-  var _mePack = getPackagingCost();
-  var _meList = slotDishes.filter(function(d){ return !d.athleteVariant; }).map(function(d){
-    var tt = calcDishTotals(d);
-    return { m: tt.sell > 0 ? (tt.sell - tt.cost - _mePack) / tt.sell : 0, p: (n(d.drop1)||0) + (n(d.drop2)||0) };
-  });
-  var _meAvgM = _meList.length ? _meList.reduce(function(a,x){return a+x.m;},0)/_meList.length : 0;
-  var _meAvgP = _meList.length ? _meList.reduce(function(a,x){return a+x.p;},0)/_meList.length : 0;
-  var _mePopThresh = _meAvgP * 0.7;
-  var _meHasData = _meAvgP > 0;
-  function _meClassify(dish){
-    if (dish.athleteVariant || !_meHasData) return null;
-    var tt = calcDishTotals(dish);
-    var m  = tt.sell > 0 ? (tt.sell - tt.cost - _mePack) / tt.sell : 0;
-    var p  = (n(dish.drop1)||0) + (n(dish.drop2)||0);
-    var hiM = m >= _meAvgM, hiP = p >= _mePopThresh;
-    if (hiM && hiP)  return { k:'Star',         e:'⭐', style:'background:rgba(201,168,76,.18);color:var(--gold);border:1px solid rgba(201,168,76,.4)' };
-    if (hiM && !hiP) return { k:'Puzzle',       e:'🧩', style:'background:rgba(10,132,255,.14);color:#5a9eff;border:1px solid rgba(10,132,255,.32)' };
-    if (!hiM && hiP) return { k:'Plough-horse', e:'🐴', style:'background:rgba(245,158,11,.14);color:#f59e0b;border:1px solid rgba(245,158,11,.32)' };
-    return                  { k:'Dog',          e:'🐶', style:'background:rgba(239,68,68,.12);color:#ef6b6b;border:1px solid rgba(239,68,68,.3)' };
-  }
-
   document.getElementById('menu-card-grid').innerHTML = _compDlHtml + dishes.map((dish,idx)=>{
     const realIdx=slotDishes.indexOf(dish);
     const t=calcDishTotals(dish);
@@ -7532,10 +7511,6 @@ function renderMenu(){
     const marginClass=margin>=0.5?'menu-margin-green':margin>=0.35?'menu-margin-amber':'menu-margin-red';
     const allergenHtml=[...t.allergens].map(a=>`<span class="allergen-tag">${a.split(' ')[0]}</span>`).join('');
     const filteredTotal = dishPortions(dish, menuSessionFilter);
-    const _me = _meClassify(dish);
-    const meBadge = _me
-      ? `<span title="Menu engineering — ${_me.k}. Margin ${(margin*100).toFixed(0)}% (menu avg ${(_meAvgM*100).toFixed(0)}%) · ${(n(dish.drop1)||0)+(n(dish.drop2)||0)} ordered (avg ${_meAvgP.toFixed(1)}). Stars: feature top. Puzzles: high margin/low sales — feature to boost. Plough-horses: popular/low margin — nudge price. Dogs: consider dropping." style="flex-shrink:0;font-size:9px;font-family:var(--mono);font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;${_me.style}">${_me.e} ${_me.k}</span>`
-      : '';
 
     // Read-only component summary badges
     const compSummary = [
@@ -7644,9 +7619,8 @@ function renderMenu(){
             <button onclick="moveDish(${realIdx},-1)" ${realIdx===0?'disabled':''} aria-label="Move up" style="width:18px;height:13px;line-height:1;padding:0;font-size:8px;border-radius:3px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer">▲</button>
             <button onclick="moveDish(${realIdx},1)" ${realIdx===slotDishes.length-1?'disabled':''} aria-label="Move down" style="width:18px;height:13px;line-height:1;padding:0;font-size:8px;border-radius:3px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer">▼</button>
           </div>
-          <input class="menu-card-name-input" value="${dish.name}" onchange="ud(${realIdx},'name',this.value)" spellcheck="false" placeholder="Dish name…" style="flex:1;min-width:0">
+          <input class="menu-card-name-input" value="${escHtml(dish.name||'')}" onchange="ud(${realIdx},'name',this.value)" spellcheck="false" placeholder="Dish name…" style="flex:1;min-width:0">
           <input type="file" accept="image/*" style="display:none" id="photo-file-${realIdx}" onchange="handlePhotoUpload(${realIdx},this)">
-          ${meBadge}
           <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
             <button class="menu-card-toggle-btn" id="menu-card-toggle-btn-${realIdx}" onclick="menuToggleCard(${realIdx})">▾ Info</button>
             <button class="menu-card-edit-btn" id="menu-card-edit-btn-${realIdx}" onclick="menuToggleCardEdit(${realIdx})">✎ Edit</button>
@@ -7801,8 +7775,6 @@ function renderMenu(){
 
     </div>`;
   }).join('') || `<div style="grid-column:1/-1"><div class="empty-state"><div class="big">⚡</div><div class="msg">No dishes yet — plan your week in Quick Build, then push dishes here</div><button class="btn btn-gold" onclick="showPage('quickbuild')">→ Go to Quick Build</button></div></div>`;
-
-  updateMenuStats();
 }
 
 function menuToggleCard(idx) {
@@ -11630,8 +11602,12 @@ function buildReferralLedger() {
     var pending   = qualified.filter(function(o) { return getPayStatus(o) !== 'paid'; });        // referred, awaiting payment
     var fee       = parseFloat(dc.referralFee) || 0;
     var owedOrders = paid.filter(function(o) { return !_refSettled(dc.id, o.id); });
+    // Raw uptake — every order placed with the code (any status), and unique customers
+    var custSeen = {}; used.forEach(function(o) { if (o.customerId) custSeen[o.customerId] = 1; });
     return {
       dc: dc,
+      ordersPlaced: used.length,
+      customersReached: Object.keys(custSeen).length,
       newCustomers: paid.length,
       pending: pending.length,
       revenue: paid.reduce(function(s, o) { return s + _orderValue(o); }, 0),
@@ -11675,7 +11651,8 @@ function renderReferralLedger() {
       + '<span style="font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:1px">' + escHtml(dc.code) + '</span>'
       + (dc.referrerContact ? '<span style="font-size:11px;color:var(--text3)">· ' + escHtml(dc.referrerContact) + '</span>' : '')
       + '</div>'
-      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px 16px">'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px 16px">'
+      + stat('Orders placed', r.ordersPlaced)
       + stat('New customers', r.newCustomers)
       + stat('Awaiting payment', r.pending, r.pending > 0 ? 'var(--text2)' : '')
       + stat('First-order rev', '£' + r.revenue.toFixed(2))
@@ -12973,12 +12950,70 @@ function sortCustomers(key) {
   renderCustomersTable();
 }
 
+// ── Marketing consent (UK GDPR/PECR) ──────────────────────────────────────────
+// Consent rides on ORDERS (append-only), not the customer node (which the portal
+// overwrites on every order and can't read back). We take the customer's most recent
+// consenting order; a manual opt-out (DB.marketingWithdrawals) overrides it unless a
+// newer consent supersedes the opt-out. This keeps the audit trail intact.
+function custMarketingStatus(custId) {
+  var all = (DB.weeklyOrders || []).concat(_custArchOrders || []);
+  var latest = 0, rec = null;
+  all.forEach(function(o) {
+    if (!o || o.customerId !== custId || !o.marketingConsent) return;
+    var t = Date.parse(o.marketingConsentAt || o.createdAt || '') || 0;
+    if (t >= latest) { latest = t; rec = o; }
+  });
+  var withdrawn = (DB.marketingWithdrawals && DB.marketingWithdrawals[custId])
+    ? (Date.parse(DB.marketingWithdrawals[custId]) || 0) : 0;
+  return {
+    consented: !!rec && latest > withdrawn,
+    at: latest || 0,
+    withdrawnAt: withdrawn || 0,
+    channels: rec && rec.marketingChannels ? rec.marketingChannels : null,
+    text: rec ? rec.marketingConsentText : '',
+    source: rec ? rec.marketingConsentSource : ''
+  };
+}
+
+// Record a marketing opt-out (use when a customer asks to stop). Reversible only by the
+// customer re-consenting on a future order (a newer consent timestamp supersedes this).
+function withdrawMarketing(custId) {
+  var c = getCustById(custId); if (!c) return;
+  confirmAction('Record a marketing opt-out for <b>' + n2h(c.name || 'this customer') + '</b>?<br><br>They\'ll be removed from the consented list and export. Use this whenever a customer asks to stop hearing from you.', function() {
+    if (!DB.marketingWithdrawals) DB.marketingWithdrawals = {};
+    DB.marketingWithdrawals[custId] = new Date().toISOString();
+    save();
+    renderCustomersTable();
+    notify('Marketing opt-out recorded ✓');
+  }, { confirmLabel: 'Record opt-out' });
+}
+
+// Export the consented list (CSV) to feed your email/SMS tool.
+function exportConsentedCustomers() {
+  var rows = [['Name', 'Email', 'Phone', 'Channels', 'Consented on', 'Source']];
+  (DB.customers || []).forEach(function(c) {
+    var mk = custMarketingStatus(c.id);
+    if (!mk.consented) return;
+    var ch = mk.channels ? Object.keys(mk.channels).filter(function(k) { return mk.channels[k]; }).join('/') : 'email';
+    rows.push([(c.name || '').replace(/,/g, ' '), (c.email || '').replace(/,/g, ' '), (c.phone || '').replace(/,/g, ' '), ch, mk.at ? new Date(mk.at).toISOString().slice(0, 10) : '', mk.source || '']);
+  });
+  if (rows.length === 1) { notify('No consented customers to export yet'); return; }
+  var csv = rows.map(function(r) { return r.map(function(x) { return '"' + String(x).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '29-marketing-consent-' + new Date().toISOString().slice(0, 10) + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+  notify('Exported ' + (rows.length - 1) + ' consented customer(s)');
+}
+
 function renderCustomersTable() {
   if (!DB.customers) DB.customers = [];
   _ensureArchivedOrders();
 
-  // Attach lifetime stats to each customer
-  var rows = DB.customers.map(function(c) { return { c: c, st: custOrderStats(c.id) }; });
+  // Attach lifetime stats + marketing-consent status to each customer
+  var rows = DB.customers.map(function(c) { return { c: c, st: custOrderStats(c.id), mk: custMarketingStatus(c.id) }; });
 
   // Search
   if (_custSearch) {
@@ -12994,6 +13029,10 @@ function renderCustomersTable() {
   if (_custFilter === 'lapsed') {
     rows = rows.filter(function(r) { return r.st.count > 0 && r.st.last && (Date.now() - r.st.last) > 30 * 86400000; });
   }
+  // "Consented" = currently opted in to marketing
+  if (_custFilter === 'marketing') {
+    rows = rows.filter(function(r) { return r.mk.consented; });
+  }
 
   // Sort — an explicit column click wins; otherwise the active preset's natural order
   var key = _custSort.key, dir = _custSort.dir;
@@ -13008,6 +13047,7 @@ function renderCustomersTable() {
       var va = (a.c.name||'').toLowerCase(), vb = (b.c.name||'').toLowerCase();
       return va < vb ? -dir : va > vb ? dir : 0;
     }
+    if (key === 'marketing') return ((a.mk.consented ? 1 : 0) - (b.mk.consented ? 1 : 0)) * dir;
     return ((a.st[key] || 0) - (b.st[key] || 0)) * dir;
   });
 
@@ -13017,6 +13057,7 @@ function renderCustomersTable() {
   var withOrders = allStats.filter(function(x) { return x.count > 0; }).length;
   // Lapsed = ordered before but nothing in the last 30 days — the win-back list.
   var lapsed     = allStats.filter(function(x) { return x.count > 0 && x.last && (Date.now() - x.last) > 30 * 86400000; }).length;
+  var consentedCount = DB.customers.filter(function(c) { return custMarketingStatus(c.id).consented; }).length;
   var sumEl = document.getElementById('cust-summary');
   if (sumEl) {
     function card(label, val) {
@@ -13027,7 +13068,8 @@ function renderCustomersTable() {
     sumEl.innerHTML = card('Customers', DB.customers.length) +
       card('Lifetime Revenue', '&pound;' + totalRev.toFixed(2)) +
       card('Avg / Customer', '&pound;' + (withOrders ? (totalRev / withOrders).toFixed(2) : '0.00')) +
-      card('Lapsed (30d+)', lapsed);
+      card('Lapsed (30d+)', lapsed) +
+      card('Marketing opt-ins', consentedCount);
   }
 
   var countEl = document.getElementById('cust-count');
@@ -13055,6 +13097,11 @@ function renderCustomersTable() {
       '<td style="font-family:var(--mono);white-space:nowrap">&pound;' + st.total.toFixed(2) + '</td>' +
       '<td style="font-family:var(--mono);color:var(--text2);white-space:nowrap">&pound;' + st.avg.toFixed(2) + '</td>' +
       '<td style="font-size:11px;color:var(--text2);white-space:nowrap">' + _relTime(st.last) + '</td>' +
+      '<td style="white-space:nowrap;font-size:11px">' +
+        (mk.consented
+          ? '<span style="color:var(--green);font-weight:700" title="' + n2h(mk.text || '') + '">&#x2705; Yes</span> <button class="action-btn no-print" title="Record opt-out (customer asked to stop)" onclick="withdrawMarketing(\'' + c.id + '\')" style="font-size:9px;padding:1px 5px">opt-out</button><br><span style="color:var(--text3);font-family:var(--mono);font-size:9px">' + _relTime(mk.at) + '</span>'
+          : (mk.withdrawnAt ? '<span style="color:var(--text3)" title="Opted out">&mdash; opted out</span>' : '<span style="color:var(--text3)">&mdash;</span>')) +
+      '</td>' +
       '<td class="no-print" style="white-space:nowrap">' +
         '<button class="action-btn" onclick="openCustomerModal(\'' + c.id + '\')" title="Edit">&#x270F;&#xFE0F;</button> ' +
         '<button class="action-btn" onclick="addOrderForCustomer(\'' + c.id + '\')" title="Add Order this week">&#x2795;</button> ' +
