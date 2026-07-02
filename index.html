@@ -14,12 +14,14 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:#0a0a0a; --surface:#111111; --surface2:#181818; --surface3:#222222;
-  --border:#2a2a2a; --border2:#383838;
-  --gold:#C9A84C; --gold2:#e4c06e; --gold-dim:rgba(201,168,76,0.15);
-  --green:#22c55e; --red:#ef4444; --amber:#f59e0b; --blue:#3b82f6; --purple:#a78bfa;
-  --text:#f0f0f0; --text2:#a0a0a0; --text3:#555555;
-  --mono:'DM Mono',monospace; --sans:'DM Sans',sans-serif; --display:'Inter',sans-serif;
+  /* Design tokens aligned to the 29 Performance portal + website for cross-product cohesion.
+     Brand gold #fad02c, warm off-white text, faint structural borders, Helvetica Neue. */
+  --bg:#0a0a0a; --surface:#141416; --surface2:#1b1b1f; --surface3:#232327;
+  --border:rgba(255,255,255,.07); --border2:rgba(255,255,255,.12);
+  --gold:#fad02c; --gold2:#ffdd55; --gold-dim:rgba(250,208,44,0.14);
+  --green:#54cf7f; --red:#f4796b; --amber:#efa63c; --blue:#6ea8ff; --purple:#b18bff;
+  --text:#f0ede8; --text2:#9b9892; --text3:#67675f;
+  --mono:ui-monospace,'SF Mono','DM Mono',monospace; --sans:'Helvetica Neue',Helvetica,Arial,sans-serif; --display:'Helvetica Neue',Helvetica,Arial,sans-serif;
 }
 /* ── LIGHT MODE ───────────────────────────────────────── */
 body.light-mode {
@@ -1985,6 +1987,37 @@ table td{padding-top:9px;padding-bottom:9px;}
 .qb-tpl-actions{display:flex;gap:6px;margin-top:3px;}
 .qb-tpl-actions>.btn{flex:1;text-align:center;justify-content:center;}
 
+/* ════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM COHESION — aligns the ERP to the 29 Performance portal
+   + website. Appended last so it wins the cascade. Pure styling; the
+   :root token retarget above does most of the work, this sharpens the
+   shared components (radii, borders, buttons, tables, inputs, chips).
+   ════════════════════════════════════════════════════════════════ */
+/* Sharper, premium radii on the main surfaces */
+.card, .kpi-card, .inv-kpi, .panel, .dash-kpi, .menu-card, .order-card, .summary-card,
+.qb-card, .modal, .gs-table, .arc-card, .hist-card, .info-card { border-radius:4px !important; }
+.btn, .btn-gold, .btn-ghost, .btn-sm, .btn-xs, .action-btn, .tab, .badge, .chip,
+input, select, textarea, .del-filter-btn, .inv-filter-btn, .ord-status-tab, .pf-chip,
+.menu-sell-band-input, .topbar-search { border-radius:3px !important; }
+
+/* Faint structural borders everywhere (replaces the old heavy grey) */
+.card, .kpi-card, .panel, .gs-table, .modal, .menu-card, .order-card { border-color:var(--border) !important; }
+
+/* Primary gold buttons: brand gold, dark text (matches portal CTAs) */
+.btn-gold, .btn.btn-gold { background:var(--gold) !important; color:#0a0a0a !important; border:none !important; font-weight:700 !important; }
+.btn-gold:hover, .btn.btn-gold:hover { background:var(--gold2) !important; }
+
+/* Table headers styled as the shared eyebrow label */
+.gs-table th { font-family:var(--mono) !important; font-size:9px !important; letter-spacing:.11em !important;
+  text-transform:uppercase !important; color:var(--text3) !important; font-weight:700 !important;
+  border-bottom:1px solid var(--border) !important; }
+.gs-table td { border-bottom:1px solid var(--border) !important; }
+
+/* Inputs: faint border, gold focus (no heavy ring) */
+input:focus, select:focus, textarea:focus { border-color:var(--gold) !important; outline:none !important; box-shadow:none !important; }
+
+/* Drop leftover drop-shadows for the flat, border-led look */
+.card, .kpi-card, .panel, .menu-card, .order-card, .modal { box-shadow:none !important; }
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
