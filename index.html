@@ -2018,6 +2018,53 @@ input:focus, select:focus, textarea:focus { border-color:var(--gold) !important;
 
 /* Drop leftover drop-shadows for the flat, border-led look */
 .card, .kpi-card, .panel, .menu-card, .order-card, .modal { box-shadow:none !important; }
+
+/* ════════════════════════════════════════════════════════════════
+   WEEKLY MENU — condensed table rows (replaces the tall cards).
+   ════════════════════════════════════════════════════════════════ */
+#menu-card-grid{display:block !important;overflow-x:auto;
+  --mcols:44px 40px minmax(190px,1.5fr) minmax(118px,1fr) 50px 40px 40px 46px 32px 32px 30px 80px 54px 30px 60px;}
+.menu-row-head,.menu-row{display:grid;grid-template-columns:var(--mcols);gap:9px;align-items:center;min-width:940px;}
+.menu-row-head{padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:4px 4px 0 0;
+  font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);white-space:nowrap;}
+.menu-row-head .c{text-align:center;} .menu-row-head .r{text-align:right;}
+.menu-row{padding:7px 12px;background:var(--surface);border:1px solid var(--border);border-top:none;min-height:44px;transition:background .15s;}
+.menu-row:hover{background:var(--surface2);}
+.menu-row.editing{background:var(--surface2);border-bottom:none;}
+.mr-idx{display:flex;align-items:center;gap:5px;}
+.mr-idx .n{font-family:var(--mono);font-size:11px;color:var(--text2);width:14px;text-align:center;}
+.mr-idx .ar{display:flex;flex-direction:column;gap:1px;}
+.mr-idx .ar button{width:15px;height:10px;line-height:1;padding:0;font-size:7px;border:1px solid var(--border2);background:transparent;color:var(--text3);border-radius:2px;cursor:pointer;}
+.mr-idx .ar button:hover:not(:disabled){border-color:var(--gold);color:var(--gold);}
+.mr-idx .ar button:disabled{opacity:.3;cursor:default;}
+.mr-photo img{width:34px;height:34px;border-radius:3px;object-fit:cover;border:1px solid var(--border);display:block;cursor:pointer;}
+.mr-photo .empty{width:34px;height:34px;border-radius:3px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text3);cursor:pointer;}
+.mr-dish{min-width:0;}
+.mr-name{font-size:13px;font-weight:700;letter-spacing:-.01em;line-height:1.22;color:var(--text);}
+.mr-comp{font-size:10px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mr-aller{font-size:9.5px;color:var(--red);line-height:1.3;}
+.mr-fuel .fuel{font-size:8px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 0;border-radius:2px;display:block;text-align:center;}
+.mr-fuel .fuel.plus{background:var(--gold);color:#0a0a0a;}
+.mr-fuel .fuel.lite{background:transparent;color:var(--gold);border:1px solid var(--gold);}
+.mr-pt{font-family:var(--mono);font-size:13px;font-weight:800;text-align:center;}
+.mr-pt.sun{color:var(--gold);} .mr-pt.wed{color:var(--blue);} .mr-pt.zero{color:var(--text3);font-weight:400;}
+.mr-mac{font-family:var(--mono);font-size:12px;text-align:center;}
+.mr-mac.k{color:var(--amber);} .mr-mac.p{color:var(--blue);} .mr-mac.c{color:var(--text2);} .mr-mac.f{color:var(--purple);}
+.mr-price{text-align:right;}
+.mr-price input{width:58px;background:transparent;border:1px solid transparent;border-radius:3px;color:var(--text);font-family:var(--sans);font-size:13px;font-weight:800;text-align:right;padding:3px 5px;}
+.mr-price input:hover{border-color:var(--border2);} .mr-price input:focus{border-color:var(--gold);outline:none;background:var(--bg);}
+.mr-price .fp{font-size:8px;color:var(--text3);font-family:var(--mono);}
+.mr-margin{font-family:var(--mono);font-size:11px;font-weight:700;padding:3px 0;border-radius:3px;text-align:center;}
+.mr-margin.menu-margin-green{background:rgba(84,207,127,.13);color:var(--green);}
+.mr-margin.menu-margin-amber{background:rgba(239,166,60,.13);color:var(--amber);}
+.mr-margin.menu-margin-red{background:rgba(244,121,107,.13);color:var(--red);}
+.mr-stat{text-align:center;font-size:13px;}
+.mr-acts{display:flex;gap:4px;justify-content:flex-end;}
+.mr-acts button{width:24px;height:24px;padding:0;font-size:11px;border:1px solid var(--border2);background:transparent;color:var(--text2);border-radius:3px;cursor:pointer;}
+.mr-acts button:hover{border-color:var(--gold);color:var(--gold);}
+.mr-acts button.on{border-color:var(--gold);color:var(--gold);background:var(--gold-dim);}
+.mr-acts button.del:hover{border-color:var(--red);color:var(--red);}
+.menu-edit-panel-v2{background:var(--surface2) !important;border:1px solid var(--border) !important;border-top:none !important;padding:16px !important;margin:0 !important;border-radius:0 !important;}
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -7536,7 +7583,12 @@ function renderMenu(){
   const s1Active = menuSessionFilter === 's1' || menuSessionFilter === 'sunday';
   const s2Active = menuSessionFilter === 's2' || menuSessionFilter === 'wednesday';
 
-  document.getElementById('menu-card-grid').innerHTML = _compDlHtml + dishes.map((dish,idx)=>{
+  var _menuHead = '<div class="menu-row-head">'
+    + '<div>Order</div><div></div><div>Dish · components</div><div>Allergens</div><div class="c">Fuel</div>'
+    + '<div class="c">Sun</div><div class="c">Wed</div><div class="c">Kcal</div><div class="c">P</div><div class="c">C</div><div class="c">F</div>'
+    + '<div class="r">Sell £</div><div class="c">Margin</div><div class="c">✓</div><div class="r"></div>'
+    + '</div>';
+  var _menuRowsHtml = dishes.map((dish,idx)=>{
     const realIdx=slotDishes.indexOf(dish);
     const t=calcDishTotals(dish);
     const packCost=getPackagingCost();
@@ -7641,173 +7693,77 @@ function renderMenu(){
     const hasAthleteVariant = !!dish.athleteVariant;
     const athleteHtml = renderAthleteSection(dish, realIdx);
 
-    return `<div class="menu-card" id="menu-card-${realIdx}" data-fuel="${dish.fuelLine||'Fuel Plus'}" data-athlete="${dish.athleteVariant?'true':'false'}">
-
-      <!-- CARD HEADER -->
-      <div class="menu-card-header">
-        <!-- Row 1: index + name + action buttons (photo moved below) -->
-        <div class="menu-card-header-row">
-          <div class="menu-card-num">${realIdx+1}</div>
-          <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0" title="Reorder — this is the order customers see on the portal">
-            <button onclick="moveDish(${realIdx},-1)" ${realIdx===0?'disabled':''} aria-label="Move up" style="width:18px;height:13px;line-height:1;padding:0;font-size:8px;border-radius:3px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer">▲</button>
-            <button onclick="moveDish(${realIdx},1)" ${realIdx===slotDishes.length-1?'disabled':''} aria-label="Move down" style="width:18px;height:13px;line-height:1;padding:0;font-size:8px;border-radius:3px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer">▼</button>
-          </div>
-          <input class="menu-card-name-input" value="${escHtml(dish.name||'')}" onchange="ud(${realIdx},'name',this.value)" spellcheck="false" placeholder="Dish name…" style="flex:1;min-width:0">
-          <input type="file" accept="image/*" style="display:none" id="photo-file-${realIdx}" onchange="handlePhotoUpload(${realIdx},this)">
-          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-            <button class="menu-card-toggle-btn" id="menu-card-toggle-btn-${realIdx}" onclick="menuToggleCard(${realIdx})">▾ Info</button>
-            <button class="menu-card-edit-btn" id="menu-card-edit-btn-${realIdx}" onclick="menuToggleCardEdit(${realIdx})">✎ Edit</button>
-            <button class="action-btn r" onclick="removeDish(${realIdx})" style="margin-left:2px">🗑</button>
-          </div>
-        </div>
-        <!-- Row 2: photo thumbnail + description -->
-        <div class="menu-card-header-meta">
-          <div style="cursor:pointer;flex-shrink:0" onclick="triggerPhotoUpload(${realIdx})" title="${dish.photoUrl?'Click to change photo':'Click to upload photo'}">
-            ${dish.photoUrl
-              ? `<img class="photo-thumb-header" src="${(dish.photoUrl||'').replace(/"/g,'&quot;')}" alt="dish photo">`
-              : `<div class="photo-thumb-header-empty">📷</div>`}
-          </div>
-          ${dish.serves
-            ? `<span class="menu-card-desc">${escHtml(dish.serves)}</span>`
-            : `<span class="menu-card-desc-empty">No description — add one in ✎ Edit</span>`}
+    var _compLine = ['protein','carb','veg','condiment','complete'].map(function(k){return dish[k];}).filter(Boolean).join(' · ') || '—';
+    var _allerLine = [...t.allergens].join(', ');
+    return `<div class="menu-row" id="menu-card-${realIdx}" data-fuel="${dish.fuelLine||'Fuel Plus'}" data-athlete="${dish.athleteVariant?'true':'false'}">
+      <div class="mr-idx"><span class="n">${realIdx+1}</span><span class="ar">
+        <button onclick="moveDish(${realIdx},-1)" ${realIdx===0?'disabled':''} aria-label="Move up">▲</button>
+        <button onclick="moveDish(${realIdx},1)" ${realIdx===slotDishes.length-1?'disabled':''} aria-label="Move down">▼</button>
+      </span></div>
+      <div class="mr-photo">${dish.photoUrl?`<img src="${(dish.photoUrl||'').replace(/"/g,'&quot;')}" alt="" onclick="triggerPhotoUpload(${realIdx})" title="Change photo">`:`<div class="empty" onclick="triggerPhotoUpload(${realIdx})" title="Upload photo">📷</div>`}<input type="file" accept="image/*" style="display:none" id="photo-file-${realIdx}" onchange="handlePhotoUpload(${realIdx},this)"></div>
+      <div class="mr-dish"><div class="mr-name">${escHtml(dish.name||'Untitled dish')}${hasAthleteVariant?' <span title="Has athlete variant">🏅</span>':''}</div><div class="mr-comp" title="${escHtml(_compLine)}">${escHtml(_compLine)}</div></div>
+      <div class="mr-aller">${_allerLine?escHtml(_allerLine):'<span style="color:var(--text3)">—</span>'}</div>
+      <div class="mr-fuel"><span class="fuel ${dish.fuelLine==='Fuel Lite'?'lite':'plus'}">${dish.fuelLine==='Fuel Lite'?'Lite':'Plus'}</span></div>
+      <div class="mr-pt sun${(n(dish.drop1)||0)===0?' zero':''}">${n(dish.drop1)||0}</div>
+      <div class="mr-pt wed${(n(dish.drop2)||0)===0?' zero':''}">${n(dish.drop2)||0}</div>
+      <div class="mr-mac k">${t.kcal.toFixed(0)}</div>
+      <div class="mr-mac p">${t.prot.toFixed(0)}</div>
+      <div class="mr-mac c">${t.carb.toFixed(0)}</div>
+      <div class="mr-mac f">${t.fat.toFixed(0)}</div>
+      <div class="mr-price"><input type="number" step="0.01" min="0" value="${dish.sellPrice||''}" placeholder="0.00" onchange="ud(${realIdx},'sellPrice',this.value)" title="Sell price"><div class="fp">f+p £${(t.cost+packCost).toFixed(2)}</div></div>
+      <div class="mr-margin ${marginClass}">${pct(margin)}</div>
+      <div class="mr-stat" style="color:${_allComplete?'var(--green)':'var(--amber)'}" title="${_allComplete?'Ready':(_missingCount+' missing')}">${_allComplete?'✓':'◷'}</div>
+      <div class="mr-acts"><button id="menu-card-edit-btn-${realIdx}" onclick="menuToggleCardEdit(${realIdx})" title="Edit">✎</button><button class="del" onclick="removeDish(${realIdx})" title="Delete">🗑</button></div>
+    </div>
+    <div id="menu-card-edit-${realIdx}" class="menu-card-edit-panel menu-edit-panel-v2" style="display:none">
+      <div class="menu-card-edit-panel-header">
+        <span class="menu-card-edit-panel-label">✎ Edit — ${escHtml(dish.name||'dish')}</span>
+        <span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:4px">Saves immediately</span>
+      </div>
+      <div class="menu-card-edit-section">
+        <div class="menu-card-edit-section-label">Name &amp; description</div>
+        <input type="text" value="${escHtml(dish.name||'')}" placeholder="Dish name…" onchange="ud(${realIdx},'name',this.value)" style="width:100%;max-width:440px;font-size:13px;padding:7px 9px;background:var(--surface);border:1px solid var(--border2);border-radius:3px;color:var(--text);margin-bottom:7px">
+        <input type="text" value="${escHtml(dish.serves||'')}" placeholder="Description shown on portal (e.g. Brown rice, mixed salad…)" onchange="ud(${realIdx},'serves',this.value.trim())" style="width:100%;max-width:440px;font-size:12px;padding:7px 9px;background:var(--surface);border:1px solid var(--border2);border-radius:3px;color:var(--text)">
+      </div>
+      <div class="menu-card-edit-section">
+        <div class="menu-card-edit-section-label">Recipe Components</div>
+        ${compRowsEdit}
+        <div class="menu-comp-row" style="margin-top:4px">
+          <span style="font-size:9px;font-family:var(--mono);color:var(--text3);width:34px;flex-shrink:0">SCALE</span>
+          <input class="menu-scale-input" type="number" value="${n(dish.scaleOverall)||1}" step="0.05" min="0.1" title="Overall scale" style="width:60px" onchange="ud(${realIdx},'scaleOverall',this.value)">
+          <span style="font-size:9px;font-family:var(--mono);color:var(--text3)">Overall ×</span>
         </div>
       </div>
-
-      <!-- SESSIONS STRIP — kitchen-primary info at a glance -->
-      <div class="menu-card-sessions">
-        <div class="menu-card-session-blk sun${s1Active||dish.availSunday?' sun-on':''}">
-          <span class="mcs-label">${dish.athleteVariant?'🏅 Sunday':'☀ Sunday'}</span>
-          <span class="mcs-count${(n(dish.drop1)||0)===0?' zero':''}">${n(dish.drop1)||0}</span>
-          <span class="mcs-unit">portions</span>
-          ${!dish.athleteVariant?`<span class="mcs-avail ${dish.availSunday?'on':'off'}">${dish.availSunday?'✓ avail':'off'}</span>`:''}
-        </div>
-        <div class="menu-card-session-blk wed${s2Active||dish.availWednesday?' wed-on':''}">
-          <span class="mcs-label">${dish.athleteVariant?'🏅 Wednesday':'🌙 Wednesday'}</span>
-          <span class="mcs-count${(n(dish.drop2)||0)===0?' zero':''}">${n(dish.drop2)||0}</span>
-          <span class="mcs-unit">portions</span>
-          ${!dish.athleteVariant?`<span class="mcs-avail ${dish.availWednesday?'on':'off'}">${dish.availWednesday?'✓ avail':'off'}</span>`:''}
+      <div class="menu-card-edit-section">
+        <div class="menu-card-edit-section-label">Availability &amp; Line</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${_editS1Chk}${_editS2Chk}
+          <button class="box-type-btn${(dish.fuelLine!=='Fuel Lite')?' active':''}" id="menu-edit-fp-${realIdx}" onclick="udMenuFuelLine(${realIdx},'Fuel Plus')" style="font-size:10px;padding:3px 9px">⚡ Fuel Plus</button>
+          <button class="box-type-btn${(dish.fuelLine==='Fuel Lite')?' active':''}" id="menu-edit-fl-${realIdx}" onclick="udMenuFuelLine(${realIdx},'Fuel Lite')" style="font-size:10px;padding:3px 9px">✦ Fuel Lite</button>
         </div>
       </div>
-
-      <!-- ATTRS STRIP — line, packaging, status -->
-      <div class="menu-card-attrs">
-        <span class="menu-attr-chip ${dish.fuelLine==='Fuel Lite'?'fuel-lite':'fuel-plus'}">${dish.fuelLine==='Fuel Lite'?'✦ Fuel Lite':'⚡ Fuel Plus'}</span>
-        <span class="menu-attr-chip box">${(!dish.boxType||dish.boxType==='3-compartment')?'▣ 3-Comp':'☐ Single'}</span>
-        ${(n(dish.condimentTubs)||0)>0?`<span class="menu-attr-chip box">${n(dish.condimentTubs)}× tub</span>`:''}
-        ${dish.athleteVariant?'<span class="menu-attr-chip athlete">🏅 Athlete</span>':''}
-        <span class="menu-attr-chip ${_allComplete?'ready':'incomplete'}" style="margin-left:auto">${_allComplete?'✓ Ready':'⚠ '+_missingCount+' missing'}</span>
+      <div class="menu-card-edit-section">
+        <div class="menu-card-edit-section-label">Packaging</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <button class="box-type-btn${(!dish.boxType||dish.boxType==='3-compartment')?' active':''}" id="menu-edit-box3c-${realIdx}" onclick="udMenuBoxType(${realIdx},'3-compartment')" style="font-size:10px;padding:3px 9px">▣ 3-Comp</button>
+          <button class="box-type-btn${(dish.boxType==='single')?' active':''}" id="menu-edit-boxsg-${realIdx}" onclick="udMenuBoxType(${realIdx},'single')" style="font-size:10px;padding:3px 9px">☐ Single</button>
+          <div class="tub-count" id="menu-edit-tubs-${realIdx}">
+            <button class="tub-btn" onclick="udMenuAdjTubs(${realIdx},-1)">−</button>
+            <span class="tub-num">${n(dish.condimentTubs)||0}</span>
+            <button class="tub-btn" onclick="udMenuAdjTubs(${realIdx},1)">+</button>
+            <span style="font-size:9px;font-family:var(--mono);color:var(--text3)">tubs</span>
+          </div>
+        </div>
       </div>
-
-      ${allergenHtml?`<div class="menu-allergen-row"><span style="font-size:9px;color:#f87171;font-family:var(--mono);margin-right:2px">⚠</span>${allergenHtml}</div>`:''}
-      ${_sellBand}
-
-      <!-- COLLAPSIBLE INFO PANEL (read-only) -->
-      <div id="menu-card-details-${realIdx}" class="menu-card-details" style="display:none">
-        ${_portalHtml}
-        <div class="menu-card-body">
-
-          <!-- RECIPE -->
-          <div>
-            <div class="menu-card-section-label" style="margin-bottom:5px">Recipe</div>
-            <div class="menu-comp-summary">
-              ${compSummary || '<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">No components — configure in ⚡ Quick Build</span>'}
-            </div>
-          </div>
-
-          <!-- MACROS -->
-          <div>
-            <div class="menu-card-section-label">Macros / portion</div>
-            <div class="menu-macro-row">
-              <div class="menu-macro-chip c-kcal"><span class="mmv">${t.kcal.toFixed(0)}</span><span class="mml">kcal</span></div>
-              <div class="menu-macro-chip c-prot"><span class="mmv">${t.prot.toFixed(1)}</span><span class="mml">pro</span></div>
-              <div class="menu-macro-chip c-carb"><span class="mmv">${t.carb.toFixed(1)}</span><span class="mml">carb</span></div>
-              <div class="menu-macro-chip c-fat"><span class="mmv">${t.fat.toFixed(1)}</span><span class="mml">fat</span></div>
-            </div>
-          </div>
-
-          <!-- TAGS -->
-          <div class="menu-card-info-row">
-            <span class="menu-card-readonly-label">Tags</span>
-            ${_tagsHtml}
-          </div>
-
-        </div><!-- end menu-card-body -->
-
-      </div><!-- end menu-card-details -->
-
-      <!-- ATHLETES (always visible) -->
-      ${hasAthleteVariant
-        ? `<div class="menu-athlete-strip">
-             <div class="menu-card-section-label" style="margin-bottom:5px">Athlete Variant</div>
-             ${athleteHtml}
-           </div>`
-        : `<div class="menu-athlete-strip-add">${athleteHtml}</div>`}
-
-      <!-- EDIT OVERRIDE PANEL (amber, hidden by default) -->
-      <div id="menu-card-edit-${realIdx}" class="menu-card-edit-panel" style="display:none">
-        <div class="menu-card-edit-panel-header">
-          <span class="menu-card-edit-panel-label">✎ Override Edit</span>
-          <span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:4px">Changes save immediately to Firebase</span>
-        </div>
-
-        <!-- Recipe components -->
-        <div class="menu-card-edit-section">
-          <div class="menu-card-edit-section-label">Recipe Components</div>
-          ${compRowsEdit}
-          <div class="menu-comp-row" style="margin-top:4px">
-            <span style="font-size:9px;font-family:var(--mono);color:var(--text3);width:34px;flex-shrink:0">SCALE</span>
-            <input class="menu-scale-input" type="number" value="${n(dish.scaleOverall)||1}" step="0.05" min="0.1" title="Overall scale" style="width:60px" onchange="ud(${realIdx},'scaleOverall',this.value)">
-            <span style="font-size:9px;font-family:var(--mono);color:var(--text3)">Overall ×</span>
-          </div>
-        </div>
-
-        <!-- Availability + Fuel line -->
-        <div class="menu-card-edit-section">
-          <div class="menu-card-edit-section-label">Availability &amp; Line</div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            ${_editS1Chk}
-            ${_editS2Chk}
-            <button class="box-type-btn${(dish.fuelLine!=='Fuel Lite')?' active':''}" id="menu-edit-fp-${realIdx}"
-              onclick="udMenuFuelLine(${realIdx},'Fuel Plus')" style="font-size:10px;padding:3px 9px">⚡ Fuel Plus</button>
-            <button class="box-type-btn${(dish.fuelLine==='Fuel Lite')?' active':''}" id="menu-edit-fl-${realIdx}"
-              onclick="udMenuFuelLine(${realIdx},'Fuel Lite')" style="font-size:10px;padding:3px 9px">✦ Fuel Lite</button>
-          </div>
-        </div>
-
-        <!-- Box type + Tubs -->
-        <div class="menu-card-edit-section">
-          <div class="menu-card-edit-section-label">Packaging</div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <button class="box-type-btn${(!dish.boxType||dish.boxType==='3-compartment')?' active':''}" id="menu-edit-box3c-${realIdx}"
-              onclick="udMenuBoxType(${realIdx},'3-compartment')" style="font-size:10px;padding:3px 9px">▣ 3-Comp</button>
-            <button class="box-type-btn${(dish.boxType==='single')?' active':''}" id="menu-edit-boxsg-${realIdx}"
-              onclick="udMenuBoxType(${realIdx},'single')" style="font-size:10px;padding:3px 9px">☐ Single</button>
-            <div class="tub-count" id="menu-edit-tubs-${realIdx}">
-              <button class="tub-btn" onclick="udMenuAdjTubs(${realIdx},-1)">−</button>
-              <span class="tub-num">${n(dish.condimentTubs)||0}</span>
-              <button class="tub-btn" onclick="udMenuAdjTubs(${realIdx},1)">+</button>
-              <span style="font-size:9px;font-family:var(--mono);color:var(--text3)">tubs</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Serves with -->
-        <div class="menu-card-edit-section">
-          <div class="menu-card-edit-section-label">Serves With</div>
-          <input type="text" value="${escHtml(dish.serves||'')}" placeholder="e.g. Brown rice, mixed salad…"
-            style="width:100%;max-width:340px;font-size:10px;font-family:var(--mono);padding:4px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;color:var(--text1)"
-            onchange="ud(${realIdx},'serves',this.value.trim())">
-        </div>
-
-        <!-- Tags -->
-        <div class="menu-card-edit-section">
-          ${renderTagToggles(dish, realIdx)}
-        </div>
-
-      </div><!-- end menu-card-edit-panel -->
-
+      <div class="menu-card-edit-section">${renderTagToggles(dish, realIdx)}</div>
+      <div class="menu-card-edit-section">
+        <div class="menu-card-edit-section-label">Athlete Variant</div>
+        ${athleteHtml}
+      </div>
+      <div style="text-align:right;margin-top:12px"><button class="btn btn-gold btn-sm" onclick="menuToggleCardEdit(${realIdx})">Done</button></div>
     </div>`;
-  }).join('') || `<div style="grid-column:1/-1"><div class="empty-state"><div class="big">⚡</div><div class="msg">No dishes yet — plan your week in Quick Build, then push dishes here</div><button class="btn btn-gold" onclick="showPage('quickbuild')">→ Go to Quick Build</button></div></div>`;
+  }).join('');
+  document.getElementById('menu-card-grid').innerHTML = _compDlHtml + (_menuRowsHtml ? (_menuHead + _menuRowsHtml) : `<div class="empty-state"><div class="big">⚡</div><div class="msg">No dishes yet — plan your week in Quick Build, then push dishes here</div><button class="btn btn-gold" onclick="showPage('quickbuild')">→ Go to Quick Build</button></div>`);
 }
 
 function menuToggleCard(idx) {
