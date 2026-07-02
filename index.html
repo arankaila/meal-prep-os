@@ -13082,7 +13082,7 @@ function renderCustomersTable() {
   if (empty) empty.style.display = 'none';
 
   tbody.innerHTML = rows.map(function(r) {
-    var c = r.c, st = r.st;
+    var c = r.c, st = r.st, mk = r.mk;
     var dietaryText = [c.dietary, c.notes].filter(Boolean).join(' &middot; ');
     return '<tr>' +
       '<td class="cust-name-cell">' + n2h(c.name) + (c.email ? '<small>' + n2h(c.email) + '</small>' : '') + '</td>' +
