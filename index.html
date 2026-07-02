@@ -2065,6 +2065,19 @@ input:focus, select:focus, textarea:focus { border-color:var(--gold) !important;
 .mr-acts button.on{border-color:var(--gold);color:var(--gold);background:var(--gold-dim);}
 .mr-acts button.del:hover{border-color:var(--red);color:var(--red);}
 .menu-edit-panel-v2{background:var(--surface2) !important;border:1px solid var(--border) !important;border-top:none !important;padding:16px !important;margin:0 !important;border-radius:0 !important;}
+
+/* Condense the inline edit panel — compact controls + multi-column flow */
+.menu-edit-panel-v2{display:flex !important;flex-wrap:wrap;align-items:flex-start;gap:2px 26px;padding:14px 18px !important;}
+.menu-edit-panel-v2 .menu-card-edit-panel-header{flex:1 1 100%;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.menu-edit-panel-v2 .menu-card-edit-section{flex:1 1 290px;max-width:400px;margin:0 0 10px !important;}
+.menu-edit-panel-v2 .menu-card-edit-section:first-of-type{flex:1 1 100%;max-width:820px;display:flex;flex-wrap:wrap;gap:8px;}
+.menu-edit-panel-v2 .menu-card-edit-section:first-of-type .menu-card-edit-section-label{flex:1 1 100%;}
+.menu-edit-panel-v2 .menu-card-edit-section:first-of-type>input{flex:1 1 300px;max-width:400px;margin:0 !important;}
+.menu-edit-panel-v2 .box-type-btn{flex:0 0 auto !important;padding:5px 11px !important;}
+.menu-edit-panel-v2 .menu-comp-row{max-width:360px;}
+.menu-edit-panel-v2 .menu-comp-select,.menu-edit-panel-v2 .menu-comp-search{flex:1;max-width:230px;}
+.menu-edit-panel-v2 .tub-count{flex:0 0 auto;}
+.menu-edit-panel-v2>div[style*="text-align:right"]{flex:1 1 100%;margin-top:2px !important;}
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -7544,7 +7557,9 @@ function updateDropDateDeadlineDisplay() {
   if (s2El) s2El.textContent = fmt(deadlines.s2);
 }
 
+var _menuEditOpenIdx = null;
 function renderMenu(){
+  var _mScroll=(_menuEditOpenIdx!=null)?(window.scrollY||document.documentElement.scrollTop||0):null;
   // Auto-sync portion counts from confirmed orders for the active slot
   // This ensures drop1/drop2 always reflect the current order state
   recalcDishPortions(menuActiveSlot);
@@ -7764,6 +7779,14 @@ function renderMenu(){
     </div>`;
   }).join('');
   document.getElementById('menu-card-grid').innerHTML = _compDlHtml + (_menuRowsHtml ? (_menuHead + _menuRowsHtml) : `<div class="empty-state"><div class="big">⚡</div><div class="msg">No dishes yet — plan your week in Quick Build, then push dishes here</div><button class="btn btn-gold" onclick="showPage('quickbuild')">→ Go to Quick Build</button></div>`);
+  if (_menuEditOpenIdx != null) {
+    var _ep = document.getElementById('menu-card-edit-'+_menuEditOpenIdx);
+    if (_ep) { _ep.style.display='block';
+      var _erow=_ep.previousElementSibling; if(_erow&&_erow.classList) _erow.classList.add('editing');
+      var _eb=document.getElementById('menu-card-edit-btn-'+_menuEditOpenIdx); if(_eb) _eb.classList.add('on');
+      if(_mScroll!=null) window.scrollTo(0,_mScroll);
+    } else { _menuEditOpenIdx=null; }
+  }
 }
 
 function menuToggleCard(idx) {
@@ -7781,7 +7804,9 @@ function menuToggleCardEdit(idx) {
   if (!editEl) return;
   var isOpen = editEl.style.display !== 'none';
   editEl.style.display = isOpen ? 'none' : 'block';
-  if (btnEl) { btnEl.textContent = isOpen ? '✎ Edit' : '✕ Close'; btnEl.classList.toggle('open', !isOpen); }
+  var row = editEl.previousElementSibling; if (row && row.classList) row.classList.toggle('editing', !isOpen);
+  _menuEditOpenIdx = isOpen ? null : idx;
+  if (btnEl) btnEl.classList.toggle('on', !isOpen);
 }
 
 function udMenuFuelLine(idx, val) {
