@@ -5537,8 +5537,11 @@ function renderNextHint(id) {
       ? '<strong>' + st.compDone + '/' + st.compNames.length + ' components done</strong> — tick each Complete as it leaves the pan (temp + weight logged). Next: <strong>Packing</strong>.'
       : 'Nothing to produce yet — confirm orders first so portions sync.';
   } else if (id === 'packsheet') {
-    txt = st.packTotal
-      ? '<strong>' + st.packDone + '/' + st.packTotal + ' packed</strong> — work the Pack Sheet, tick boxes off in the <strong>Station</strong> view, print or download labels. Next: <strong>Delivery</strong>.'
+    var _pc = _packHintCounts();
+    var _gs = (typeof getGlobalSession === 'function') ? getGlobalSession() : 'all';
+    var _sw = _gs === 'sunday' ? ' \u00b7 Sunday' : _gs === 'wednesday' ? ' \u00b7 Wednesday' : '';
+    txt = _pc.total
+      ? '<strong>' + _pc.done + '/' + _pc.total + ' packed' + _sw + '</strong> — work the Pack Sheet, tick boxes off in the <strong>Station</strong> view, print or download labels. Next: <strong>Delivery</strong>.'
       : 'Nothing to pack yet — production comes first.';
   } else if (id === 'delivery') {
     txt = st.orders.length
@@ -8249,6 +8252,43 @@ function clearMenu(){
 // ═══════════════════════════════════════════
 // PACKAGING
 // ═══════════════════════════════════════════
+// Cooked weight (per box) of the MAIN ingredient in a component — a weigh-against check
+// for packers (the actual chicken / rice, not the whole component incl. sauce/oil).
+function _packMainIngHtml(comp, totalScale, slot){
+  if (['protein','carb','veg'].indexOf(slot) === -1) return '';
+  if (!comp || !comp.lines || !comp.lines.length) return '';
+  var wantCat = { protein:'Protein', carb:'Carb', veg:'Veg' }[slot];
+  var best = null;
+  comp.lines.forEach(function(line){
+    var ing = (DB.ingredients||[]).find(function(i){ return i.id === line.ingId; });
+    if (!ing) return;
+    var cw = n(line.qty) * calcTY(ing) * totalScale;
+    if (cw <= 0) return;
+    var isCat = ing.cat === wantCat;
+    if (!best || (isCat && !best.isCat) || (isCat === best.isCat && cw > best.cw)) best = { name: ing.name, cw: cw, isCat: isCat };
+  });
+  if (!best) return '';
+  return '<div style="font-size:10.5px;color:var(--gold);font-family:var(--mono);margin-top:3px">\u21B3 '+n2h(best.name)+' ~'+Math.round(best.cw)+'g cooked</div>';
+}
+
+// Session-aware, athlete-inclusive pack counts (mirrors the Box Board) for the next-hint.
+function _packHintCounts(){
+  var groups = (typeof bbBoxGroups === 'function') ? bbBoxGroups() : [];
+  var total = 0, done = 0;
+  groups.forEach(function(g){
+    total += g.qty;
+    var isDone;
+    if (g.ord && g.ord.athlete) {
+      isDone = g.comps.length && g.comps.every(function(c){ return bbIsFilled(g.ord, g.dish.id, c); });
+    } else {
+      var pp = (g.ord.packProgress || {})[g.dish.id];
+      isDone = !!(pp && pp.packed);
+    }
+    if (isDone) done += g.qty;
+  });
+  return { total: total, done: done };
+}
+
 function renderPackSheet(){
   document.getElementById('print-date').textContent='Generated: '+new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const content=document.getElementById('pack-content');
@@ -8378,6 +8418,7 @@ function renderPackSheet(){
         <div style="flex:1;min-width:0">
           <div class="pack-component-name">${comp.name}${s.scale!==1?` <span style="color:var(--text3);font-size:10px;font-weight:400">×${s.scale}</span>`:''}</div>
           ${finSteps?`<div style="margin-top:5px">${finSteps.map((fs,fi)=>`<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:3px"><div style="width:15px;height:15px;border-radius:50%;background:rgba(52,211,153,.15);color:#34d399;font-family:var(--mono);font-size:7px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;border:1px solid rgba(52,211,153,.25)">${fi+1}</div><div style="font-size:10.5px;color:var(--text2);line-height:1.45">${fs}</div></div>`).join('')}</div>`:`${comp.cookMethod?`<div class="pack-component-sub" style="color:var(--text3)">${comp.cookMethod}</div>`:''}`}
+          ${_packMainIngHtml(comp, s.scale*overallScale, s.slot)}
         </div>
         <div class="pack-weight">${cookedWt}<span class="pack-weight-unit"> g</span></div>
       </div>`;
@@ -8460,6 +8501,7 @@ function renderPackSheet(){
         <div style="flex:1;min-width:0">
           <div class="pack-component-name">${comp.name}${s.scale!==1?` <span style="color:var(--text3);font-size:10px;font-weight:400">×${s.scale}</span>`:''}</div>
           ${finSteps?`<div style="margin-top:5px">${finSteps.map((fs,fi)=>`<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:3px"><div style="width:15px;height:15px;border-radius:50%;background:rgba(52,211,153,.15);color:#34d399;font-family:var(--mono);font-size:7px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;border:1px solid rgba(52,211,153,.25)">${fi+1}</div><div style="font-size:10.5px;color:var(--text2);line-height:1.45">${fs}</div></div>`).join('')}</div>`:`${comp.cookMethod?`<div class="pack-component-sub" style="color:var(--text3)">${comp.cookMethod}</div>`:''}`}
+          ${_packMainIngHtml(comp, s.scale*overallScale, s.slot)}
         </div>
         <div class="pack-weight">${cookedWt}<span class="pack-weight-unit"> g</span></div>
       </div>`;
@@ -14120,6 +14162,7 @@ function rerenderActivePage() {
     var staView = document.getElementById('pack-station-view');
     if (lblView && lblView.style.display !== 'none') renderLabels();
     if (staView && staView.style.display !== 'none') renderFulfillmentStation();
+    renderNextHint('packsheet');
     return;
   }
   if (fns[id]) try { fns[id](); } catch(e) {}
@@ -15752,6 +15795,7 @@ function renderBoxBoard() {
   }).join('') + '</div>';
 
   el.innerHTML = html;
+  if (typeof renderNextHint === 'function' && document.getElementById('nh-packsheet')) renderNextHint('packsheet');
 }
 function bbSelectComp(c) { _bbFillComp = _bbFillComp === c ? null : c; renderBoxBoard(); }
 
