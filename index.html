@@ -15363,6 +15363,24 @@ function _loadHtml2Canvas(cb){
   document.head.appendChild(sc);
 }
 
+// Trim blank white space at the bottom of a rendered label canvas so the JPG is
+// exactly the label content (no empty tail) — scans up for the last inked row.
+function _lblTrimBottom(cv){
+  try{
+    var ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
+    var d=ctx.getImageData(0,0,W,H).data, last=0;
+    for(var y=H-1;y>=0;y--){ var ink=false;
+      for(var x=0;x<W;x+=3){ var i=(y*W+x)*4; if(d[i]<245||d[i+1]<245||d[i+2]<245){ink=true;break;} }
+      if(ink){ last=y; break; }
+    }
+    var nh=Math.min(H, last+12);   // +~1mm breathing room below the last line
+    if(nh<=0 || nh>=H) return cv;
+    var out=document.createElement('canvas'); out.width=W; out.height=nh;
+    out.getContext('2d').drawImage(cv,0,0,W,nh,0,0,W,nh);
+    return out;
+  }catch(e){ return cv; }
+}
+
 // Rasterize the label to a print-matching canvas via html2canvas, using an off-screen
 // stage styled with the print CSS. 89x41mm @300dpi, edge-to-edge (no white margins).
 function _lblRasterize(item, idx, cb){
@@ -15376,7 +15394,7 @@ function _lblRasterize(item, idx, cb){
   document.body.appendChild(stage);
   try{
     html2canvas(stage,{scale:1051/w,backgroundColor:'#ffffff',width:w,height:hgt,windowWidth:w,logging:false}).then(function(cv){
-      if(stage.parentNode) document.body.removeChild(stage); cb(cv);
+      if(stage.parentNode) document.body.removeChild(stage); cb(_lblTrimBottom(cv));
     }).catch(function(){ if(stage.parentNode) document.body.removeChild(stage); cb(null); });
   }catch(e){ if(stage.parentNode) document.body.removeChild(stage); cb(null); }
 }
