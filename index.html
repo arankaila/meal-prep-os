@@ -15330,54 +15330,66 @@ function _lblFileName(item, idx) {
   return String(idx + 1).padStart(3, '0') + '-' + nm + '.jpg';
 }
 
-// Standalone CSS mirroring the Dymo print label (so the JPG matches the printout).
-function _lblStandaloneCss(){return [
- '*{margin:0;padding:0;box-sizing:border-box;}',
- '.label-card{width:89mm;height:41mm;overflow:hidden;padding:1.4mm 2.5mm;background:#fff;color:#000;display:flex;flex-direction:column;gap:0;font-family:Helvetica,Arial,sans-serif;border:none;}',
- '.label-card .lc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5mm;}',
- '.label-card .lc-biz{font-size:5pt;color:#555;font-family:monospace;}',
- '.label-card .lc-mealid{font-size:6pt;font-weight:700;font-family:monospace;padding:0.2mm 1.5mm;border-radius:2px;background:#f5f0d0;border:0.5pt solid #b8860b;color:#000;}',
- '.label-card .lc-name{font-size:9pt;font-weight:700;line-height:1.1;color:#000;margin-bottom:0.2mm;}',
- '.label-card .lc-dish-name{font-size:7.5pt;font-weight:700;color:#000;margin:0.5mm 0 0.1mm;line-height:1.1;}',
- '.label-card .lc-macros{font-size:5.5pt;font-family:monospace;padding:0.4mm 1.5mm;margin:0.4mm 0 0.2mm;background:#f3f4f6;color:#000;border-radius:2px;line-height:1.3;}',
- '.label-card .lc-allergens{font-size:5.5pt;padding:0.4mm 1.5mm;margin:0.3mm 0;border-radius:2px;background:#fff0f0;border:0.5pt solid #f87171;color:#000;line-height:1.35;}',
- '.label-card .lc-allerg-hdr{font-weight:700;color:#cc0000;}',
- '.label-card .lc-allerg-none{background:#f0fff4;border-color:#86efac;}',
- '.label-card .lc-dietary{font-size:5pt;color:#7c5c00;border-top:0.3pt solid #ddd;padding-top:0.3mm;margin-top:0.3mm;}',
- '.label-card .lc-useby{font-size:6.5pt;font-weight:700;font-family:monospace;display:inline-block;padding:0.3mm 1.5mm;margin:0.4mm 0;background:#fffbeb;border:0.5pt solid #f59e0b;color:#000;border-radius:2px;}',
- '.label-card .lc-storage{font-size:4.5pt;color:#333;margin-top:0.4mm;line-height:1.3;}',
- '.label-card .lc-reheat{font-size:4.5pt;color:#333;margin-top:0.2mm;border-top:0.3pt solid #ccc;padding-top:0.3mm;line-height:1.3;}',
- '.label-card.lc-athlete{border-left:2pt solid #e07b20;}',
- '.label-card .lc-athlete-banner{font-size:5pt;font-weight:700;font-family:monospace;color:#b05a00;letter-spacing:0.5px;padding:0.3mm 0 0.5mm;border-bottom:0.4pt solid #e0a060;margin-bottom:0.5mm;display:block;}'
+// Print-matching label CSS, scoped to an off-screen raster stage so it never
+// touches the on-screen (dark) cards. Mirrors the Dymo @media print rules.
+function _lblStandaloneCss(){var P='#lbl-raster-stage ';return [
+ P+'.label-card{width:89mm;height:41mm;overflow:hidden;padding:1.4mm 2.5mm;background:#fff;color:#000;display:flex;flex-direction:column;gap:0;font-family:Helvetica,Arial,sans-serif;border:none;box-sizing:border-box;}',
+ P+'.label-card *{box-sizing:border-box;}',
+ P+'.label-card .lc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5mm;}',
+ P+'.label-card .lc-biz{font-size:5pt;color:#555;font-family:monospace;}',
+ P+'.label-card .lc-mealid{font-size:6pt;font-weight:700;font-family:monospace;padding:0.2mm 1.5mm;border-radius:2px;background:#f5f0d0;border:0.5pt solid #b8860b;color:#000;}',
+ P+'.label-card .lc-name{font-size:9pt;font-weight:700;line-height:1.1;color:#000;margin-bottom:0.2mm;}',
+ P+'.label-card .lc-dish-name{font-size:7.5pt;font-weight:700;color:#000;margin:0.5mm 0 0.1mm;line-height:1.1;}',
+ P+'.label-card .lc-macros{font-size:5.5pt;font-family:monospace;padding:0.4mm 1.5mm;margin:0.4mm 0 0.2mm;background:#f3f4f6;color:#000;border-radius:2px;line-height:1.3;}',
+ P+'.label-card .lc-allergens{font-size:5.5pt;padding:0.4mm 1.5mm;margin:0.3mm 0;border-radius:2px;background:#fff0f0;border:0.5pt solid #f87171;color:#000;line-height:1.35;}',
+ P+'.label-card .lc-allerg-hdr{font-weight:700;color:#cc0000;}',
+ P+'.label-card .lc-allerg-none{background:#f0fff4;border-color:#86efac;}',
+ P+'.label-card .lc-dietary{font-size:5pt;color:#7c5c00;border-top:0.3pt solid #ddd;padding-top:0.3mm;margin-top:0.3mm;}',
+ P+'.label-card .lc-useby{font-size:6.5pt;font-weight:700;font-family:monospace;display:inline-block;padding:0.3mm 1.5mm;margin:0.4mm 0;background:#fffbeb;border:0.5pt solid #f59e0b;color:#000;border-radius:2px;}',
+ P+'.label-card .lc-storage{font-size:4.5pt;color:#333;margin-top:0.4mm;line-height:1.3;}',
+ P+'.label-card .lc-reheat{font-size:4.5pt;color:#333;margin-top:0.2mm;border-top:0.3pt solid #ccc;padding-top:0.3mm;line-height:1.3;}',
+ P+'.label-card.lc-athlete{border-left:2pt solid #e07b20;}',
+ P+'.label-card .lc-athlete-banner{font-size:5pt;font-weight:700;font-family:monospace;color:#b05a00;letter-spacing:0.5px;padding:0.3mm 0 0.5mm;border-bottom:0.4pt solid #e0a060;margin-bottom:0.5mm;display:block;}'
 ].join('');}
 
-// Rasterize the on-screen .label-card to a canvas via SVG foreignObject (no libs, no
-// tainting — labels are text-only). Fills exactly 89x41mm @300dpi, edge to edge.
-function _lblRasterize(item, idx, cb){
-  var card = document.getElementById('lcard-'+idx);
-  if(!card){ cb(null); return; }
-  var W=1051, H=484, mm=96/25.4, baseW=89*mm, baseH=41*mm, scale=W/baseW;
-  var inner='<div xmlns="http://www.w3.org/1999/xhtml" style="width:'+baseW+'px;height:'+baseH+'px;transform:scale('+scale+');transform-origin:top left;background:#ffffff;overflow:hidden">'
-    +'<style>'+_lblStandaloneCss()+'</style>'+card.outerHTML+'</div>';
-  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'"><foreignObject x="0" y="0" width="'+W+'" height="'+H+'">'+inner+'</foreignObject></svg>';
-  var img=new Image();
-  var url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
-  img.onload=function(){
-    try{ var cv=document.createElement('canvas'); cv.width=W; cv.height=H;
-      var ctx=cv.getContext('2d'); ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
-      ctx.drawImage(img,0,0,W,H); URL.revokeObjectURL(url); cb(cv);
-    }catch(e){ URL.revokeObjectURL(url); cb(null); }
-  };
-  img.onerror=function(){ URL.revokeObjectURL(url); cb(null); };
-  img.src=url;
+// Lazy-load html2canvas (renders DOM to a NON-tainted canvas — the SVG foreignObject
+// trick tainted the canvas in Chrome/Safari, so toBlob failed and fell back).
+function _loadHtml2Canvas(cb){
+  if(window.html2canvas){ cb(true); return; }
+  var sc=document.createElement('script');
+  sc.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+  sc.onload=function(){ cb(!!window.html2canvas); };
+  sc.onerror=function(){ cb(false); };
+  document.head.appendChild(sc);
 }
 
-// Get a JPEG blob for a label — print-matching rasterizer with the hand-drawn canvas as fallback.
+// Rasterize the label to a print-matching canvas via html2canvas, using an off-screen
+// stage styled with the print CSS. 89x41mm @300dpi, edge-to-edge (no white margins).
+function _lblRasterize(item, idx, cb){
+  var card=document.getElementById('lcard-'+idx);
+  if(!card || !window.html2canvas){ cb(null); return; }
+  var mm=96/25.4, w=Math.round(89*mm), hgt=Math.round(41*mm);
+  var stage=document.createElement('div');
+  stage.id='lbl-raster-stage';
+  stage.style.cssText='position:fixed;left:-99999px;top:0;width:'+w+'px;height:'+hgt+'px;background:#fff;overflow:hidden;';
+  stage.innerHTML='<style>'+_lblStandaloneCss()+'</style>'+card.outerHTML;
+  document.body.appendChild(stage);
+  try{
+    html2canvas(stage,{scale:1051/w,backgroundColor:'#ffffff',width:w,height:hgt,windowWidth:w,logging:false}).then(function(cv){
+      if(stage.parentNode) document.body.removeChild(stage); cb(cv);
+    }).catch(function(){ if(stage.parentNode) document.body.removeChild(stage); cb(null); });
+  }catch(e){ if(stage.parentNode) document.body.removeChild(stage); cb(null); }
+}
+
+// Get a JPEG blob for a label — print-matching rasterizer, hand-drawn canvas fallback.
 function _lblExportBlob(item, idx, cb){
   function fallback(){ try{ _lblDrawCanvas(item).toBlob(function(b){ cb(b); },'image/jpeg',0.92); }catch(e){ cb(null); } }
-  _lblRasterize(item, idx, function(cv){
-    if(!cv){ fallback(); return; }
-    try{ cv.toBlob(function(blob){ if(blob) cb(blob); else fallback(); },'image/jpeg',0.95); }catch(e){ fallback(); }
+  _loadHtml2Canvas(function(ok){
+    if(!ok){ fallback(); return; }
+    _lblRasterize(item, idx, function(cv){
+      if(!cv){ fallback(); return; }
+      try{ cv.toBlob(function(blob){ if(blob) cb(blob); else fallback(); },'image/jpeg',0.95); }catch(e){ fallback(); }
+    });
   });
 }
 
