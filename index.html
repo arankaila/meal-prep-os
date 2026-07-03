@@ -788,9 +788,9 @@ tr:hover .inv-row-actions{opacity:1;}
 .pack-box-title{font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:-.3px;line-height:1.2;}
 .pack-box-meta{display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;}
 .pack-body{padding:0 18px;}
-.pack-row{display:grid;grid-template-columns:80px 1fr 64px auto;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.pack-row{display:grid;grid-template-columns:58px minmax(0,1fr) auto;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
 .pack-row:last-child{border-bottom:none;}
-.pack-type-badge{font-family:var(--mono);font-size:8px;padding:3px 6px;border-radius:4px;text-align:center;letter-spacing:.3px;}
+.pack-type-badge{font-family:var(--mono);font-size:8px;padding:3px 6px;border-radius:4px;text-align:center;letter-spacing:.3px;margin-top:2px;}
 .pack-component-name{font-size:13px;font-weight:600;color:var(--text);line-height:1.3;}
 .pack-component-sub{font-size:10px;color:var(--text3);margin-top:1px;}
 .pack-weight{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--gold);text-align:right;}
@@ -801,7 +801,7 @@ tr:hover .inv-row-actions{opacity:1;}
 .pack-macro-label{font-size:8px;color:var(--text3);font-family:var(--mono);letter-spacing:.5px;margin-top:2px;text-transform:uppercase;}
 .pack-allergen-row{padding:10px 18px;border-top:1px solid rgba(239,68,68,.15);background:rgba(239,68,68,.04);display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
 .pack-highlight-row{padding:8px 18px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
-.pack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;}
+.pack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:14px;}
 
 /* WEEKLY MENU CARDS */
 .menu-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s,box-shadow .2s;}
@@ -8254,9 +8254,12 @@ function clearMenu(){
 // ═══════════════════════════════════════════
 // Cooked weight (per box) of the MAIN ingredient in a component — a weigh-against check
 // for packers (the actual chicken / rice, not the whole component incl. sauce/oil).
-function _packMainIngHtml(comp, totalScale, slot){
-  if (['protein','carb','veg'].indexOf(slot) === -1) return '';
-  if (!comp || !comp.lines || !comp.lines.length) return '';
+// Macro-driving main ingredient in a component (protein: chicken/salmon/fish; carb: rice/quinoa),
+// returned as {name, cw} where cw is the cooked weight. Shared by the pack sheet AND the Box
+// Board \u2014 these ingredients drive most of the label macros, so they must be consistent box-to-box.
+function bbMainIng(comp, totalScale, slot){
+  if (['protein','carb','veg'].indexOf(slot) === -1) return null;
+  if (!comp || !comp.lines || !comp.lines.length) return null;
   var wantCat = { protein:'Protein', carb:'Carb', veg:'Veg' }[slot];
   var best = null;
   comp.lines.forEach(function(line){
@@ -8267,6 +8270,10 @@ function _packMainIngHtml(comp, totalScale, slot){
     var isCat = ing.cat === wantCat;
     if (!best || (isCat && !best.isCat) || (isCat === best.isCat && cw > best.cw)) best = { name: ing.name, cw: cw, isCat: isCat };
   });
+  return best;
+}
+function _packMainIngHtml(comp, totalScale, slot){
+  var best = bbMainIng(comp, totalScale, slot);
   if (!best) return '';
   return '<div style="font-size:10.5px;color:var(--gold);font-family:var(--mono);margin-top:3px">\u21B3 '+n2h(best.name)+' ~'+Math.round(best.cw)+'g cooked</div>';
 }
@@ -8568,7 +8575,7 @@ function renderPackSheet(){
              <div style="font-size:11px;color:var(--text3);margin-top:1px">Bespoke macros · Must be packed and labelled separately · Do not mix with standard boxes</div>
            </div>
          </div>
-         <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+         <div style="margin-top:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:16px">
            ${athleteCards.join('')}
          </div>
        </div>`
@@ -15669,14 +15676,41 @@ function bbBoxGroups() {
   });
   return groups;
 }
-function bbIsFilled(ord, dishId, comp) {
+// Resolve the fill-progress store for a box group (athlete boxes live on the dish, real orders on the order).
+function _bbStore(ord, dishId) {
   if (ord && ord.athlete) {
     var d = getProductionDishes().find(function(x){ return x.id === dishId; });
-    return !!(d && d.fillProgress && d.fillProgress[ord.id] && d.fillProgress[ord.id][comp]);
+    return (d && d.fillProgress && d.fillProgress[ord.id]) || null;
   }
-  return !!(ord.fillProgress && ord.fillProgress[dishId] && ord.fillProgress[dishId][comp]);
+  return (ord && ord.fillProgress && ord.fillProgress[dishId]) || null;
 }
-function fillBoxComp(ordId, dishId, comp) {
+// Group-level "fully filled" = every physical box of this component is in. The boolean store[comp]
+// is kept true only when ALL boxes are filled, so every existing caller keeps working unchanged.
+function bbIsFilled(ord, dishId, comp) {
+  var s = _bbStore(ord, dishId);
+  return !!(s && s[comp] === true);
+}
+// Is one specific physical box (0-based idx) filled?
+function bbBoxFilled(ord, dishId, comp, idx) {
+  var s = _bbStore(ord, dishId);
+  if (!s) return false;
+  if (s[comp] === true) return true;                 // legacy / all-filled
+  var boxes = s[comp + '#box'];
+  return !!(boxes && typeof boxes === 'object' && boxes[idx]);
+}
+// How many of a group's qty boxes are filled (drives the "N to fill" count).
+function bbFilledBoxCount(ord, dishId, comp, qty) {
+  var s = _bbStore(ord, dishId);
+  if (!s) return 0;
+  if (s[comp] === true) return qty;
+  var boxes = s[comp + '#box'];
+  if (!boxes || typeof boxes !== 'object') return 0;
+  var f = 0; for (var i = 0; i < qty; i++) if (boxes[i]) f++;
+  return f;
+}
+function fillBoxComp(ordId, dishId, comp, idx, qty) {
+  idx = idx == null ? 0 : idx;
+  qty = Math.max(1, qty || 1);
   var isAth = String(ordId).indexOf('ATH-') === 0;
   var dish = getProductionDishes().find(function(d){ return d.id === dishId; });
   var store, ord = null;
@@ -15692,18 +15726,52 @@ function fillBoxComp(ordId, dishId, comp) {
     if (!ord.fillProgress[dishId]) ord.fillProgress[dishId] = {};
     store = ord.fillProgress[dishId];
   }
-  var was = !!store[comp];
-  store[comp] = !was;
-  if (was) delete store[comp];
-  // Real orders: mark packed when every component lands (pack sheet reads athletes via drops).
+  // Per-box map under comp+'#box'; migrate a legacy all-filled boolean into it first.
+  var bk = comp + '#box';
+  var boxes = store[bk];
+  if (!boxes || typeof boxes !== 'object') {
+    boxes = {};
+    if (store[comp] === true) { for (var i = 0; i < qty; i++) boxes[i] = true; }
+  }
+  if (boxes[idx]) delete boxes[idx]; else boxes[idx] = true;
+  store[bk] = boxes;
+  // Keep the group boolean = all qty boxes filled (so bbIsFilled + packed rollup stay correct).
+  var all = true; for (var j = 0; j < qty; j++) { if (!boxes[j]) { all = false; break; } }
+  if (all) store[comp] = true; else if (store[comp]) delete store[comp];
+  // Real orders: mark packed when every component is fully in (pack sheet reads athletes via drops).
   if (!isAth && ord && dish) {
-    var allIn = bbDishComps(dish).every(function(c){ return ord.fillProgress[dishId][c]; });
+    var allIn = bbDishComps(dish).every(function(c){ return ord.fillProgress[dishId][c] === true; });
     if (!ord.packProgress) ord.packProgress = {};
     if (allIn) ord.packProgress[dishId] = { packed: true, packedAt: new Date().toISOString() };
     else if (ord.packProgress[dishId] && ord.packProgress[dishId].packed) ord.packProgress[dishId] = { packed: false, packedAt: null };
   }
   save();
   renderBoxBoard();
+}
+// Reconciliation + learning trend for a component: cooked-vs-needed flag (±10%) and rolling yield drift.
+function _bbReconcileHtml(comp, needed, week) {
+  var out = '';
+  var log = (DB.productionLog || []).find(function(p){ return p.week === week && p.component === comp; });
+  if (log && log.actualWeight != null && needed > 0) {
+    var pct = (log.actualWeight - needed) / needed * 100;
+    var ok = Math.abs(pct) <= 10;
+    var col = ok ? 'var(--green)' : '#ff9f0a';
+    var sign = pct >= 0 ? '+' : '';
+    out += '<div style="display:flex;align-items:center;gap:8px;border:1px solid ' + col + ';border-radius:6px;padding:6px 10px;margin-bottom:8px;font-size:12px">' +
+      '<span style="font-family:var(--mono);font-weight:800;color:' + col + '">' + (ok ? '✓' : '⚠') + ' ' + sign + pct.toFixed(0) + '%</span>' +
+      '<span style="color:var(--text2)">Cooked ' + Math.round(log.actualWeight) + 'g vs ' + Math.round(needed) + 'g needed' +
+      (ok ? '' : ' — worth checking this component\'s yield or portion sizes') + '</span></div>';
+  }
+  // Learning loop — average variance across every logged cook of this component (all weeks).
+  var hist = (DB.productionLog || []).filter(function(p){ return p.component === comp && p.actualWeight != null && p.expectedWeight; });
+  if (hist.length >= 2) {
+    var avg = hist.reduce(function(s, p){ return s + (p.actualWeight - p.expectedWeight) / p.expectedWeight; }, 0) / hist.length * 100;
+    var s2 = avg >= 0 ? '+' : '';
+    var msg = 'Last ' + hist.length + ' cooks averaged ' + s2 + avg.toFixed(0) + '% vs plan';
+    if (Math.abs(avg) > 8) msg += ' — yield estimate may be ' + (avg > 0 ? 'low' : 'high') + '; consider adjusting this component\'s cook yield.';
+    out += '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;font-family:var(--mono)">📈 ' + msg + '</div>';
+  }
+  return out;
 }
 
 function renderBoxBoard() {
@@ -15725,7 +15793,7 @@ function renderBoxBoard() {
         compState[c] = { cooked: !!(log && log.status === 'complete'), needed: 0, filled: 0 };
       }
       compState[c].needed += g.qty;                                        // count BOXES, not orders (Gary ×2 = 2 boxes)
-      if (bbIsFilled(g.ord, g.dish.id, c)) compState[c].filled += g.qty;
+      compState[c].filled += bbFilledBoxCount(g.ord, g.dish.id, c, g.qty); // count filled BOXES (partial groups count)
     });
   });
 
@@ -15763,19 +15831,53 @@ function renderBoxBoard() {
 
   if (_bbFillComp && compState[_bbFillComp]) {
     var c = _bbFillComp;
-    var rows = groups.filter(function(g){ return g.comps.indexOf(c) !== -1; })
-      .sort(function(a, b){ return (bbIsFilled(a.ord, a.dish.id, c) ? 1 : 0) - (bbIsFilled(b.ord, b.dish.id, c) ? 1 : 0); })
-      .map(function(g) {
-        var cust = getCustById(g.ord.customerId);
-        var who = g.ord.recipientName || (cust ? cust.name : g.ord.id);
-        var filled = bbIsFilled(g.ord, g.dish.id, c);
-        return '<div class="bb-fill-row' + (filled ? ' bb-filled' : '') + '">' +
-          '<div style="flex:1;min-width:0"><strong>' + n2h(who) + '</strong> <span style="color:var(--text3)">· ' + n2h(g.dish.name) + '</span></div>' +
-          '<span style="font-family:var(--mono);font-weight:800;font-size:15px">×' + g.qty + '</span>' +
-          '<button class="bb-fill-btn" style="' + (filled ? 'background:var(--surface3);color:var(--text3)' : '') + '" onclick="fillBoxComp(\'' + g.ord.id + '\',\'' + g.dish.id + '\',\'' + c.replace(/'/g, "\\'") + '\')">' + (filled ? '↺' : '✓ In') + '</button>' +
-        '</div>';
-      }).join('');
-    html += '<div class="card" style="padding:14px 16px;margin-bottom:14px"><div style="font-weight:800;font-size:15px;margin-bottom:10px">Filling: ' + n2h(c) + '</div>' + rows + '</div>';
+    var fillComp = getComp(c);
+    var fillGroups = groups.filter(function(g){ return g.comps.indexOf(c) !== -1; });
+
+    // Expand each group into one row PER PHYSICAL BOX, each with its own cooked-weight target.
+    // We show the whole-component weight AND the macro-driving ingredient weight (chicken, rice…)
+    // so protein/carb stays consistent box-to-box and the label macros stay honest.
+    var boxRows = [];
+    var batchCooked = 0, batchMain = 0, mainName = '';
+    fillGroups.forEach(function(g) {
+      var slot = ['protein','carb','veg','condiment','complete'].find(function(sl){ return g.dish[sl] === c; }) || '';
+      var overall = n(g.dish.scaleOverall) || 1;
+      var cscale = (slot === 'protein' ? (n(g.dish.scaleProtein) || 1)
+                  : slot === 'carb'    ? (n(g.dish.scaleCarb) || 1)
+                  : slot === 'veg'     ? (n(g.dish.scaleVeg) || 1) : 1) * overall;
+      var perBox = fillComp ? calcRecipeTotals(fillComp).cookedWeight * cscale : 0;
+      var mi = bbMainIng(fillComp, cscale, slot);
+      var custF = getCustById(g.ord.customerId);
+      var whoF = g.ord.recipientName || (custF ? custF.name : g.ord.id);
+      for (var bi = 0; bi < g.qty; bi++) {
+        boxRows.push({ ordId: g.ord.id, dishId: g.dish.id, dishName: g.dish.name, who: whoF, qty: g.qty, idx: bi,
+          athlete: !!g.ord.athlete, perBox: perBox, mi: mi,
+          filled: bbBoxFilled(g.ord, g.dish.id, c, bi) });
+      }
+      batchCooked += perBox * g.qty;
+      if (mi) { batchMain += mi.cw * g.qty; mainName = mi.name; }
+    });
+    boxRows.sort(function(a, b){ return (a.filled ? 1 : 0) - (b.filled ? 1 : 0); });
+
+    var rows = boxRows.map(function(r) {
+      var boxTag = r.qty > 1 ? ' <span style="color:var(--text3);font-family:var(--mono);font-size:11px">· box ' + (r.idx + 1) + ' of ' + r.qty + '</span>' : '';
+      var athTag = r.athlete ? ' <span style="color:var(--gold);font-size:10px">⚡ athlete</span>' : '';
+      var miLine = r.mi ? '<div style="font-size:10.5px;color:var(--gold);font-family:var(--mono);margin-top:2px">↳ ' + n2h(r.mi.name) + ' ~' + Math.round(r.mi.cw) + 'g</div>' : '';
+      return '<div class="bb-fill-row' + (r.filled ? ' bb-filled' : '') + '">' +
+        '<div style="flex:1;min-width:0"><strong>' + n2h(r.who) + '</strong> <span style="color:var(--text3)">· ' + n2h(r.dishName) + '</span>' + boxTag + athTag + '</div>' +
+        '<div style="text-align:right;margin-right:8px">' +
+          '<div style="font-family:var(--mono);font-weight:800;font-size:15px">' + Math.round(r.perBox) + 'g</div>' + miLine +
+        '</div>' +
+        '<button class="bb-fill-btn" style="' + (r.filled ? 'background:var(--surface3);color:var(--text3)' : '') + '" onclick="fillBoxComp(\'' + r.ordId + '\',\'' + r.dishId + '\',\'' + c.replace(/'/g, "\\'") + '\',' + r.idx + ',' + r.qty + ')">' + (r.filled ? '↺' : '✓ In') + '</button>' +
+      '</div>';
+    }).join('');
+
+    var sub = boxRows.length + ' box' + (boxRows.length !== 1 ? 'es' : '') + ' · ~' + Math.round(batchCooked) + 'g total';
+    if (batchMain > 0 && mainName) sub += ' · ~' + Math.round(batchMain) + 'g ' + n2h(mainName.toLowerCase());
+    var hdr = '<div style="font-weight:800;font-size:15px;margin-bottom:2px">Filling: ' + n2h(c) + '</div>' +
+      '<div style="color:var(--text3);font-size:12px;margin-bottom:8px">' + sub + '</div>' +
+      _bbReconcileHtml(c, batchCooked, week);
+    html += '<div class="card" style="padding:14px 16px;margin-bottom:14px">' + hdr + rows + '</div>';
   }
 
   html += '<div class="bb-grid">' + groups.map(function(g) {
