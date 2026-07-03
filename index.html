@@ -4363,7 +4363,7 @@ input:focus, select:focus, textarea:focus { border-color:var(--gold) !important;
             <div class="gs-h2">Athlete Dish Variants</div>
             <p class="gs-p">Athlete variants are a built-in dish type — flagged directly on the dish card and filtered from the portal automatically. Customers can never see or order them, regardless of whether the portal is open.</p>
             <div class="gs-callout gold"><b>★ Automatic filtering.</b> Any dish with the athlete variant flag set is excluded from the portal in every part of the ordering flow — dish listing, selection, cart, and order submission. There is no setting to toggle or forget.</div>
-            <p class="gs-p">To create and manage an athlete variant, see <strong>Weekly Menu → Athlete Variant Dishes</strong> in this guide. The short version: click <strong>+ Create Athlete Variant</strong> on a dish card, adjust the scales, assign the athlete from the dropdown, then manually add the order in the Orders panel. The dish flows through Production, Packaging, Route Sheet, and Labels exactly like any other order.</p>
+            <p class="gs-p">To create and manage an athlete variant, see <strong>Weekly Menu → Athlete Variant Dishes</strong> in this guide. The short version: click <strong>+ Create Athlete Variant</strong> on a dish card, assign the athlete, set the <strong>Sunday/Wednesday portions</strong> on the variant, and adjust the scales. It then flows through Purchasing, Production, Packaging, Route Sheet, and Labels automatically — no manual order needed.</p>
 
             <div class="gs-h2">Portal Setup (First-Time or New Device)</div>
             <p class="gs-p">On first load, the portal shows a setup screen. Paste in the Firebase config object (from Firebase Console → Project Settings → Your apps → Web app). Add your bank account name, sort code, and account number for the payment instructions shown after checkout. This config is saved to <code>localStorage</code> — it only needs to be done once per device. The ops app and portal share the same config key, so if you're on the same machine where you've already configured the ops app, the portal picks it up automatically with no setup required.</p>
@@ -8101,7 +8101,14 @@ function renderAthleteSection(dish, realIdx) {
     return '<option value="'+ath.id+'"'+(currentId === ath.id ? ' selected' : '')+'>'+ath.name+'</option>';
   }).join('');
   var dropdown = '<select style="width:100%;padding:5px 8px;border-radius:5px;border:1px solid '+(currentId?'rgba(201,168,76,.45)':'var(--border2)')+';background:'+(currentId?'rgba(201,168,76,.07)':'var(--surface2)')+';color:'+(currentId?'var(--gold)':'var(--text2)')+';font-family:var(--mono);font-size:11px;outline:none;cursor:pointer" onchange="setAthleteId('+realIdx+',this.value)">'+opts+'</select>';
-  return banner + dropdown;
+  var drops = '<div style="display:flex;gap:8px;margin-top:7px">'
+    + '<label style="flex:1;display:flex;flex-direction:column;gap:2px;font-size:8px;font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase;color:var(--text3)">Sun portions'
+    + '<input type="number" min="0" step="1" value="'+(n(dish.drop1)||0)+'" onchange="ud('+realIdx+',\'drop1\',this.value)" style="width:100%;padding:5px 7px;border:1px solid var(--border2);border-radius:4px;background:var(--surface2);color:var(--text);font-size:13px;font-family:var(--mono)"></label>'
+    + '<label style="flex:1;display:flex;flex-direction:column;gap:2px;font-size:8px;font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase;color:var(--text3)">Wed portions'
+    + '<input type="number" min="0" step="1" value="'+(n(dish.drop2)||0)+'" onchange="ud('+realIdx+',\'drop2\',this.value)" style="width:100%;padding:5px 7px;border:1px solid var(--border2);border-radius:4px;background:var(--surface2);color:var(--text);font-size:13px;font-family:var(--mono)"></label>'
+    + '</div>'
+    + '<div style="font-size:9px;color:var(--text3);margin-top:4px;line-height:1.4">Set how many portions on each drop — this drives Purchasing, Production, Packing &amp; Labels.</div>';
+  return banner + dropdown + drops;
 }
 
 function setAthleteId(idx, athId) {
@@ -15607,22 +15614,46 @@ function bbBoxGroups() {
       groups.push({ ord: o, dish: dish, qty: qty, comps: bbDishComps(dish) });
     });
   });
+  // Athlete variants have no real order — add their boxes from the dish's manual Sun/Wed
+  // drops (mirrors pack-sheet & label logic). Fill state lives on the dish, keyed by box id.
+  dishes.filter(function(d){ return d.athleteVariant; }).forEach(function(d){
+    var athName = (d.athleteIds||[]).map(function(aId){ var a=(DB.athletes||[]).find(function(x){return x.id===aId;}); return a?a.name:''; }).filter(Boolean).join(' / ') || 'Athlete';
+    [['sunday','S',n(d.drop1)||0],['wednesday','W',n(d.drop2)||0]].forEach(function(pr){
+      if (pr[2] <= 0) return;
+      if (gs !== 'all' && gs !== pr[0]) return;
+      groups.push({ ord: { id:'ATH-'+pr[1]+'-'+d.id, recipientName:athName, session:pr[0], athlete:true }, dish: d, qty: pr[2], comps: bbDishComps(d) });
+    });
+  });
   return groups;
 }
 function bbIsFilled(ord, dishId, comp) {
+  if (ord && ord.athlete) {
+    var d = getProductionDishes().find(function(x){ return x.id === dishId; });
+    return !!(d && d.fillProgress && d.fillProgress[ord.id] && d.fillProgress[ord.id][comp]);
+  }
   return !!(ord.fillProgress && ord.fillProgress[dishId] && ord.fillProgress[dishId][comp]);
 }
 function fillBoxComp(ordId, dishId, comp) {
-  var ord = (DB.weeklyOrders || []).find(function(o){ return o.id === ordId; });
-  if (!ord) return;
-  if (!ord.fillProgress) ord.fillProgress = {};
-  if (!ord.fillProgress[dishId]) ord.fillProgress[dishId] = {};
-  var was = !!ord.fillProgress[dishId][comp];
-  ord.fillProgress[dishId][comp] = !was;
-  if (was) delete ord.fillProgress[dishId][comp];
-  // Box complete when every component of the dish has landed → mark packed
+  var isAth = String(ordId).indexOf('ATH-') === 0;
   var dish = getProductionDishes().find(function(d){ return d.id === dishId; });
-  if (dish) {
+  var store, ord = null;
+  if (isAth) {
+    if (!dish) return;
+    if (!dish.fillProgress) dish.fillProgress = {};
+    if (!dish.fillProgress[ordId]) dish.fillProgress[ordId] = {};
+    store = dish.fillProgress[ordId];
+  } else {
+    ord = (DB.weeklyOrders || []).find(function(o){ return o.id === ordId; });
+    if (!ord) return;
+    if (!ord.fillProgress) ord.fillProgress = {};
+    if (!ord.fillProgress[dishId]) ord.fillProgress[dishId] = {};
+    store = ord.fillProgress[dishId];
+  }
+  var was = !!store[comp];
+  store[comp] = !was;
+  if (was) delete store[comp];
+  // Real orders: mark packed when every component lands (pack sheet reads athletes via drops).
+  if (!isAth && ord && dish) {
     var allIn = bbDishComps(dish).every(function(c){ return ord.fillProgress[dishId][c]; });
     if (!ord.packProgress) ord.packProgress = {};
     if (allIn) ord.packProgress[dishId] = { packed: true, packedAt: new Date().toISOString() };
