@@ -15620,8 +15620,8 @@ function renderBoxBoard() {
         var log = (DB.productionLog || []).find(function(p){ return p.week === week && p.component === c; });
         compState[c] = { cooked: !!(log && log.status === 'complete'), needed: 0, filled: 0 };
       }
-      compState[c].needed++;
-      if (bbIsFilled(g.ord, g.dish.id, c)) compState[c].filled++;
+      compState[c].needed += g.qty;                                        // count BOXES, not orders (Gary ×2 = 2 boxes)
+      if (bbIsFilled(g.ord, g.dish.id, c)) compState[c].filled += g.qty;
     });
   });
 
