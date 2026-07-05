@@ -11282,12 +11282,13 @@ function renderAthletes() {
   var athletes = DB.athletes || [];
   document.getElementById('athletes-list').innerHTML = athletes.length ?
     athletes.map((ath, idx) => `
-      <div style="padding:12px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+      <div style="padding:12px;border:1px solid var(--border);border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px">
         <div>
           <div style="font-weight:600;color:var(--text1)">${ath.name}</div>
-          <div style="font-size:12px;color:var(--text3)">Added ${new Date(ath.createdAt||Date.now()).toLocaleDateString()}</div>
+          <div style="font-size:12px;color:var(--text3)">${(ath.targets||[]).length} macro target${(ath.targets||[]).length===1?'':'s'}${(ath.allergens&&ath.allergens.length)?' · avoids '+escHtml(ath.allergens.join(', ')):''}</div>
         </div>
-        <div style="display:flex;gap:6px">
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-gold btn-xs" onclick="openAthleteMatcher(${idx})" title="Find a dish that hits this athlete's macros">🎯 Match dish</button>
           <button class="btn btn-ghost btn-xs" onclick="openAthleteModal(${idx})">✎ Edit</button>
           <button class="btn btn-ghost btn-xs" onclick="deleteAthlete(${idx})">🗑 Delete</button>
         </div>
@@ -11365,7 +11366,7 @@ function openAthleteModal(id) {
     m = document.createElement('div');
     m.className = 'modal-overlay';
     m.id = 'athlete-modal';
-    m.innerHTML = `<div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="am-title">Add Athlete</div><button class="modal-close" onclick="closeModal('athlete-modal')">×</button></div><div class="modal-body"><div style="display:flex;flex-direction:column;gap:12px"><label><span style="display:block;font-weight:600;margin-bottom:4px;font-size:12px;color:var(--text2)">Athlete Name</span><input type="text" id="am-name" placeholder="e.g., Jake" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:4px"></label><label><span style="display:block;font-weight:600;margin-bottom:4px;font-size:12px;color:var(--text2)">Notes (optional)</span><textarea id="am-notes" placeholder="e.g., Bulking phase, high protein" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:4px;min-height:60px;font-size:13px"></textarea></label></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('athlete-modal')">Cancel</button><button class="btn btn-gold" onclick="saveAthlete()">Save Athlete</button></div></div>`;
+    m.innerHTML = `<div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="am-title">Add Athlete</div><button class="modal-close" onclick="closeModal('athlete-modal')">×</button></div><div class="modal-body"><div style="display:flex;flex-direction:column;gap:12px"><label><span style="display:block;font-weight:600;margin-bottom:4px;font-size:12px;color:var(--text2)">Athlete Name</span><input type="text" id="am-name" placeholder="e.g., Jake" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:4px"></label><label><span style="display:block;font-weight:600;margin-bottom:4px;font-size:12px;color:var(--text2)">Allergens to avoid <span style="font-weight:400;color:var(--text3)">(comma-separated — hard filter)</span></span><input type="text" id="am-allergens" placeholder="e.g., Dairy, Gluten" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:4px"></label><label><span style="display:block;font-weight:600;margin-bottom:4px;font-size:12px;color:var(--text2)">Dietary preference <span style="font-weight:400;color:var(--text3)">(optional, soft)</span></span><input type="text" id="am-dietary" placeholder="e.g., prefers no red meat" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:4px"></label><div><span style="display:block;font-weight:600;margin-bottom:4px;font-size:12px;color:var(--text2)">Macro targets <span style="font-weight:400;color:var(--text3)">(from the nutritionist — protein / carb / fat grams)</span></span><div id="am-targets"></div><button class="btn btn-ghost btn-xs" onclick="amAddTarget()" style="margin-top:4px">+ Add target</button></div><label><span style="display:block;font-weight:600;margin-bottom:4px;font-size:12px;color:var(--text2)">Notes (optional)</span><textarea id="am-notes" placeholder="e.g., Bulking phase" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:4px;min-height:50px;font-size:13px"></textarea></label></div></div><div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('athlete-modal')">Cancel</button><button class="btn btn-gold" onclick="saveAthlete()">Save Athlete</button></div></div>`;
     document.body.appendChild(m);
   }
   var editIdx = id !== undefined ? id : -1;
@@ -11373,6 +11374,10 @@ function openAthleteModal(id) {
   document.getElementById('am-title').textContent = ath ? 'Edit Athlete' : 'Add Athlete';
   document.getElementById('am-name').value = ath?.name || '';
   document.getElementById('am-notes').value = ath?.notes || '';
+  document.getElementById('am-allergens').value = (ath && ath.allergens || []).join(', ');
+  document.getElementById('am-dietary').value = ath?.dietary || '';
+  _amTargets = (ath && ath.targets ? JSON.parse(JSON.stringify(ath.targets)) : []);
+  amRenderTargets();
   document.getElementById('am-name').dataset.editIdx = editIdx;
   openModal('athlete-modal');
 }
@@ -11382,13 +11387,22 @@ function saveAthlete() {
   if (!name) { alert('Please enter athlete name'); return; }
   var editIdx = parseInt(document.getElementById('am-name').dataset.editIdx);
   var notes = (document.getElementById('am-notes').value || '').trim();
+  var allergens = (document.getElementById('am-allergens').value || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  var dietary = (document.getElementById('am-dietary').value || '').trim();
+  // Collect macro targets — keep rows with any macro entered; coerce to numbers.
+  var targets = (_amTargets || []).map(function(t){
+    return { label: (t.label || '').trim(), p: n(t.p), c: n(t.c), f: n(t.f) };
+  }).filter(function(t){ return t.p || t.c || t.f; });
 
   if (!DB.athletes) DB.athletes = [];
   if (editIdx >= 0) {
     DB.athletes[editIdx].name = name;
     DB.athletes[editIdx].notes = notes;
+    DB.athletes[editIdx].allergens = allergens;
+    DB.athletes[editIdx].dietary = dietary;
+    DB.athletes[editIdx].targets = targets;
   } else {
-    DB.athletes.push({ id: 'ath-' + Date.now(), name: name, notes: notes, createdAt: new Date().toISOString() });
+    DB.athletes.push({ id: 'ath-' + Date.now(), name: name, notes: notes, allergens: allergens, dietary: dietary, targets: targets, createdAt: new Date().toISOString() });
   }
   save();
   closeModal('athlete-modal');
@@ -11403,6 +11417,193 @@ function deleteAthlete(idx) {
   renderAthletes();
   notify('Athlete deleted');
 }
+
+// ═══════════════════════════════════════════
+// ATHLETE MACRO-TARGET SOLVER & DISH MATCHER
+// A dish's macros are LINEAR in its component scales, so "tweak the scales until
+// the macros match" isn't trial-and-error — it's a solve. For a target P/C we
+// solve the protein & carb scales in one pass (veg held at its scale, condiment/
+// complete fixed), rank every dish by fit, PREFER dishes already being cooked
+// this drop (an athlete variant reusing those components is a re-portion, not a
+// new cook), and HARD-EXCLUDE the athlete's allergens. Fat is a best-effort
+// residual — the current levers can't drive it independently.
+// ═══════════════════════════════════════════
+var ATH_TOL = 0.10;                 // ±10% per macro = "in range" (configurable)
+var ATH_SMIN = 0.25, ATH_SMAX = 4;  // scale clamps (keeps portions sane)
+var _amTargets = [];                // working target rows in the athlete editor
+
+function _compMacro(name) {
+  var comp = getComp(name);
+  if (!comp) return { p: 0, c: 0, f: 0 };
+  var t = calcRecipeTotals(comp);
+  return { p: n(t.prot), c: n(t.carb), f: n(t.fat) };
+}
+// Solve protein & carb scales to hit target P/C. Returns scales, achieved macros
+// and residuals; fat is reported, not targeted.
+function solveDishToTarget(dish, tgt) {
+  var P = _compMacro(dish.protein), C = _compMacro(dish.carb), V = _compMacro(dish.veg),
+      D = _compMacro(dish.condiment), K = _compMacro(dish.complete);
+  var sV = n(dish.scaleVeg) || 1;
+  var bP = V.p * sV + D.p + K.p, bC = V.c * sV + D.c + K.c, bF = V.f * sV + D.f + K.f;
+  // [P.p C.p ; P.c C.c] · [sP ; sC] = [tgt.p - bP ; tgt.c - bC]
+  var a = P.p, b = C.p, e = (tgt.p || 0) - bP;
+  var c = P.c, d = C.c, f = (tgt.c || 0) - bC;
+  var det = a * d - b * c, sP, sC;
+  if (Math.abs(det) > 1e-6) { sP = (e * d - b * f) / det; sC = (a * f - e * c) / det; }
+  else { sP = Math.abs(a) > 1e-6 ? e / a : (n(dish.scaleProtein) || 1);
+         sC = Math.abs(d) > 1e-6 ? f / d : (n(dish.scaleCarb) || 1); }
+  sP = Math.min(ATH_SMAX, Math.max(ATH_SMIN, sP));
+  sC = Math.min(ATH_SMAX, Math.max(ATH_SMIN, sC));
+  var gP = bP + sP * P.p + sC * C.p, gC = bC + sP * P.c + sC * C.c, gF = bF + sP * P.f + sC * C.f;
+  var pctP = (tgt.p > 0) ? Math.abs(gP - tgt.p) / tgt.p : 0;
+  var pctC = (tgt.c > 0) ? Math.abs(gC - tgt.c) / tgt.c : 0;
+  return { sP: sP, sC: sC, sV: sV, gotP: gP, gotC: gC, gotF: gF,
+           errP: gP - (tgt.p || 0), errC: gC - (tgt.c || 0), errF: gF - (tgt.f || 0),
+           fit: Math.max(pctP, pctC), inRange: (pctP <= ATH_TOL && pctC <= ATH_TOL) };
+}
+// True if the dish contains any of the athlete's allergens (substring match, either way).
+function _athAllergenClash(dish, ath) {
+  var al = (ath.allergens || []).map(function(x){ return String(x).toLowerCase().trim(); }).filter(Boolean);
+  if (!al.length) return false;
+  var da = getDishAllergens(dish).map(function(x){ return String(x).toLowerCase(); });
+  return al.some(function(a){ return da.some(function(x){ return x.indexOf(a) !== -1 || a.indexOf(x) !== -1; }); });
+}
+// Dish IDs (→ ordered qty) already ordered for a given drop this production week.
+function _dishesOrderedForDrop(dropSess) {
+  var set = {};
+  getProductionOrders().forEach(function(o) {
+    var s = (o.session || '').toLowerCase();
+    if (s === dropSess || s === 'both') {
+      Object.keys(o.allocation || {}).forEach(function(id){ var q = n(o.allocation[id]); if (q > 0) set[id] = (set[id] || 0) + q; });
+    }
+  });
+  return set;
+}
+
+function openAthleteMatcher(athIdx) {
+  var ath = (DB.athletes || [])[athIdx];
+  if (!ath) return;
+  var m = document.getElementById('ath-match-modal');
+  if (!m) {
+    m = document.createElement('div');
+    m.className = 'modal-overlay';
+    m.id = 'ath-match-modal';
+    m.innerHTML = '<div class="modal modal-lg"><div class="modal-header"><div class="modal-title" id="amm-title">Match dish</div><button class="modal-close" onclick="closeModal(\'ath-match-modal\')">×</button></div><div class="modal-body"><div id="amm-controls"></div><div id="amm-results" style="margin-top:12px"></div></div></div>';
+    document.body.appendChild(m);
+  }
+  m.dataset.athIdx = athIdx;
+  document.getElementById('amm-title').textContent = 'Match dish → ' + ath.name;
+  var tgts = ath.targets || [];
+  var tgtOpts = tgts.length
+    ? tgts.map(function(t, i){ return '<option value="' + i + '">' + escHtml(t.label || ('Target ' + (i + 1))) + ' — ' + n(t.p) + 'P / ' + n(t.c) + 'C / ' + n(t.f) + 'F</option>'; }).join('')
+    : '<option value="">(no targets — add via Edit)</option>';
+  document.getElementById('amm-controls').innerHTML =
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">' +
+      '<label style="flex:2;min-width:200px;font-size:11px;color:var(--text2)">Target<br><select id="amm-target" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:5px;margin-top:3px">' + tgtOpts + '</select></label>' +
+      '<label style="font-size:11px;color:var(--text2)">Drop<br><select id="amm-drop" style="padding:7px;border:1px solid var(--border);border-radius:5px;margin-top:3px"><option value="sunday">Sunday</option><option value="wednesday">Wednesday</option></select></label>' +
+      '<button class="btn btn-gold btn-sm" onclick="runAthleteMatch()">Find matches</button>' +
+    '</div>' +
+    (ath.allergens && ath.allergens.length ? '<div style="margin-top:6px;font-size:10px;color:#f4796b;font-family:var(--mono)">⚠ Excluding allergens: ' + escHtml(ath.allergens.join(', ')) + '</div>' : '') +
+    (ath.dietary ? '<div style="margin-top:3px;font-size:10px;color:var(--text3)">Preference: ' + escHtml(ath.dietary) + '</div>' : '');
+  document.getElementById('amm-results').innerHTML = '';
+  openModal('ath-match-modal');
+  if (tgts.length) runAthleteMatch();
+}
+
+function runAthleteMatch() {
+  var m = document.getElementById('ath-match-modal');
+  var athIdx = parseInt(m.dataset.athIdx);
+  var ath = (DB.athletes || [])[athIdx];
+  if (!ath) return;
+  var res = document.getElementById('amm-results');
+  var ti = parseInt((document.getElementById('amm-target') || {}).value);
+  var tgt = (ath.targets || [])[ti];
+  if (!tgt) { res.innerHTML = '<div style="color:var(--text3);font-size:12px">Add a macro target to this athlete first (Edit → Macro targets).</div>'; return; }
+  var target = { p: n(tgt.p), c: n(tgt.c), f: n(tgt.f) };
+  var drop = (document.getElementById('amm-drop') || {}).value || 'sunday';
+  var ordered = _dishesOrderedForDrop(drop);
+  var rows = getProductionDishes().filter(function(d){ return !d.athleteVariant; }).map(function(d) {
+    return { d: d, sol: solveDishToTarget(d, target), clash: _athAllergenClash(d, ath), tier: ordered[d.id] ? 1 : 2, orderedQty: ordered[d.id] || 0 };
+  }).filter(function(r){ return !r.clash; });   // hard-exclude allergen clashes
+  rows.sort(function(a, b) {
+    if (a.sol.inRange !== b.sol.inRange) return a.sol.inRange ? -1 : 1;   // reachable first
+    if (a.tier !== b.tier) return a.tier - b.tier;                        // already cooking first
+    return a.sol.fit - b.sol.fit;                                         // then closest fit
+  });
+  if (!rows.length) { res.innerHTML = '<div style="color:var(--text3);font-size:12px">No allergen-safe dishes on this week\'s menu — a bespoke dish is needed.</div>'; return; }
+  function macro(lbl, got, tv, err) {
+    var ok = tv > 0 ? Math.abs(err) / tv <= ATH_TOL : true;
+    var col = ok ? 'var(--text2)' : '#ff9f0a';
+    var sg = err >= 0 ? '+' : '';
+    return '<span style="color:' + col + '">' + lbl + ' ' + Math.round(got) + '<span style="color:var(--text3)">/' + Math.round(tv) + 'g</span> (' + sg + Math.round(err) + ')</span>';
+  }
+  res.innerHTML = rows.slice(0, 8).map(function(r) {
+    var s = r.sol;
+    var badge = s.inRange
+      ? '<span style="font-family:var(--mono);font-size:10px;font-weight:800;color:var(--green);border:1px solid var(--green);border-radius:4px;padding:1px 6px">✓ in range</span>'
+      : '<span style="font-family:var(--mono);font-size:10px;font-weight:800;color:#ff9f0a;border:1px solid #ff9f0a;border-radius:4px;padding:1px 6px">stretch ' + Math.round(s.fit * 100) + '%</span>';
+    var tier = r.tier === 1
+      ? '<span style="font-size:10px;color:var(--gold);font-family:var(--mono)" title="Already being cooked this drop — no extra dish, just a bigger portion">♻ already cooking ×' + r.orderedQty + '</span>'
+      : '<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">on menu</span>';
+    return '<div style="border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin-bottom:8px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px">' +
+        '<div style="font-weight:700">' + escHtml(r.d.name) + '</div>' + badge + '</div>' +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;font-family:var(--mono);margin-bottom:6px">' +
+        macro('P', s.gotP, target.p, s.errP) + macro('C', s.gotC, target.c, s.errC) +
+        '<span style="color:var(--text3)" title="Fat is a best-effort residual">Fat ' + Math.round(s.gotF) + '/' + Math.round(target.f) + 'g (' + (s.errF >= 0 ? '+' : '') + Math.round(s.errF) + ')</span>' +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">' +
+        '<div style="font-size:10px;color:var(--text3);font-family:var(--mono)">' + tier + ' · protein ×' + s.sP.toFixed(2) + ' · carb ×' + s.sC.toFixed(2) + ' · veg ×' + s.sV.toFixed(2) + '</div>' +
+        '<button class="btn btn-gold btn-xs" onclick="createMatchedVariant(\'' + r.d.id + '\',' + athIdx + ',' + s.sP.toFixed(3) + ',' + s.sC.toFixed(3) + ',' + s.sV.toFixed(3) + ',\'' + drop + '\')">Create variant →</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// Clone the chosen base dish into an athlete variant, PRE-SCALED to the solved
+// values and placed on the chosen drop. Reuses the base's component recipes, so
+// it's the same cook — the athlete just gets scaled portions.
+function createMatchedVariant(baseId, athIdx, sP, sC, sV, drop) {
+  var arr = getProductionDishes();
+  var base = arr.find(function(d){ return d.id === baseId; });
+  var ath = (DB.athletes || [])[athIdx];
+  if (!base || !ath) return;
+  var v = JSON.parse(JSON.stringify(base));
+  v.id = 'DISH' + String(DB.nextDishId++).padStart(3, '0');
+  v.name = base.name + ' (Athlete: ' + ath.name + ')';
+  v.athleteVariant = true;
+  v.athleteIds = [ath.id];
+  v.scaleProtein = n(sP) || 1;
+  v.scaleCarb = n(sC) || 1;
+  v.scaleVeg = n(sV) || 1;
+  v.scaleOverall = 1;
+  v.drop1 = 0; v.drop2 = 0;
+  if (drop === 'wednesday') v.drop2 = 1; else v.drop1 = 1;
+  v.availSunday = true; v.availWednesday = true;
+  arr.push(v);
+  save();
+  closeModal('ath-match-modal');
+  try { renderMenu(); } catch (e) {}
+  notify('✓ Variant created for ' + ath.name + ' — pre-scaled, on the ' + (drop === 'wednesday' ? 'Wed' : 'Sun') + ' drop');
+}
+
+// ── Athlete-editor macro-target rows ──
+function amRenderTargets() {
+  var el = document.getElementById('am-targets');
+  if (!el) return;
+  el.innerHTML = _amTargets.length ? _amTargets.map(function(t, i) {
+    var inp = 'padding:6px;border:1px solid var(--border);border-radius:4px;font-size:12px';
+    return '<div style="display:flex;gap:6px;margin-bottom:5px;align-items:center">' +
+      '<input placeholder="Meal 01" value="' + escHtml(t.label || '') + '" oninput="_amTargets[' + i + '].label=this.value" style="flex:2;min-width:80px;' + inp + '">' +
+      '<input type="number" placeholder="P" value="' + (t.p != null ? t.p : '') + '" oninput="_amTargets[' + i + '].p=this.value" style="width:54px;' + inp + '">' +
+      '<input type="number" placeholder="C" value="' + (t.c != null ? t.c : '') + '" oninput="_amTargets[' + i + '].c=this.value" style="width:54px;' + inp + '">' +
+      '<input type="number" placeholder="F" value="' + (t.f != null ? t.f : '') + '" oninput="_amTargets[' + i + '].f=this.value" style="width:54px;' + inp + '">' +
+      '<button class="btn btn-ghost btn-xs" onclick="amRemoveTarget(' + i + ')" title="Remove">×</button>' +
+    '</div>';
+  }).join('') : '<div style="font-size:11px;color:var(--text3);font-style:italic">No targets yet — add the nutritionist\'s numbers.</div>';
+}
+function amAddTarget() { _amTargets.push({ label: '', p: '', c: '', f: '' }); amRenderTargets(); }
+function amRemoveTarget(i) { _amTargets.splice(i, 1); amRenderTargets(); }
 
 // ═══════════════════════════════════════════
 // DISCOUNT CODES
