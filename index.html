@@ -8759,23 +8759,61 @@ function prepExcludeIngredient(ingId) {
   });
 }
 
-/* Build ingredient-major prep data from the production slot */
+/* Resolve a component's recipe resiliently. Prefers an exact Active match, then a
+   trimmed/case-insensitive Active match (so a stray space or capitalisation drift
+   doesn't hide a whole component). If a recipe with that name exists but ISN'T
+   Active, returns no recipe + a message so the prep view can flag it rather than
+   silently omitting every ingredient in that component. */
+function _findPrepRecipe(name) {
+  var recs = DB.recipes || [];
+  var exact = recs.find(function(r){ return r.name === name && r.status === 'Active'; });
+  if (exact) return { rec: exact };
+  var key = String(name || '').trim().toLowerCase();
+  var ci = recs.find(function(r){ return String(r.name || '').trim().toLowerCase() === key && r.status === 'Active'; });
+  if (ci) return { rec: ci };
+  var inactive = recs.find(function(r){ return String(r.name || '').trim().toLowerCase() === key; });
+  if (inactive) return { rec: null, msg: 'recipe "' + name + '" exists but isn\'t marked Active' };
+  return { rec: null, msg: 'no Active recipe named "' + name + '"' };
+}
+
+/* Build ingredient-major prep data from the production slot.
+   Returns { items, issues, otherSessionPorts } — issues surface anything that
+   would otherwise vanish silently (unresolved recipe or missing ingredient), and
+   otherSessionPorts explains an empty view caused by the session filter. */
 function buildPrepData() {
   var map = {};
+  var issues = [];            // {dish, comp, msg}
+  var seenIssue = {};         // de-dupe identical warnings
+  var otherSessionPorts = 0;  // portions sitting on the OTHER drop (for the empty-state hint)
+  function addIssue(dishName, compName, msg) {
+    var k = dishName + '|' + compName + '|' + msg;
+    if (seenIssue[k]) return;
+    seenIssue[k] = 1;
+    issues.push({ dish: dishName, comp: compName, msg: msg });
+  }
   getProductionDishes().forEach(function(dish) {
     var ports = dishPortions(dish, prodSessionFilter);
-    if (!ports) return;
+    if (!ports) {
+      // Not an error — but if this dish has portions on the OTHER drop, remember
+      // so an empty view can say "switch the session filter" instead of "no orders".
+      if (prodSessionFilter !== 'all') otherSessionPorts += dishPortions(dish, 'all');
+      return;
+    }
+    var dishName = dish.name || dish.id;
     var overall = n(dish.scaleOverall) || 1;
     [['protein', n(dish.scaleProtein) || 1], ['carb', n(dish.scaleCarb) || 1],
      ['veg', n(dish.scaleVeg) || 1], ['condiment', 1], ['complete', 1]].forEach(function(pair) {
       var compName = dish[pair[0]];
       if (!compName) return;
-      var rec = DB.recipes.find(function(r){ return r.name === compName && r.status === 'Active'; });
-      if (!rec || !rec.lines) return;
+      var found = _findPrepRecipe(compName);
+      var rec = found.rec;
+      if (!rec) { addIssue(dishName, compName, found.msg); return; }
+      if (!rec.lines || !rec.lines.length) { addIssue(dishName, compName, 'recipe has no ingredients'); return; }
       rec.lines.forEach(function(l) {
         if (l.prepNeeded === false) return; // spices/oils/seasonings — added during cooking, not prepped
+        if (!l.ingId) return;               // truly blank line — nothing to resolve
         var ing = DB.ingredients.find(function(i){ return i.id === l.ingId; });
-        if (!ing) return;
+        if (!ing) { addIssue(dishName, compName, 'an ingredient is no longer in the database'); return; }
         var edible = n(l.qty) * pair[1] * overall * ports;
         if (!map[ing.id]) map[ing.id] = { ing: ing, rawG: 0, splits: {} };
         map[ing.id].rawG += edible / ((n(ing.proc) || 100) / 100);
@@ -8786,15 +8824,27 @@ function buildPrepData() {
       });
     });
   });
-  return Object.values(map).sort(function(a, b){ return b.rawG - a.rawG; });
+  var items = Object.values(map).sort(function(a, b){ return b.rawG - a.rawG; });
+  return { items: items, issues: issues, otherSessionPorts: otherSessionPorts };
 }
 
 function renderPrepView() {
   var el = document.getElementById('prod-prep-view');
   if (!el) return;
-  var data = buildPrepData();
+  var built = buildPrepData();
+  var data = built.items;
+  // Warning banners for anything that would otherwise vanish silently.
+  var warnHtml = built.issues.length ? '<div class="next-hint no-print" style="border-color:rgba(244,121,107,.4);background:rgba(244,121,107,.06);align-items:flex-start">' +
+    '<span class="nh-icon">⚠</span><span><strong>' + built.issues.length + ' item' + (built.issues.length > 1 ? 's' : '') + ' couldn\'t be shown</strong> — fix these so nothing is missed on prep day:<br>' +
+    built.issues.map(function(is){ return '<span style="font-size:12px;color:var(--text2)">• <strong>' + escHtml(is.dish) + '</strong> → ' + escHtml(is.comp) + ': ' + escHtml(is.msg) + '</span>'; }).join('<br>') +
+    '</span></div>' : '';
   if (!data.length) {
-    el.innerHTML = '<div class="empty-state"><div class="big">🔪</div><div class="msg">Nothing to prep — confirm orders so portions sync, then come back.</div></div>';
+    var sessName = prodSessionFilter === 'sunday' || prodSessionFilter === 's1' ? 'Sunday'
+                 : prodSessionFilter === 'wednesday' || prodSessionFilter === 's2' ? 'Wednesday' : '';
+    var emptyMsg = (built.otherSessionPorts > 0 && sessName)
+      ? 'Nothing to prep for <strong>' + sessName + '</strong> — but there are ' + Math.round(built.otherSessionPorts) + ' portions on the other drop. Switch the session filter above.'
+      : 'Nothing to prep — confirm orders so portions sync, then come back.';
+    el.innerHTML = warnHtml + '<div class="empty-state"><div class="big">🔪</div><div class="msg">' + emptyMsg + '</div></div>';
     return;
   }
   var checks = prepProgress();
@@ -8831,7 +8881,7 @@ function renderPrepView() {
         (prepSet.length ? '<span style="font-size:12px;color:var(--text2);background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:2px 8px">🔪 ' + prepSet.join(' · ') + '</span>' : '') +
       '</div>' + splitRows + '</div>';
   }).join('');
-  el.innerHTML =
+  el.innerHTML = warnHtml +
     '<div class="next-hint no-print"><span class="nh-icon">🔪</span><span><strong>Prep day:</strong> take out the total, process it as shown, weigh each split into its labelled container, tick it off. ' +
     '<strong>' + doneCount + '/' + totalSplits + ' splits done.</strong> Tomorrow Mum cooks straight from the containers.</span></div>' + cards;
 }
