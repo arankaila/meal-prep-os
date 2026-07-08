@@ -2505,13 +2505,18 @@ input:focus, select:focus, textarea:focus { border-color:var(--gold) !important;
               <input type="checkbox" id="lbl-show-code" checked onchange="renderLabels()" style="width:13px;height:13px;cursor:pointer;accent-color:var(--gold)">
               Meal code
             </label>
-            <button class="btn btn-ghost btn-sm" onclick="downloadAllLabelJpegs()" title="One JPEG per label, zipped — upload straight to the label printer">⬇ All as JPEGs</button>
-            <button class="btn btn-gold btn-sm" style="margin-left:auto" onclick="printDymoLabels()">&#x1F5A8; Print All — Dymo</button>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;padding:4px 10px;border:1px solid var(--border2);border-radius:5px;background:var(--surface2)" title="Show each identical label once with a × count, instead of one card per box">
+              <input type="checkbox" id="lbl-collapse" checked onchange="renderLabels()" style="width:13px;height:13px;cursor:pointer;accent-color:var(--gold)">
+              Collapse duplicates
+            </label>
+            <button class="btn btn-ghost btn-sm" onclick="downloadUniqueLabelJpegs()" title="One JPEG per UNIQUE label, count in the filename (e.g. Butter-Chicken_x7.jpg) — print that many on the Dymo">⬇ Unique as JPEGs</button>
+            <button class="btn btn-ghost btn-sm" onclick="downloadAllLabelJpegs()" title="One JPEG per label (all boxes), zipped">⬇ All as JPEGs</button>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="exportLabelsCsv()" title="CSV for DYMO Label v8 merge-print — one row per label. Set the label template up once in DYMO, then import → print. Test this alongside the image method.">⬇ CSV for DYMO (beta)</button>
           </div>
           <!-- Row 2: use-by + storage -->
           <div class="label-ctrl-row">
             <div class="label-ctrl-group">
-              <label class="form-label">Use-By Date</label>
+              <label class="form-label">Use-By Date <span style="color:#f4796b;font-weight:700" title="Required before labels can be printed">* required</span></label>
               <input id="lbl-useby" class="form-input" type="text" placeholder="e.g. 05/03/2026" style="width:140px;font-size:11px;font-family:var(--mono)" oninput="renderLabels()">
             </div>
             <div class="label-ctrl-group" style="flex:1">
@@ -15405,7 +15410,7 @@ function renderLabels() {
 
   // ── Label cards ────────────────────────────────────────────────────────────
   // Build a label-card HTML string for a given item + global idx
-  function buildLabelCard(item, idx) {
+  function buildLabelCard(item, idx, count) {
     var ord       = item.ord;
     var dish      = item.dish;
     var cust      = getCustById(ord.customerId);
@@ -15440,10 +15445,9 @@ function renderLabels() {
 
       '<div class="label-print-bar no-print' + (isAthlete ? ' lb-athlete' : '') + '">' +
         '<span style="font-size:10px;color:var(--text2);font-family:var(--mono)">' + barLabel + '</span>' +
+        (count > 1 ? '<span style="font-family:var(--mono);font-size:11px;font-weight:800;color:var(--gold);background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.35);border-radius:4px;padding:1px 8px" title="Print this many identical labels">× ' + count + ' needed</span>' : '') +
         '<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px" ' +
           'onclick="downloadLabelJpeg(' + idx + ')" title="Download this label as a JPEG">&#x2B07; JPG</button>' +
-        '<button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px" ' +
-          'onclick="printSingleLabel(' + idx + ')">&#x1F5A8; Print</button>' +
       '</div>' +
 
       '<div class="label-card' + (isAthlete ? ' lc-athlete' : '') + '" id="lcard-' + idx + '">' +
@@ -15477,29 +15481,76 @@ function renderLabels() {
   window._labelItems = items;
   window._labelMeta  = { week: week, useBy: useBy, storage: storage, reheat: reheat, showName: showName, showCode: showCode };
 
-  var html = summaryHtml;
-
-  // Standard labels grid
-  if (standardItems.length) {
-    html += '<div class="labels-grid">';
-    standardItems.forEach(function(item, i) { html += buildLabelCard(item, i); });
-    html += '</div>';
+  // ── Dedup: group identical labels so the packer handles one image + a count ──
+  // Signature = only what actually PRINTS on the label (not the per-portion print
+  // bar). With names off these collapse per-dish; a per-customer difference (a
+  // dietary note, or a shown name) keeps that label separate. All dish-derived
+  // content — macros, allergens, weight — is captured by dish.id.
+  function labelSig(item) {
+    var dish = item.dish, ord = item.ord, cust = getCustById(ord.customerId);
+    var isAth = !!dish.athleteVariant;
+    var athName = isAth ? (dish.athleteIds || []).map(function(aId){ var a = (DB.athletes || []).find(function(x){ return x.id === aId; }); return a ? a.name : ''; }).filter(Boolean).join(' / ') : '';
+    var nameStr = ord.recipientName || (cust ? cust.name : '');
+    return [dish.id, isAth ? athName : '', (showName || isAth) ? nameStr : '',
+            showCode ? genMealId(dish) : '', cust ? (cust.dietary || '') : '',
+            useBy, storage, reheat, week].join('¦');
   }
+  var sigIndex = {}, groups = [];
+  items.forEach(function(item, i) {
+    var sig = labelSig(item);
+    if (sigIndex[sig] == null) { sigIndex[sig] = groups.length; groups.push({ repIdx: i, count: 0 }); }
+    groups[sigIndex[sig]].count++;
+  });
+  window._labelGroups = groups;
 
-  // Athlete labels grid — always shown if present, with clear separator
-  if (athleteItems.length) {
-    var athOffset = standardItems.length;
-    html +=
-      '<div class="no-print" style="display:flex;align-items:center;gap:10px;margin:20px 0 12px">' +
-        '<div style="flex:1;height:1px;background:rgba(251,146,60,.3)"></div>' +
-        '<span style="font-family:var(--mono);font-size:9px;font-weight:700;color:#fb923c;letter-spacing:1px;text-transform:uppercase;white-space:nowrap">' +
-          '🏅 Athlete Labels — Bespoke Macros — Pack &amp; Label Separately' +
-        '</span>' +
-        '<div style="flex:1;height:1px;background:rgba(251,146,60,.3)"></div>' +
-      '</div>' +
-      '<div class="labels-grid" style="border:2px solid rgba(251,146,60,.25);border-radius:8px;padding:14px;background:rgba(251,146,60,.03)">';
-    athleteItems.forEach(function(item, i) { html += buildLabelCard(item, athOffset + i); });
-    html += '</div>';
+  var collapse = (document.getElementById('lbl-collapse') || { checked: true }).checked;
+  var athSep =
+    '<div class="no-print" style="display:flex;align-items:center;gap:10px;margin:20px 0 12px">' +
+      '<div style="flex:1;height:1px;background:rgba(251,146,60,.3)"></div>' +
+      '<span style="font-family:var(--mono);font-size:9px;font-weight:700;color:#fb923c;letter-spacing:1px;text-transform:uppercase;white-space:nowrap">' +
+        '🏅 Athlete Labels — Bespoke Macros — Pack &amp; Label Separately' +
+      '</span>' +
+      '<div style="flex:1;height:1px;background:rgba(251,146,60,.3)"></div>' +
+    '</div>';
+  var athWrapOpen = '<div class="labels-grid" style="border:2px solid rgba(251,146,60,.25);border-radius:8px;padding:14px;background:rgba(251,146,60,.03)">';
+
+  // Use-by is mandatory before printing (compliance). Highlight the field + banner
+  // when it's blank; the export/download actions hard-block until it's filled.
+  var _ubEl = document.getElementById('lbl-useby');
+  if (_ubEl) { _ubEl.style.borderColor = useBy ? '' : '#f4796b'; _ubEl.style.background = useBy ? '' : 'rgba(244,121,107,.06)'; }
+  var useByBanner = useBy ? '' :
+    '<div class="next-hint no-print" style="border-color:rgba(244,121,107,.5);background:rgba(244,121,107,.08)"><span class="nh-icon">⚠</span><span><strong>Use-by date required.</strong> Enter a Use-by date in the controls above before downloading or printing labels — it\'s a compliance requirement, so exports are blocked until it\'s set.</span></div>';
+
+  var html = useByBanner + summaryHtml;
+
+  if (collapse) {
+    // One card per unique label, with a × count. repIdx is the item's global index
+    // so the JPG button + downloads keep working against window._labelItems.
+    var stdG = groups.filter(function(g){ return !items[g.repIdx].dish.athleteVariant; });
+    var athG = groups.filter(function(g){ return items[g.repIdx].dish.athleteVariant; });
+    if (stdG.length) {
+      html += '<div class="labels-grid">';
+      stdG.forEach(function(g){ html += buildLabelCard(items[g.repIdx], g.repIdx, g.count); });
+      html += '</div>';
+    }
+    if (athG.length) {
+      html += athSep + athWrapOpen;
+      athG.forEach(function(g){ html += buildLabelCard(items[g.repIdx], g.repIdx, g.count); });
+      html += '</div>';
+    }
+  } else {
+    // Full view — every physical label as its own card (original behaviour).
+    if (standardItems.length) {
+      html += '<div class="labels-grid">';
+      standardItems.forEach(function(item, i) { html += buildLabelCard(item, i, 1); });
+      html += '</div>';
+    }
+    if (athleteItems.length) {
+      var athOffset = standardItems.length;
+      html += athSep + athWrapOpen;
+      athleteItems.forEach(function(item, i) { html += buildLabelCard(item, athOffset + i, 1); });
+      html += '</div>';
+    }
   }
 
   bodyEl.innerHTML = html;
@@ -15633,9 +15684,10 @@ function _lblDrawCanvas(item) {
   return cv;
 }
 
-function _lblFileName(item, idx) {
+function _lblFileName(item, idx, count) {
   var nm = (item.dish.name || 'label').replace(/[^A-Za-z0-9 \-]/g, '').trim().replace(/\s+/g, '-');
-  return String(idx + 1).padStart(3, '0') + '-' + nm + '.jpg';
+  var suffix = (count && count > 1) ? '_x' + count : '';   // e.g. Butter-Chicken_x7.jpg
+  return String(idx + 1).padStart(3, '0') + '-' + nm + suffix + '.jpg';
 }
 
 // Print-matching label CSS, scoped to an off-screen raster stage so it never
@@ -15719,7 +15771,18 @@ function _lblExportBlob(item, idx, cb){
   });
 }
 
+// Compliance gate: a Use-by date must be set before any label is exported/printed.
+function _lblUseByOk() {
+  var el = document.getElementById('lbl-useby');
+  var v = el ? el.value.trim() : '';
+  if (v) return true;
+  notify('⚠ Set a Use-by date before printing labels — required for compliance');
+  if (el) { el.focus(); el.style.borderColor = '#f4796b'; el.style.background = 'rgba(244,121,107,.08)'; }
+  return false;
+}
+
 function downloadLabelJpeg(idx) {
+  if (!_lblUseByOk()) return;
   var item = (window._labelItems || [])[idx];
   if (!item) { notify('Render labels first'); return; }
   _lblExportBlob(item, idx, function(blob) {
@@ -15742,8 +15805,15 @@ function _loadJsZip(cb) {
 }
 
 function downloadAllLabelJpegs() {
+  if (!_lblUseByOk()) return;
+  // The rasterizer reads each card from the DOM; in collapsed view the duplicates
+  // aren't rendered, so briefly expand to a full render, then restore.
+  var cbEl = document.getElementById('lbl-collapse');
+  var wasCollapsed = !!(cbEl && cbEl.checked);
+  if (wasCollapsed) { cbEl.checked = false; renderLabels(); }
+  function restore() { if (wasCollapsed && cbEl) { cbEl.checked = true; renderLabels(); } }
   var items = window._labelItems || [];
-  if (!items.length) { notify('No labels to export — check orders and session filter'); return; }
+  if (!items.length) { restore(); notify('No labels to export — check orders and session filter'); return; }
   notify('Rendering ' + items.length + ' labels…');
   _loadJsZip(function() {
     var zip = new JSZip();
@@ -15756,6 +15826,7 @@ function downloadAllLabelJpegs() {
         a.click();
         setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
         notify('⬇ ' + items.length + ' label JPEGs zipped ✓');
+        restore();
       });
     }
     items.forEach(function(item, idx) {
@@ -15765,6 +15836,85 @@ function downloadAllLabelJpegs() {
       });
     });
   });
+}
+
+// One JPEG per UNIQUE label, count in the filename (e.g. 001-Butter-Chicken_x7.jpg)
+// — you print that many on the Dymo. Representative cards are always in the DOM
+// (collapsed or not), so this rasterizes at full print fidelity.
+function downloadUniqueLabelJpegs() {
+  if (!_lblUseByOk()) return;
+  var items  = window._labelItems  || [];
+  var groups = window._labelGroups || [];
+  if (!groups.length) { notify('No labels to export — check orders and session filter'); return; }
+  notify('Rendering ' + groups.length + ' unique labels…');
+  _loadJsZip(function() {
+    var zip = new JSZip();
+    var done = 0;
+    function finish() {
+      zip.generateAsync({ type: 'blob' }).then(function(zb) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(zb);
+        a.download = 'labels-unique-' + ((window._labelMeta || {}).week || 'week').replace(/[^A-Za-z0-9]+/g, '-') + '.zip';
+        a.click();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+        notify('⬇ ' + groups.length + ' unique label JPEGs zipped ✓ (counts in filenames)');
+      });
+    }
+    groups.forEach(function(g) {
+      var item = items[g.repIdx];
+      if (!item) { if (++done === groups.length) finish(); return; }
+      _lblExportBlob(item, g.repIdx, function(blob) {
+        if (blob) zip.file(_lblFileName(item, g.repIdx, g.count), blob);
+        if (++done === groups.length) finish();
+      });
+    });
+  });
+}
+
+// CSV for DYMO Label v8 merge-print — ONE ROW PER PHYSICAL LABEL (already expanded
+// by qty), so a single Import → Print job produces exactly the right number of
+// labels. Columns mirror the on-screen label; map them once to a DYMO template and
+// reuse weekly. Kept as a fallback-friendly extra alongside the image downloads.
+function exportLabelsCsv() {
+  if (!_lblUseByOk()) return;
+  var items = window._labelItems || [];
+  if (!items.length) { notify('No labels to export — check orders and session filter'); return; }
+  var meta = window._labelMeta || {};
+  var useBy = meta.useBy || '', storage = meta.storage || '', reheat = meta.reheat || '', week = meta.week || '';
+  var showName = !!meta.showName, showCode = !!meta.showCode;
+  var cols = ['MealCode','DishName','Name','Athlete','Kcal','Protein_g','Carb_g','Fat_g','Weight_g','Allergens','Dietary','UseBy','Storage','Reheat','Week'];
+  function esc(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
+  var lines = [cols.join(',')];
+  items.forEach(function(item) {
+    var dish = item.dish, ord = item.ord, cust = getCustById(ord.customerId);
+    var isAth = !!dish.athleteVariant;
+    var athName = isAth ? (dish.athleteIds || []).map(function(aId){ var a = (DB.athletes || []).find(function(x){ return x.id === aId; }); return a ? a.name : ''; }).filter(Boolean).join(' / ') : '';
+    var nameStr = ord.recipientName || (cust ? cust.name : '');
+    var totals = calcDishTotals(dish);
+    var allergens = Array.from(totals.allergens || new Set()).sort().join('; ');
+    lines.push([
+      showCode ? genMealId(dish) : '',
+      dish.name || '',
+      (showName || isAth) ? nameStr : '',
+      isAth ? athName : '',
+      (totals.kcal || 0).toFixed(0),
+      (totals.prot || 0).toFixed(1),
+      (totals.carb || 0).toFixed(1),
+      (totals.fat || 0).toFixed(1),
+      totals.weight ? Math.round(totals.weight) : '',
+      allergens,
+      cust ? (cust.dietary || '') : '',
+      useBy, storage, reheat, week
+    ].map(esc).join(','));
+  });
+  // BOM so Excel/DYMO read °, é and en-dashes correctly.
+  var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'labels-' + (week.replace(/[^A-Za-z0-9]+/g, '-') || 'week') + '.csv';
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  notify('⬇ ' + items.length + ' label rows exported to CSV ✓ (one row per label)');
 }
 
 function printDymoLabels() {
