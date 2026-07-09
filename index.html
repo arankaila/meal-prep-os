@@ -13741,8 +13741,8 @@ function _portalUsesNextSlot() {
   // not merely because dishes have been added.
   return !!(DB.nextMenuDishes && DB.nextMenuDishes.length > 0 && DB.nextMenuPublished);
 }
-function getPortalSessionStatus() {
-  var hasNext = _portalUsesNextSlot();
+function getPortalSessionStatus(forNext) {
+  var hasNext = (forNext === undefined) ? _portalUsesNextSlot() : !!forNext;
   var now  = new Date();
   var pub  = hasNext ? DB.nextMenuPublished : DB.menuPublished;
   var s1d  = hasNext ? (DB.nextS1Deadline ? new Date(DB.nextS1Deadline) : null)
@@ -13768,11 +13768,13 @@ function getPortalSessionStatus() {
 function renderPortalPublishStrip() {
   var strip = document.getElementById('portal-publish-strip');
   if (!strip) return;
-  var hasNext   = _portalUsesNextSlot();
+  var hasNext   = _toggleTargetIsNext();          // the slot the Open/Close button controls
   var pub       = hasNext ? DB.nextMenuPublished : DB.menuPublished;
   var weekLabel = hasNext ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
-  var slotLabel = hasNext ? 'Next Week' : 'Current Week';
-  var st        = getPortalSessionStatus();
+  var slotLabel = hasNext ? 'Building Next' : 'Current Week';
+  var st        = getPortalSessionStatus(hasNext);
+  var liveNext  = _portalUsesNextSlot();          // what customers actually see right now
+  var liveNote  = (liveNext !== hasNext) ? ' <span style="color:var(--text3);font-weight:400">· customers currently see ' + (liveNext ? 'Building Next' : 'Current Week') + '</span>' : '';
   var weekDisp  = weekLabel ? ' · ' + weekLabel
     : (!hasNext && !(DB.menuDishes && DB.menuDishes.length) ? ' · no menu built yet' : '');
   var noLblWarn = !weekLabel
@@ -13793,7 +13795,7 @@ function renderPortalPublishStrip() {
   var dot = function(s) { return s.open ? '<span style="color:var(--green)">🟢</span>' : '<span style="color:var(--text3)">⚫</span>'; };
   strip.innerHTML =
     '<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">' +
-      '<div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Customer Portal — ' + slotLabel + weekDisp + noLblWarn + autoPublishNote + '</div>' +
+      '<div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Customer Portal — ' + slotLabel + weekDisp + noLblWarn + autoPublishNote + liveNote + '</div>' +
       '<div style="display:flex;gap:16px;flex-wrap:wrap">' +
         '<span style="font-size:12px;font-weight:600;color:' + (st.s1.open?'var(--green)':'var(--text3)') + '">' + dot(st.s1) + ' Sunday — ' + st.s1.text + '</span>' +
         '<span style="font-size:12px;font-weight:600;color:' + (st.s2.open?'var(--green)':'var(--text3)') + '">' + dot(st.s2) + ' Wednesday — ' + st.s2.text + '</span>' +
@@ -13810,8 +13812,12 @@ function _toggleTargetIsNext() {
   var hasNextDishes = !!(DB.nextMenuDishes && DB.nextMenuDishes.length > 0);
   if (!hasNextDishes) return false;
   if (DB.nextMenuPublished) return true;   // already live — keep controlling next
-  if (!DB.menuPublished)    return true;   // current closed, next has dishes — open next
-  return false;                             // current still live, next is being prepped
+  // Next only takes over the button when it's actually READY to open (has a week
+  // label). A half-built, unlabelled Next slot must NOT hijack the toggle — otherwise
+  // you can't open/close the current week's ordering while building next ahead.
+  var nextReady = !!((DB.nextMenuWeekLabel || '').trim());
+  if (!DB.menuPublished && nextReady) return true;  // current closed + next ready → open next
+  return false;                                     // current live, or next not ready → control current
 }
 
 function togglePortal() {
