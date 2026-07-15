@@ -7334,10 +7334,14 @@ function getProductionWeekLabel() {
 function getProductionOrders(includeStatuses) {
   var slot   = getProductionSlot();
   var dishes = slot === 'next' ? (DB.nextMenuDishes || []) : (DB.menuDishes || []);
+  var slotLabel = slot === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
   var dishIds = {};
   dishes.forEach(function(d){ dishIds[d.id] = 1; });
   return (DB.weeklyOrders || []).filter(function(o) {
     if (o.slot && o.slot !== slot) return false;
+    // Same week-label guard as the Orders tab: exclude an order only when it carries
+    // a label that differs from this slot's (a prior week). No label = counted.
+    if (slotLabel && o.week && o.week !== slotLabel) return false;
     // Match by dish-ID membership in the production menu, NOT the brittle week-label
     // string (a tiny label difference used to leave production/packaging/delivery
     // empty). Orders from other weeks reference different dish IDs and are excluded.
@@ -7393,9 +7397,11 @@ function syncPortionsFromOrders() {
   // string — that brittle comparison left production/purchasing empty whenever a
   // label differed slightly. Dish-ID membership is exact and self-correcting: orders
   // from other weeks reference different dish IDs and are naturally excluded.
+  var syncSlotLabel = menuActiveSlot === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
   var activeOrders = (DB.weeklyOrders || []).filter(function(o) {
     if (o.slot && o.slot !== menuActiveSlot) return false;
     if (getOrderStatus(o) === 'cancelled') return false;
+    if (syncSlotLabel && o.week && o.week !== syncSlotLabel) return false;   // ignore prior-week orders
     return Object.keys(o.allocation || {}).some(function(id) { return dishIds[id]; });
   });
   var pending = activeOrders.filter(function(o) { return getOrderStatus(o) === 'pending'; });
@@ -7457,13 +7463,19 @@ function recalcDishPortions(slotOrLabel) {
     slot = (DB.nextMenuWeekLabel && slotOrLabel === DB.nextMenuWeekLabel) ? 'next' : 'current';
   }
   var dishes = slot === 'next' ? (DB.nextMenuDishes||[]) : (DB.menuDishes||[]);
+  var slotLabel = slot === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
   var dishIds = {};
   dishes.forEach(function(d){ dishIds[d.id] = 1; });
-  // Match by slot + dish-ID membership in the menu (not the brittle week-label
-  // string). Orders from other weeks reference different dish IDs and are excluded.
+  // Match by slot + dish-ID membership in the menu. PLUS the same week-label guard
+  // the Orders tab uses: exclude an order only when it carries a week label that
+  // DIFFERS from this slot's label (i.e. it belongs to a prior week). Orders with no
+  // week label are still counted (backward-compat, no brittleness). Without this,
+  // prior-week orders that reference dishes still on the menu (dish IDs are copied
+  // on Advance Week) leaked into production/purchasing counts.
   var orders = (DB.weeklyOrders||[]).filter(function(o){
     if (o.slot && o.slot !== slot) return false;
     if (getOrderStatus(o)==='cancelled' || getOrderStatus(o)==='pending') return false;
+    if (slotLabel && o.week && o.week !== slotLabel) return false;   // stale prior-week order
     return Object.keys(o.allocation||{}).some(function(id){ return dishIds[id]; });
   });
   var s1={}, s2={};
@@ -7594,9 +7606,11 @@ function renderMenu(){
   var bannerEl = document.getElementById('menu-slot-banner');
   if (bannerEl) {
     var _slotDishIds = {}; getSlotDishes().forEach(function(d){ _slotDishIds[d.id] = 1; });
+    var _slotLabel = menuActiveSlot === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
     var _pend = (DB.weeklyOrders || []).filter(function(o){
       if (o.slot && o.slot !== menuActiveSlot) return false;
       if (getOrderStatus(o) !== 'pending') return false;
+      if (_slotLabel && o.week && o.week !== _slotLabel) return false;   // ignore prior-week pending
       return Object.keys(o.allocation || {}).some(function(id){ return _slotDishIds[id]; });
     });
     if (_pend.length) {
