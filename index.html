@@ -7587,12 +7587,27 @@ function renderMenu(){
   if (wedInput) wedInput.value = dd.wednesday || '';
   updateDropDateDeadlineDisplay();
 
-  // Slot context banner
+  // Pending-orders notice. Portion counts (drop1/drop2) reflect CONFIRMED orders
+  // only — the number you cook to. If pending orders exist for this slot's dishes,
+  // the Menu reads LOWER than the Orders tab until they're confirmed. This is the
+  // usual surprise right after Advance Week (promoted pre-orders are still pending).
   var bannerEl = document.getElementById('menu-slot-banner');
-  // Slot context banner removed — its "this is the slot the portal reads"
-  // messaging became misleading once the portal started reading the published
-  // public/menu node rather than a slot directly.
-  if (bannerEl) bannerEl.innerHTML = '';
+  if (bannerEl) {
+    var _slotDishIds = {}; getSlotDishes().forEach(function(d){ _slotDishIds[d.id] = 1; });
+    var _pend = (DB.weeklyOrders || []).filter(function(o){
+      if (o.slot && o.slot !== menuActiveSlot) return false;
+      if (getOrderStatus(o) !== 'pending') return false;
+      return Object.keys(o.allocation || {}).some(function(id){ return _slotDishIds[id]; });
+    });
+    if (_pend.length) {
+      var _pendPortions = _pend.reduce(function(s, o){
+        return s + Object.keys(o.allocation || {}).reduce(function(a, id){ return a + (_slotDishIds[id] ? (o.allocation[id] || 0) : 0); }, 0);
+      }, 0);
+      bannerEl.innerHTML = '<div class="next-hint no-print" style="border-color:rgba(251,191,36,.5);background:rgba(251,191,36,.08)"><span class="nh-icon">⚠</span><span><strong>' + _pend.length + ' pending order' + (_pend.length !== 1 ? 's' : '') + ' (' + _pendPortions + ' portion' + (_pendPortions !== 1 ? 's' : '') + ') not in these counts yet.</strong> The menu shows <strong>confirmed</strong> orders only — what you cook to — so it reads lower than the Orders tab until you confirm. <button class="btn btn-gold btn-sm" style="margin-left:8px" onclick="bulkConfirmOrders(\'' + menuActiveSlot + '\')">Confirm all pending</button></span></div>';
+    } else {
+      bannerEl.innerHTML = '';
+    }
+  }
 
   const slotDishes = getSlotDishes();
   const dishes=slotDishes.filter(d=>!menuSearchFilter||d.name.toLowerCase().includes(menuSearchFilter.toLowerCase()));
@@ -14617,8 +14632,8 @@ function _doAdvanceWeek() {
   notify('⏭ Week advanced · ' + nextLabel + ' is now the current production week');
 }
 
-function bulkConfirmOrders() {
-  var slotFilter = window._orderSlotFilter || 'current';
+function bulkConfirmOrders(slotArg) {
+  var slotFilter = slotArg || window._orderSlotFilter || 'current';
   var week = slotFilter === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
   var count = 0;
   (DB.weeklyOrders || []).forEach(function(o) {
@@ -14635,9 +14650,14 @@ function bulkConfirmOrders() {
     }
   });
   if (!count) { notify('No pending orders to confirm'); return; }
+  // Recalc portions so the Menu + drop-driven tabs (production/purchasing/labels/pack)
+  // immediately reflect the newly-confirmed orders — single-confirm already did this,
+  // bulk-confirm previously didn't, which is why the Menu could lag the Orders tab.
+  recalcDishPortions(slotFilter === 'next' ? 'next' : 'current');
   save();
   renderOrdersPanel();
-  notify(count + ' order' + (count > 1 ? 's' : '') + ' confirmed ✓');
+  if (typeof renderMenu === 'function') renderMenu();
+  notify(count + ' order' + (count > 1 ? 's' : '') + ' confirmed ✓ — production counts updated');
 }
 
 // ── Payment status: Unpaid / Paid / Comped (athlete partnerships) ──
