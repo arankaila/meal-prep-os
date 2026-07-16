@@ -8373,8 +8373,13 @@ function renderPackSheet(){
   // Only fall back to manual drop1/drop2 when no order data exists at all.
   function livePortions(dish, sf) {
     var hasLiveData = (dish.id in liveDrop1) || (dish.id in liveDrop2);
-    var d1 = hasLiveData ? (liveDrop1[dish.id] || 0) : (n(dish.drop1) || 0);
-    var d2 = hasLiveData ? (liveDrop2[dish.id] || 0) : (n(dish.drop2) || 0);
+    // Manual drop1/drop2 fallback applies ONLY to athlete variants — they legitimately
+    // have no portal orders. A regular dish with no orders = 0 boxes; otherwise a stray
+    // manual drop counts a phantom box the order-driven Box Board never sees.
+    var fb1 = dish.athleteVariant ? (n(dish.drop1) || 0) : 0;
+    var fb2 = dish.athleteVariant ? (n(dish.drop2) || 0) : 0;
+    var d1 = hasLiveData ? (liveDrop1[dish.id] || 0) : fb1;
+    var d2 = hasLiveData ? (liveDrop2[dish.id] || 0) : fb2;
     if (!sf || sf === 'all') return d1 + d2;
     if (sf === 's1' || sf === 'sunday') return d1;
     if (sf === 's2' || sf === 'wednesday') return d2;
@@ -8387,8 +8392,8 @@ function renderPackSheet(){
     const bt=d.boxType||'3-compartment';
     const tubs=n(d.condimentTubs)||0;
     var hasLiveData = (d.id in liveDrop1) || (d.id in liveDrop2);
-    const d1 = hasLiveData ? (liveDrop1[d.id] || 0) : (n(d.drop1) || 0);
-    const d2 = hasLiveData ? (liveDrop2[d.id] || 0) : (n(d.drop2) || 0);
+    const d1 = hasLiveData ? (liveDrop1[d.id] || 0) : (d.athleteVariant ? (n(d.drop1) || 0) : 0);
+    const d2 = hasLiveData ? (liveDrop2[d.id] || 0) : (d.athleteVariant ? (n(d.drop2) || 0) : 0);
     if(bt==='3-compartment'){ three1+=d1; three2+=d2; }
     else { single1+=d1; single2+=d2; }
     tubs1+=d1*tubs; tubs2+=d2*tubs;
