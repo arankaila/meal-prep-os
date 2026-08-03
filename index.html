@@ -7681,11 +7681,11 @@ function renderMenu(){
       {slot:'veg',      label:'VEG',  type:'Veg',       cls:'b-veg'},
       {slot:'condiment',label:'SCE',  type:'Condiment', cls:'b-condiment'},
       {slot:'complete', label:'FULL', type:'Complete',  cls:'b-complete'},
-    ].filter(r=> dish.category==='side' ? r.slot==='complete' : r.slot!=='complete').map(({slot,label,type,cls})=>`
+    ].filter(r=> dish.category==='side' ? true : r.slot!=='complete').map(({slot,label,type,cls})=>`
       <div class="menu-comp-row">
-        <span class="badge ${cls}" style="font-size:7px;padding:2px 5px;flex-shrink:0;letter-spacing:.4px;width:34px;text-align:center">${dish.category==='side'&&slot==='complete'?'SIDE':label}</span>
+        <span class="badge ${cls}" style="font-size:7px;padding:2px 5px;flex-shrink:0;letter-spacing:.4px;width:34px;text-align:center">${dish.category==='side'&&slot==='complete'?'SIDES':label}</span>
         <input class="menu-comp-select menu-comp-search" type="text" list="comp-dl-${type}"
-          value="${escHtml(dish[slot]||'')}" placeholder="${dish.category==='side'&&slot==='complete'?'Side item…':type+'…'}"
+          value="${escHtml(dish[slot]||'')}" placeholder="${dish.category==='side'&&slot==='complete'?'Unique item…':type+'…'}"
           data-slot="${slot}" data-realidx="${realIdx}" autocomplete="off" spellcheck="false"
           onchange="udCompValidate(${realIdx},'${slot}',this.value,this)">
         ${slot!=='condiment'&&slot!=='complete'
@@ -7704,7 +7704,7 @@ function renderMenu(){
     // Completeness checks (athlete variants skip the availability check — use drop counts instead)
     const _compChecks = [
       { label:'Name',   ok: !!(dish.name && dish.name.trim()) },
-      { label:'Recipe', ok: !!(dish.protein || dish.carb || dish.veg || dish.complete) },
+      { label:'Recipe', ok: !!(dish.protein || dish.carb || dish.veg || dish.condiment || dish.complete) },
       { label:'Photo',  ok: !!(dish.photoUrl) },
       { label:'Price',  ok: !!(dish.sellPrice && parseFloat(dish.sellPrice) > 0) },
       { label:'Drops',  ok: dish.athleteVariant ? (n(dish.drop1)>0 || n(dish.drop2)>0) : !!(dish.availSunday || dish.availWednesday) },
@@ -7791,7 +7791,7 @@ function renderMenu(){
         <input type="text" value="${escHtml(dish.serves||'')}" placeholder="Description shown on portal (e.g. Brown rice, mixed salad…)" onchange="ud(${realIdx},'serves',this.value.trim())" style="width:100%;max-width:440px;font-size:12px;padding:7px 9px;background:var(--surface);border:1px solid var(--border2);border-radius:3px;color:var(--text)">
       </div>
       <div class="menu-card-edit-section">
-        <div class="menu-card-edit-section-label">Recipe Components</div>
+        <div class="menu-card-edit-section-label">${dish.category==='side'?'Side item — pick any one component (protein / carb / veg / sauce), or a unique Sides item':'Recipe Components'}</div>
         ${compRowsEdit}
         <div class="menu-comp-row" style="margin-top:4px">
           <span style="font-size:9px;font-family:var(--mono);color:var(--text3);width:34px;flex-shrink:0">SCALE</span>
