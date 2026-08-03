@@ -2455,6 +2455,7 @@ input:focus, select:focus, textarea:focus { border-color:var(--gold) !important;
       <div id="menu-slot-banner" style="margin-bottom:10px"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
         <div class="search-bar" style="margin-bottom:0;flex:1"><span>🔍</span><input type="text" placeholder="Search dishes..." oninput="filterMenu(this.value)" id="menu-search"></div>
+        <button class="btn btn-ghost btn-sm no-print" onclick="addSideRow()" title="Add a side — a single item in its own tub">+ Add Side</button>
         <span id="menu-count" style="font-family:var(--mono);font-size:10px;color:var(--text3);white-space:nowrap;">0 dishes</span>
       </div>
       <div class="menu-card-grid" id="menu-card-grid"></div>
@@ -7673,11 +7674,11 @@ function renderMenu(){
       {slot:'veg',      label:'VEG',  type:'Veg',       cls:'b-veg'},
       {slot:'condiment',label:'SCE',  type:'Condiment', cls:'b-condiment'},
       {slot:'complete', label:'FULL', type:'Complete',  cls:'b-complete'},
-    ].map(({slot,label,type,cls})=>`
+    ].filter(r=>dish.category!=='side'||r.slot==='complete').map(({slot,label,type,cls})=>`
       <div class="menu-comp-row">
-        <span class="badge ${cls}" style="font-size:7px;padding:2px 5px;flex-shrink:0;letter-spacing:.4px;width:34px;text-align:center">${label}</span>
+        <span class="badge ${cls}" style="font-size:7px;padding:2px 5px;flex-shrink:0;letter-spacing:.4px;width:34px;text-align:center">${dish.category==='side'&&slot==='complete'?'ITEM':label}</span>
         <input class="menu-comp-select menu-comp-search" type="text" list="comp-dl-${type}"
-          value="${escHtml(dish[slot]||'')}" placeholder="${type}…"
+          value="${escHtml(dish[slot]||'')}" placeholder="${dish.category==='side'&&slot==='complete'?'Side item…':type+'…'}"
           data-slot="${slot}" data-realidx="${realIdx}" autocomplete="off" spellcheck="false"
           onchange="udCompValidate(${realIdx},'${slot}',this.value,this)">
         ${slot!=='condiment'&&slot!=='complete'
@@ -7753,9 +7754,9 @@ function renderMenu(){
         <button onclick="moveDish(${realIdx},1)" ${realIdx===slotDishes.length-1?'disabled':''} aria-label="Move down">▼</button>
       </span></div>
       <div class="mr-photo">${dish.photoUrl?`<img src="${(dish.photoUrl||'').replace(/"/g,'&quot;')}" alt="" onclick="triggerPhotoUpload(${realIdx})" title="Change photo">`:`<div class="empty" onclick="triggerPhotoUpload(${realIdx})" title="Upload photo">📷</div>`}<input type="file" accept="image/*" style="display:none" id="photo-file-${realIdx}" onchange="handlePhotoUpload(${realIdx},this)"></div>
-      <div class="mr-dish"><div class="mr-name">${escHtml(dish.name||'Untitled dish')}${hasAthleteVariant?' <span title="Has athlete variant">🏅</span>':''}</div><div class="mr-comp" title="${escHtml(_compLine)}">${escHtml(_compLine)}</div></div>
+      <div class="mr-dish"><div class="mr-name">${dish.category==='side'?'<span style="font-size:8px;font-weight:800;letter-spacing:.5px;background:var(--gold);color:#0a0a0a;border-radius:3px;padding:1px 5px;margin-right:5px">SIDE</span>':''}${escHtml(dish.name||'Untitled dish')}${hasAthleteVariant?' <span title="Has athlete variant">🏅</span>':''}</div><div class="mr-comp" title="${escHtml(_compLine)}">${escHtml(_compLine)}</div></div>
       <div class="mr-aller">${_allerLine?escHtml(_allerLine):'<span style="color:var(--text3)">—</span>'}</div>
-      <div class="mr-fuel"><span class="fuel ${dish.fuelLine==='Fuel Lite'?'lite':'plus'}">${dish.fuelLine==='Fuel Lite'?'Lite':'Plus'}</span></div>
+      <div class="mr-fuel">${dish.category==='side'?'<span class="fuel" style="background:var(--surface3);color:var(--text3)">'+(dish.sideCooked?'🔥':'❄')+' Side</span>':'<span class="fuel '+(dish.fuelLine==='Fuel Lite'?'lite':'plus')+'">'+(dish.fuelLine==='Fuel Lite'?'Lite':'Plus')+'</span>'}</div>
       <div class="mr-pt sun${(n(dish.drop1)||0)===0?' zero':''}">${n(dish.drop1)||0}</div>
       <div class="mr-pt wed${(n(dish.drop2)||0)===0?' zero':''}">${n(dish.drop2)||0}</div>
       <div class="mr-mac k">${t.kcal.toFixed(0)}</div>
@@ -7790,8 +7791,9 @@ function renderMenu(){
         <div class="menu-card-edit-section-label">Availability &amp; Line</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           ${_editS1Chk}${_editS2Chk}
-          <button class="box-type-btn${(dish.fuelLine!=='Fuel Lite')?' active':''}" id="menu-edit-fp-${realIdx}" onclick="udMenuFuelLine(${realIdx},'Fuel Plus')" style="font-size:10px;padding:3px 9px">⚡ Fuel Plus</button>
-          <button class="box-type-btn${(dish.fuelLine==='Fuel Lite')?' active':''}" id="menu-edit-fl-${realIdx}" onclick="udMenuFuelLine(${realIdx},'Fuel Lite')" style="font-size:10px;padding:3px 9px">✦ Fuel Lite</button>
+          ${dish.category==='side'
+            ? `<button class="box-type-btn${dish.sideCooked?'':' active'}" onclick="udSideCooked(${realIdx},false)" style="font-size:10px;padding:3px 9px" title="Cold / pre-portioned — skips the cook board">❄ Cold</button><button class="box-type-btn${dish.sideCooked?' active':''}" onclick="udSideCooked(${realIdx},true)" style="font-size:10px;padding:3px 9px" title="Cooked — appears on the cook board">🔥 Cooked</button>`
+            : `<button class="box-type-btn${(dish.fuelLine!=='Fuel Lite')?' active':''}" id="menu-edit-fp-${realIdx}" onclick="udMenuFuelLine(${realIdx},'Fuel Plus')" style="font-size:10px;padding:3px 9px">⚡ Fuel Plus</button><button class="box-type-btn${(dish.fuelLine==='Fuel Lite')?' active':''}" id="menu-edit-fl-${realIdx}" onclick="udMenuFuelLine(${realIdx},'Fuel Lite')" style="font-size:10px;padding:3px 9px">✦ Fuel Lite</button>`}
         </div>
       </div>
       <div class="menu-card-edit-section">
@@ -7808,10 +7810,10 @@ function renderMenu(){
         </div>
       </div>
       <div class="menu-card-edit-section">${renderTagToggles(dish, realIdx)}</div>
-      <div class="menu-card-edit-section">
+      ${dish.category==='side' ? '' : `<div class="menu-card-edit-section">
         <div class="menu-card-edit-section-label">Athlete Variant</div>
         ${athleteHtml}
-      </div>
+      </div>`}
       <div style="text-align:right;margin-top:12px"><button class="btn btn-gold btn-sm" onclick="menuToggleCardEdit(${realIdx})">Done</button></div>
     </div>`;
   }).join('');
@@ -7992,8 +7994,25 @@ function addDishRow(){
   // isn't being offered for that drop. syncPortionsFromOrders() overwrites these
   // with actual demand once ordering closes.
   var defaultPortions = menuActiveSlot === 'next' ? (DB.defaultPortions || 20) : 0;
-  getSlotDishes().push({id:'DISH'+String(DB.nextDishId++).padStart(3,'0'),name:'New Dish',serves:'',tags:[],protein:'',carb:'',veg:'',condiment:'',complete:'',scaleProtein:1,scaleCarb:1,scaleVeg:1,scaleOverall:1,drop1:defaultPortions,drop2:defaultPortions,sellPrice:DB.defaultSellPrice,boxType:'3-compartment',condimentTubs:0,fuelLine:'Fuel Plus',photoUrl:''});
+  getSlotDishes().push({id:'DISH'+String(DB.nextDishId++).padStart(3,'0'),name:'New Dish',category:'meal',serves:'',tags:[],protein:'',carb:'',veg:'',condiment:'',complete:'',scaleProtein:1,scaleCarb:1,scaleVeg:1,scaleOverall:1,drop1:defaultPortions,drop2:defaultPortions,sellPrice:DB.defaultSellPrice,boxType:'3-compartment',condimentTubs:0,fuelLine:'Fuel Plus',photoUrl:''});
   save();renderMenu();
+}
+
+// A SIDE is a dish with category:'side' — a single item held in the 'complete' slot,
+// its own single-square tub (not microwave-safe → label warning), and a Cooked/Cold
+// flag (cold sides skip the cook board). It inherits the whole pipeline as a dish.
+function addSideRow(){
+  var defaultPortions = menuActiveSlot === 'next' ? (DB.defaultPortions || 20) : 0;
+  getSlotDishes().push({id:'DISH'+String(DB.nextDishId++).padStart(3,'0'),name:'New Side',category:'side',sideCooked:false,serves:'',tags:[],protein:'',carb:'',veg:'',condiment:'',complete:'',scaleProtein:1,scaleCarb:1,scaleVeg:1,scaleOverall:1,drop1:defaultPortions,drop2:defaultPortions,sellPrice:DB.defaultSellPrice,boxType:'single',condimentTubs:0,fuelLine:'',photoUrl:'',availSunday:true,availWednesday:true});
+  _menuEditOpenIdx = getSlotDishes().length - 1;   // open its editor straight away
+  save();renderMenu();
+  notify('✓ Side added — set its Item, price and Cooked/Cold');
+}
+function udSideCooked(idx, val){
+  var dish = getSlotDishes()[idx];
+  if(!dish) return;
+  dish.sideCooked = !!val;
+  save(); renderMenu();
 }
 
 function removeDish(idx){
@@ -8666,7 +8685,9 @@ function renderProduction(){
   }
 
   const compDemand={};
+  const compCooked={};   // component → used by at least one cooked-context dish (not a cold side)
   prodDishes.forEach(dish=>{
+    const isColdSide = dish.category==='side' && dish.sideCooked===false;
     const slots=[
       {slot:'protein',scale:n(dish.scaleProtein)||1},
       {slot:'carb',scale:n(dish.scaleCarb)||1},
@@ -8682,10 +8703,12 @@ function renderProduction(){
       if(!compDemand[dish[slot]]) compDemand[dish[slot]]={portions:0,scale:scale*overall};
       compDemand[dish[slot]].portions+=ports;
       compDemand[dish[slot]].scale=Math.max(compDemand[dish[slot]].scale,scale*overall);
+      if(!isColdSide) compCooked[dish[slot]]=true;   // a meal or a hot side uses this → it's cooked
     });
   });
 
   prodRows=Object.entries(compDemand).map(([compName,{portions,scale}])=>{
+    if(!compCooked[compName]) return null;   // only cold sides use it → not a cook-board task (still prepped/bought)
     const rec=DB.recipes.find(r=>r.name===compName&&r.status==='Active');
     if(!rec) return null;
     const adj=DB.productionAdjustments[compName]||{};
@@ -9949,6 +9972,10 @@ function purchBuyInfo(ing, netRaw) {
 }
 
 function renderPurchasing(){
+  // Sync portion counts (drop1/drop2) to CONFIRMED orders before summing ingredient
+  // demand — otherwise a stale/manual drop on a dish with no orders inflates the
+  // shopping list. recalc leaves athlete-variant drops untouched (they have no orders).
+  try { recalcDishPortions(getProductionSlot()); } catch(e) {}
   const sessionLabel=purchSessionFilter==='all'?'All Sessions':(purchSessionFilter==='s1'||purchSessionFilter==='sunday')?'Sunday only':'Wednesday only';
   document.getElementById('print-date-purch').textContent='Order for week: '+new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' · '+sessionLabel;
   const ingDemand={};
@@ -15674,7 +15701,9 @@ function renderLabels() {
         (dietary ? '<div class="lc-dietary">⚠️ ' + n2h(dietary) + '</div>' : '') +
         (useBy   ? '<div class="lc-useby">Use by: <strong>' + n2h(useBy) + '</strong></div>' : '') +
         (storage ? '<div class="lc-storage">' + n2h(storage) + '</div>' : '') +
-        (reheat  ? '<div class="lc-reheat">'  + n2h(reheat)  + '</div>' : '') +
+        (dish.category === 'side'
+          ? '<div class="lc-reheat">⚠ Not microwave-safe — transfer to a suitable dish before heating.</div>'
+          : (reheat ? '<div class="lc-reheat">' + n2h(reheat) + '</div>' : '')) +
 
       '</div>' +   // .label-card
     '</div>';      // .label-wrap
