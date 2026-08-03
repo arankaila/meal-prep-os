@@ -2363,7 +2363,7 @@ input:focus, select:focus, textarea:focus { border-color:var(--gold) !important;
           <div class="tab" onclick="filterRecType('Carb',this)">Carb</div>
           <div class="tab" onclick="filterRecType('Veg',this)">Veg</div>
           <div class="tab" onclick="filterRecType('Condiment',this)">Condiment</div>
-          <div class="tab" onclick="filterRecType('Complete',this)">Complete</div>
+          <div class="tab" onclick="filterRecType('Complete',this)">Sides</div>
         </div>
       </div>
       <div class="card">
@@ -2391,7 +2391,7 @@ input:focus, select:focus, textarea:focus { border-color:var(--gold) !important;
           <div class="tab" onclick="filterCompType('Carb',this)">Carb</div>
           <div class="tab" onclick="filterCompType('Veg',this)">Veg</div>
           <div class="tab" onclick="filterCompType('Condiment',this)">Condiment</div>
-          <div class="tab" onclick="filterCompType('Complete',this)">Complete</div>
+          <div class="tab" onclick="filterCompType('Complete',this)">Sides</div>
         </div>
       </div>
       <div class="kpi-grid" id="comp-kpi-grid"></div>
@@ -4899,7 +4899,7 @@ input:focus, select:focus, textarea:focus { border-color:var(--gold) !important;
       <div class="form-grid">
         <div class="form-group"><label>Component Name *</label><input id="rec-name" placeholder="e.g. Chicken Tikka"></div>
         <div class="form-group"><label>Type *</label>
-          <select id="rec-type" onchange="onRecTypeChange(this.value)"><option>Protein</option><option>Carb</option><option>Veg</option><option>Condiment</option><option>Complete</option></select>
+          <select id="rec-type" onchange="onRecTypeChange(this.value)"><option>Protein</option><option>Carb</option><option>Veg</option><option>Condiment</option><option value="Complete">Sides</option></select>
         </div>
         <div class="form-group"><label>Version</label><input id="rec-version" value="V1"></div>
         <div class="form-group"><label>Status</label><select id="rec-status"><option>Active</option><option>Draft</option><option>Archived</option></select></div>
@@ -7069,7 +7069,7 @@ function duplicateRec(id) {
 
   // Show source info
   var t = calcRecipeTotals(rec);
-  var typeLabels = { Protein:'Protein', Carb:'Carb', Veg:'Veg', Condiment:'Condiment', Complete:'Complete' };
+  var typeLabels = { Protein:'Protein', Carb:'Carb', Veg:'Veg', Condiment:'Condiment', Complete:'Sides' };
   document.getElementById('rec-dup-source').innerHTML =
     '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Duplicating from</span><br>'
     + '<strong style="font-size:13px">' + rec.name + '</strong>'
@@ -7209,7 +7209,7 @@ function renderComponents(){
   const byType={};
   active.forEach(r=>{byType[r.type]=(byType[r.type]||0)+1;});
   document.getElementById('comp-kpi-grid').innerHTML=['Protein','Carb','Veg','Condiment','Complete'].map(t=>`
-    <div class="kpi-card"><div class="kpi-label">${t}</div><div class="kpi-value">${byType[t]||0}</div><div class="kpi-sub">active</div></div>`).join('');
+    <div class="kpi-card"><div class="kpi-label">${t==='Complete'?'Sides':t}</div><div class="kpi-value">${byType[t]||0}</div><div class="kpi-sub">active</div></div>`).join('');
   document.getElementById('comp-tbody').innerHTML=f.map(rec=>{
     const t=calcRecipeTotals(rec);
     const highlights=getNutritionHighlights(t);
@@ -7491,7 +7491,9 @@ function recalcDishPortions(slotOrLabel) {
     });
   });
   dishes.forEach(function(dish){
-    if(!dish.athleteVariant){ dish.drop1=s1[dish.id]||0; dish.drop2=s2[dish.id]||0; }
+    // Athlete variants AND sides are manually planned (add-ons / no portal orders yet) —
+    // preserve their manual drop1/drop2 rather than zeroing them to order counts.
+    if(!dish.athleteVariant && dish.category!=='side'){ dish.drop1=s1[dish.id]||0; dish.drop2=s2[dish.id]||0; }
   });
 }
 
@@ -7625,7 +7627,8 @@ function renderMenu(){
   }
 
   const slotDishes = getSlotDishes();
-  const dishes=slotDishes.filter(d=>!menuSearchFilter||d.name.toLowerCase().includes(menuSearchFilter.toLowerCase()));
+  // Group the menu: meals first, then sides (stable within each group) so the two are easy to tell apart.
+  const dishes=slotDishes.filter(d=>!menuSearchFilter||d.name.toLowerCase().includes(menuSearchFilter.toLowerCase())).slice().sort((a,b)=>(a.category==='side'?1:0)-(b.category==='side'?1:0));
   document.getElementById('menu-count').textContent=slotDishes.length+' dish'+(slotDishes.length!==1?'es':'');
   const activeComps=DB.recipes.filter(r=>r.status==='Active').sort((a,b)=>a.name.localeCompare(b.name));
   // Build one shared datalist per component type — used by all dish card search inputs
@@ -7643,6 +7646,10 @@ function renderMenu(){
     + '</div>';
   var _menuRowsHtml = dishes.map((dish,idx)=>{
     const realIdx=slotDishes.indexOf(dish);
+    // A "Sides" header before the first side row (dishes are meal-first then sides).
+    const _sideDivider = (dish.category==='side' && (idx===0 || dishes[idx-1].category!=='side'))
+      ? '<div style="font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);padding:16px 6px 8px;border-top:1px solid var(--border);margin-top:8px">◫ Sides</div>'
+      : (dish.category!=='side' && idx===0 ? '<div style="font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);padding:2px 6px 8px">Main dishes</div>' : '');
     const t=calcDishTotals(dish);
     const packCost=getPackagingCost();
     const margin=t.sell>0?(t.sell-t.cost-packCost)/t.sell:0;
@@ -7674,9 +7681,9 @@ function renderMenu(){
       {slot:'veg',      label:'VEG',  type:'Veg',       cls:'b-veg'},
       {slot:'condiment',label:'SCE',  type:'Condiment', cls:'b-condiment'},
       {slot:'complete', label:'FULL', type:'Complete',  cls:'b-complete'},
-    ].filter(r=>dish.category!=='side'||r.slot==='complete').map(({slot,label,type,cls})=>`
+    ].filter(r=> dish.category==='side' ? r.slot==='complete' : r.slot!=='complete').map(({slot,label,type,cls})=>`
       <div class="menu-comp-row">
-        <span class="badge ${cls}" style="font-size:7px;padding:2px 5px;flex-shrink:0;letter-spacing:.4px;width:34px;text-align:center">${dish.category==='side'&&slot==='complete'?'ITEM':label}</span>
+        <span class="badge ${cls}" style="font-size:7px;padding:2px 5px;flex-shrink:0;letter-spacing:.4px;width:34px;text-align:center">${dish.category==='side'&&slot==='complete'?'SIDE':label}</span>
         <input class="menu-comp-select menu-comp-search" type="text" list="comp-dl-${type}"
           value="${escHtml(dish[slot]||'')}" placeholder="${dish.category==='side'&&slot==='complete'?'Side item…':type+'…'}"
           data-slot="${slot}" data-realidx="${realIdx}" autocomplete="off" spellcheck="false"
@@ -7686,8 +7693,13 @@ function renderMenu(){
           : `<span style="width:44px"></span>`}
       </div>`).join('');
     // Pre-compute avail checkbox strings — avoids template literal nesting issues
-    const _editS1Chk = dish.athleteVariant ? '' : '<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" '+(dish.availSunday?'checked':'')+' onchange="ud('+realIdx+',\'availSunday\',this.checked)" style="width:14px;height:14px"><span style="color:var(--text2)">Sunday</span></label>';
-    const _editS2Chk = dish.athleteVariant ? '' : '<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" '+(dish.availWednesday?'checked':'')+' onchange="ud('+realIdx+',\'availWednesday\',this.checked)" style="width:14px;height:14px"><span style="color:var(--text2)">Wednesday</span></label>';
+    const _sideInp = 'width:52px;padding:3px 5px;border:1px solid var(--border2);border-radius:4px;background:var(--surface2);color:var(--text);font-size:12px;font-family:var(--mono)';
+    const _editS1Chk = dish.athleteVariant ? '' : (dish.category==='side'
+      ? '<label style="font-size:9px;font-family:var(--mono);color:var(--text3);display:flex;align-items:center;gap:4px;text-transform:uppercase;letter-spacing:.5px">Sun<input type="number" min="0" value="'+(n(dish.drop1)||0)+'" onchange="ud('+realIdx+',\'drop1\',this.value)" style="'+_sideInp+'"></label>'
+      : '<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" '+(dish.availSunday?'checked':'')+' onchange="ud('+realIdx+',\'availSunday\',this.checked)" style="width:14px;height:14px"><span style="color:var(--text2)">Sunday</span></label>');
+    const _editS2Chk = dish.athleteVariant ? '' : (dish.category==='side'
+      ? '<label style="font-size:9px;font-family:var(--mono);color:var(--text3);display:flex;align-items:center;gap:4px;text-transform:uppercase;letter-spacing:.5px">Wed<input type="number" min="0" value="'+(n(dish.drop2)||0)+'" onchange="ud('+realIdx+',\'drop2\',this.value)" style="'+_sideInp+'"></label>'
+      : '<label style="font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" '+(dish.availWednesday?'checked':'')+' onchange="ud('+realIdx+',\'availWednesday\',this.checked)" style="width:14px;height:14px"><span style="color:var(--text2)">Wednesday</span></label>');
 
     // Completeness checks (athlete variants skip the availability check — use drop counts instead)
     const _compChecks = [
@@ -7731,7 +7743,7 @@ function renderMenu(){
 
     // Packaging summary
     const _pkgHtml = '<span style="font-size:9px;font-family:var(--mono);color:var(--text3)">'
-      + ((!dish.boxType||dish.boxType==='3-compartment')?'▣ 3-Comp':'☐ Single')
+      + (dish.boxType==='sides-box'?'◫ Sides Box':((!dish.boxType||dish.boxType==='3-compartment')?'▣ 3-Comp':'☐ Single'))
       + ((n(dish.condimentTubs)||0)>0?' · '+(n(dish.condimentTubs))+'× tub':'')
       + '</span>';
 
@@ -7748,7 +7760,7 @@ function renderMenu(){
 
     var _compLine = ['protein','carb','veg','condiment','complete'].map(function(k){return dish[k];}).filter(Boolean).join(' · ') || '—';
     var _allerLine = [...t.allergens].join(', ');
-    return `<div class="menu-row" id="menu-card-${realIdx}" data-fuel="${dish.fuelLine||'Fuel Plus'}" data-athlete="${dish.athleteVariant?'true':'false'}">
+    return `${_sideDivider}<div class="menu-row" id="menu-card-${realIdx}" data-fuel="${dish.fuelLine||'Fuel Plus'}" data-athlete="${dish.athleteVariant?'true':'false'}">
       <div class="mr-idx"><span class="n">${realIdx+1}</span><span class="ar">
         <button onclick="moveDish(${realIdx},-1)" ${realIdx===0?'disabled':''} aria-label="Move up">▲</button>
         <button onclick="moveDish(${realIdx},1)" ${realIdx===slotDishes.length-1?'disabled':''} aria-label="Move down">▼</button>
@@ -7799,9 +7811,10 @@ function renderMenu(){
       <div class="menu-card-edit-section">
         <div class="menu-card-edit-section-label">Packaging</div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <button class="box-type-btn${(!dish.boxType||dish.boxType==='3-compartment')?' active':''}" id="menu-edit-box3c-${realIdx}" onclick="udMenuBoxType(${realIdx},'3-compartment')" style="font-size:10px;padding:3px 9px">▣ 3-Comp</button>
-          <button class="box-type-btn${(dish.boxType==='single')?' active':''}" id="menu-edit-boxsg-${realIdx}" onclick="udMenuBoxType(${realIdx},'single')" style="font-size:10px;padding:3px 9px">☐ Single</button>
-          <div class="tub-count" id="menu-edit-tubs-${realIdx}">
+          ${dish.category==='side'
+            ? '<span class="box-type-btn active" style="font-size:10px;padding:3px 9px;cursor:default">◫ Sides Box</span><span style="font-size:9px;color:var(--text3);font-family:var(--mono)">single square · not microwave-safe</span>'
+            : `<button class="box-type-btn${(!dish.boxType||dish.boxType==='3-compartment')?' active':''}" id="menu-edit-box3c-${realIdx}" onclick="udMenuBoxType(${realIdx},'3-compartment')" style="font-size:10px;padding:3px 9px">▣ 3-Comp</button><button class="box-type-btn${(dish.boxType==='single')?' active':''}" id="menu-edit-boxsg-${realIdx}" onclick="udMenuBoxType(${realIdx},'single')" style="font-size:10px;padding:3px 9px">☐ Single</button>`}
+          <div class="tub-count" id="menu-edit-tubs-${realIdx}" style="${dish.category==='side'?'display:none':''}">
             <button class="tub-btn" onclick="udMenuAdjTubs(${realIdx},-1)">−</button>
             <span class="tub-num">${n(dish.condimentTubs)||0}</span>
             <button class="tub-btn" onclick="udMenuAdjTubs(${realIdx},1)">+</button>
@@ -8003,7 +8016,7 @@ function addDishRow(){
 // flag (cold sides skip the cook board). It inherits the whole pipeline as a dish.
 function addSideRow(){
   var defaultPortions = menuActiveSlot === 'next' ? (DB.defaultPortions || 20) : 0;
-  getSlotDishes().push({id:'DISH'+String(DB.nextDishId++).padStart(3,'0'),name:'New Side',category:'side',sideCooked:false,serves:'',tags:[],protein:'',carb:'',veg:'',condiment:'',complete:'',scaleProtein:1,scaleCarb:1,scaleVeg:1,scaleOverall:1,drop1:defaultPortions,drop2:defaultPortions,sellPrice:DB.defaultSellPrice,boxType:'single',condimentTubs:0,fuelLine:'',photoUrl:'',availSunday:true,availWednesday:true});
+  getSlotDishes().push({id:'DISH'+String(DB.nextDishId++).padStart(3,'0'),name:'New Side',category:'side',sideCooked:false,serves:'',tags:[],protein:'',carb:'',veg:'',condiment:'',complete:'',scaleProtein:1,scaleCarb:1,scaleVeg:1,scaleOverall:1,drop1:0,drop2:0,sellPrice:DB.defaultSellPrice,boxType:'sides-box',condimentTubs:0,fuelLine:'',photoUrl:'',availSunday:true,availWednesday:true});
   _menuEditOpenIdx = getSlotDishes().length - 1;   // open its editor straight away
   save();renderMenu();
   notify('✓ Side added — set its Item, price and Cooked/Cold');
