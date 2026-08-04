@@ -15028,14 +15028,19 @@ function renderOrdersPanel() {
 
 /* Calculate order total from items[] (new) or allocation+dishes (legacy) */
 function calcOrderTotal(ord, dishes) {
+  var itemsSum;
   if (ord.items && ord.items.length) {
-    return ord.items.reduce(function(s,i){ return s+(i.unitPrice||0)*(i.qty||0); }, 0);
+    itemsSum = ord.items.reduce(function(s,i){ return s+(i.unitPrice||0)*(i.qty||0); }, 0);
+  } else {
+    // legacy fallback
+    itemsSum = Object.keys(ord.allocation||{}).reduce(function(s,dId){
+      var d = (dishes||[]).find(function(x){ return x.id===dId; });
+      return s + (d ? (parseFloat(d.sellPrice)||0) : 0) * (ord.allocation[dId]||0);
+    }, 0);
   }
-  // legacy fallback
-  return Object.keys(ord.allocation||{}).reduce(function(s,dId){
-    var d = (dishes||[]).find(function(x){ return x.id===dId; });
-    return s + (d ? (parseFloat(d.sellPrice)||0) : 0) * (ord.allocation[dId]||0);
-  }, 0);
+  // Each drop is a separate delivery — include this order's delivery fee so the total
+  // matches what the customer actually pays (revenue + payment reconciliation).
+  return itemsSum + (parseFloat(ord.deliveryFee) || 0);
 }
 
 /* Render a single order card */
@@ -15114,17 +15119,22 @@ function renderOrderCard(ord, dishes) {
           '<span class="order-dish-qty">&times;'+i.qty+'</span>'+
           '<span class="order-dish-price">£'+(i.unitPrice*i.qty).toFixed(2)+'</span></div>';
       }).join('') +
-      (ord.discount && parseFloat(ord.discount.amount) > 0
-        ? (_orderDiscountVoid(ord)
-            // Returning customer reused a first-order code → discount void, charge full price
-            ? '<div class="order-dish-row" style="font-size:11px;color:var(--text3)"><span style="flex:1">Subtotal</span><span></span><span>£'+total.toFixed(2)+'</span></div>' +
-              '<div class="order-dish-row" style="font-size:11px;color:#f87171"><span style="flex:1">⚠ '+n2h(ord.discount.code||'')+' void — returning customer, charge full price</span><span></span><span style="text-decoration:line-through;color:var(--text3)">−£'+parseFloat(ord.discount.amount).toFixed(2)+'</span></div>' +
-              '<div class="order-total-row"><span>Total</span><span>£'+total.toFixed(2)+'</span></div>'
-            : '<div class="order-dish-row" style="font-size:11px;color:var(--text3)"><span style="flex:1">Subtotal</span><span></span><span>£'+total.toFixed(2)+'</span></div>' +
-              '<div class="order-dish-row" style="font-size:11px;color:var(--green)"><span style="flex:1">Discount ('+n2h(ord.discount.code||'')+')</span><span></span><span>−£'+parseFloat(ord.discount.amount).toFixed(2)+'</span></div>' +
-              '<div class="order-total-row"><span>Total</span><span>£'+Math.max(0,total-parseFloat(ord.discount.amount)).toFixed(2)+'</span></div>')
-        : '<div class="order-total-row"><span>Total</span><span>£'+total.toFixed(2)+'</span></div>'
-      ) +
+      (function(){
+        var deliv  = parseFloat(ord.deliveryFee) || 0;
+        var hasDisc = !!(ord.discount && parseFloat(ord.discount.amount) > 0);
+        var voided = hasDisc && _orderDiscountVoid(ord);
+        var disc   = (hasDisc && !voided) ? parseFloat(ord.discount.amount) : 0;
+        var lineStyle = 'font-size:11px;color:var(--text3)';
+        var rows = '';
+        if (deliv > 0 || hasDisc) {
+          rows += '<div class="order-dish-row" style="'+lineStyle+'"><span style="flex:1">Subtotal</span><span></span><span>£'+total.toFixed(2)+'</span></div>';
+          if (deliv > 0) rows += '<div class="order-dish-row" style="'+lineStyle+'"><span style="flex:1">Delivery</span><span></span><span>£'+deliv.toFixed(2)+'</span></div>';
+          if (voided) rows += '<div class="order-dish-row" style="font-size:11px;color:#f87171"><span style="flex:1">⚠ '+n2h(ord.discount.code||'')+' void — returning customer, charge full price</span><span></span><span style="text-decoration:line-through;color:var(--text3)">−£'+parseFloat(ord.discount.amount).toFixed(2)+'</span></div>';
+          else if (disc > 0) rows += '<div class="order-dish-row" style="font-size:11px;color:var(--green)"><span style="flex:1">Discount ('+n2h(ord.discount.code||'')+')</span><span></span><span>−£'+disc.toFixed(2)+'</span></div>';
+        }
+        var grand = Math.max(0, total + deliv - disc);
+        return rows + '<div class="order-total-row"><span>Total</span><span>£'+grand.toFixed(2)+'</span></div>';
+      })() +
       cancelNote + notesNote +
     '</div>' +
     // Actions
@@ -15199,6 +15209,7 @@ function renderOrderHistory() {
     var lines = _histItemLines(o);
     var total = lines.reduce(function(s, i){ return s + i.price; }, 0);
     var disc = (o.discount && parseFloat(o.discount.amount) > 0 && !_orderDiscountVoid(o)) ? parseFloat(o.discount.amount) : 0;
+    var deliv = parseFloat(o.deliveryFee) || 0;
     var when = Date.parse(o.createdAt || o.submittedAt || o.confirmedAt || '') || 0;
     var dateStr = when ? new Date(when).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
     var sess = (o.session || '').toLowerCase();
@@ -15211,7 +15222,7 @@ function renderOrderHistory() {
         '<div style="display:flex;gap:5px;align-items:center">' +
           '<span class="order-status-badge ' + status + '">' + orderStatusLabel(status) + '</span>' +
           '<span class="order-status-badge pay-' + pay + '">' + payStatusLabel(pay) + '</span>' +
-          '<span style="font-family:var(--mono);font-weight:800">£' + Math.max(0, total - disc).toFixed(2) + '</span>' +
+          '<span style="font-family:var(--mono);font-weight:800">£' + Math.max(0, total + deliv - disc).toFixed(2) + '</span>' +
         '</div>' +
       '</div>' +
       '<div style="font-size:12px;color:var(--text2);margin-top:5px">' + lines.map(function(i){ return n2h(i.name) + ' ×' + i.qty; }).join(' · ') + '</div>' +
