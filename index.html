@@ -15168,16 +15168,72 @@ function _histItemLines(o) {
     return { name: d ? d.name : did, qty: o.allocation[did] || 0, price: (d ? parseFloat(d.sellPrice) || 0 : 0) * (o.allocation[did] || 0) };
   }).filter(function(i){ return i.qty > 0; });
 }
+var _histPayFilter = 'all';
+// Net amount the customer owes for an order — items + delivery − (applied) discount.
+function _orderNet(o) {
+  var items = _histItemLines(o).reduce(function(s, i){ return s + i.price; }, 0);
+  var deliv = parseFloat(o.deliveryFee) || 0;
+  var disc  = (o.discount && parseFloat(o.discount.amount) > 0 && !_orderDiscountVoid(o)) ? parseFloat(o.discount.amount) : 0;
+  return Math.max(0, items + deliv - disc);
+}
+function setHistPayFilter(v) { _histPayFilter = v; renderOrderHistory(); }
+function _reconCard(label, val, color) {
+  return '<div style="flex:1;min-width:120px;border:1px solid var(--border);border-radius:8px;padding:9px 12px">' +
+    '<div style="font-size:9px;font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--text3)">' + label + '</div>' +
+    '<div style="font-size:18px;font-weight:800;color:' + color + ';margin-top:2px">£' + val.toFixed(2) + '</div></div>';
+}
+// Rich transactions export for the accounts spreadsheet — respects the current search + pay filter.
+function exportTransactionsCsv() {
+  var q = ((document.getElementById('order-history-search') || {}).value || '').trim().toLowerCase();
+  var rows = _allHistoricOrders().filter(function(o) {
+    if (!q) return true;
+    var hay = [o.recipientName, o.week, o.email, o.phone, o.postcode, o.city, o.session, o.source].filter(Boolean).join(' ').toLowerCase();
+    var items = _histItemLines(o).map(function(i){ return i.name; }).join(' ').toLowerCase();
+    return hay.indexOf(q) !== -1 || items.indexOf(q) !== -1;
+  });
+  if (_histPayFilter !== 'all') rows = rows.filter(function(o){ return getOrderStatus(o) !== 'cancelled' && getPayStatus(o) === _histPayFilter; });
+  if (!rows.length) { notify('No transactions to export'); return; }
+  var cols = ['Date','Order ID','Week','Session','Customer','Email','Phone','Postcode','Items','Items subtotal','Delivery','Discount','Net total','Order status','Payment','Source'];
+  function esc(v){ return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
+  var lines = [cols.join(',')];
+  rows.forEach(function(o) {
+    var il = _histItemLines(o);
+    var itemsSum = il.reduce(function(s, i){ return s + i.price; }, 0);
+    var deliv = parseFloat(o.deliveryFee) || 0;
+    var disc  = (o.discount && parseFloat(o.discount.amount) > 0 && !_orderDiscountVoid(o)) ? parseFloat(o.discount.amount) : 0;
+    var when = Date.parse(o.createdAt || o.submittedAt || o.confirmedAt || '') || 0;
+    lines.push([
+      when ? new Date(when).toLocaleDateString('en-GB') : '', o.id || '', o.week || '', o.session || '',
+      o.recipientName || '', o.email || '', o.phone || '', o.postcode || '',
+      il.map(function(i){ return i.qty + 'x ' + i.name; }).join('; '),
+      itemsSum.toFixed(2), deliv.toFixed(2), disc.toFixed(2), _orderNet(o).toFixed(2),
+      orderStatusLabel(getOrderStatus(o)), (getPayStatus(o) || 'unpaid'), (o.source || '').toUpperCase()
+    ].map(esc).join(','));
+  });
+  var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'transactions-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  notify('⬇ ' + rows.length + ' transactions exported ✓');
+}
 function openOrderHistory() {
   var m = document.getElementById('order-history-modal');
   if (!m) {
     m = document.createElement('div');
     m.className = 'modal-overlay';
     m.id = 'order-history-modal';
-    m.innerHTML = '<div class="modal modal-lg"><div class="modal-header"><div class="modal-title">📜 Order History</div><button class="modal-close" onclick="closeModal(\'order-history-modal\')">×</button></div>' +
-      '<div class="modal-body"><input type="text" id="order-history-search" placeholder="Search by name, week, dish, postcode…" oninput="renderOrderHistory()" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:6px;margin-bottom:6px;font-size:13px">' +
+    m.innerHTML = '<div class="modal modal-lg"><div class="modal-header"><div class="modal-title">📒 Order History &amp; Accounts</div><button class="modal-close" onclick="closeModal(\'order-history-modal\')">×</button></div>' +
+      '<div class="modal-body">' +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">' +
+        '<input type="text" id="order-history-search" placeholder="Search by name, week, dish, postcode…" oninput="renderOrderHistory()" style="flex:1;min-width:180px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px">' +
+        '<button class="btn btn-ghost btn-sm" onclick="exportTransactionsCsv()" title="Export the filtered transactions to CSV for your accounts spreadsheet">⬇ Export CSV</button>' +
+      '</div>' +
+      '<div id="order-history-payfilter" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>' +
+      '<div id="order-history-recon" style="margin-bottom:10px"></div>' +
       '<div id="order-history-summary" style="font-size:11px;color:var(--text3);margin-bottom:10px"></div>' +
-      '<div id="order-history-results" style="max-height:62vh;overflow-y:auto"></div></div></div>';
+      '<div id="order-history-results" style="max-height:52vh;overflow-y:auto"></div></div></div>';
     document.body.appendChild(m);
   }
   _ensureArchivedOrders();   // lazy-load past weeks; re-renders when they arrive
@@ -15189,19 +15245,42 @@ function renderOrderHistory() {
   if (!el) return;
   var q = ((document.getElementById('order-history-search') || {}).value || '').trim().toLowerCase();
   var all = _allHistoricOrders();
-  var filtered = all.filter(function(o) {
+  var searchFiltered = all.filter(function(o) {
     if (!q) return true;
     var hay = [o.recipientName, o.week, o.email, o.phone, o.postcode, o.city, o.session, o.source].filter(Boolean).join(' ').toLowerCase();
     var items = _histItemLines(o).map(function(i){ return i.name; }).join(' ').toLowerCase();
     return hay.indexOf(q) !== -1 || items.indexOf(q) !== -1;
   });
-  var revenue = filtered.filter(function(o){ return getOrderStatus(o) !== 'cancelled'; }).reduce(function(s, o){ return s + _orderValue(o); }, 0);
+  // Reconciliation over the (search-filtered) live orders — always all pay statuses so the totals reconcile.
+  var live = searchFiltered.filter(function(o){ return getOrderStatus(o) !== 'cancelled'; });
+  var invoiced = 0, paidT = 0, outT = 0, compT = 0;
+  live.forEach(function(o) {
+    var net = _orderNet(o), p = getPayStatus(o);
+    invoiced += net;
+    if (p === 'paid') paidT += net; else if (p === 'comped') compT += net; else outT += net;
+  });
+  var pfEl = document.getElementById('order-history-payfilter');
+  if (pfEl) pfEl.innerHTML = [['all','All'],['unpaid','💳 Unpaid'],['paid','✓ Paid'],['comped','🎁 Comped']].map(function(c) {
+    var active = (_histPayFilter || 'all') === c[0];
+    return '<button class="btn btn-' + (active ? 'gold' : 'ghost') + ' btn-xs" onclick="setHistPayFilter(\'' + c[0] + '\')">' + c[1] + '</button>';
+  }).join('');
+  var reEl = document.getElementById('order-history-recon');
+  if (reEl) reEl.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+    _reconCard('Invoiced', invoiced, 'var(--text)') +
+    _reconCard('Paid', paidT, 'var(--green)') +
+    _reconCard('Outstanding', outT, outT > 0.005 ? '#ff9f0a' : 'var(--text3)') +
+    _reconCard('Comped', compT, 'var(--text3)') + '</div>';
+  // The list respects the pay-status chip; reconciliation totals above always reflect the full (search) set.
+  var payF = _histPayFilter || 'all';
+  var filtered = (payF === 'all') ? searchFiltered : live.filter(function(o){ return getPayStatus(o) === payF; });
+  var revenue = live.reduce(function(s, o){ return s + _orderValue(o); }, 0);
   var sumEl = document.getElementById('order-history-summary');
-  if (sumEl) sumEl.innerHTML = filtered.length + ' order' + (filtered.length !== 1 ? 's' : '') + ' · £' + revenue.toFixed(2) + ' (excl. cancelled)' +
+  if (sumEl) sumEl.innerHTML = filtered.length + ' order' + (filtered.length !== 1 ? 's' : '') +
+    (payF !== 'all' ? ' shown · £' + revenue.toFixed(2) + ' invoiced (all statuses, excl. cancelled)' : ' · £' + revenue.toFixed(2) + ' (excl. cancelled)') +
     (_archOrdersLoading ? ' · <span style="color:var(--gold)">loading archived weeks…</span>' : '') +
     (filtered.length > 400 ? ' · showing newest 400' : '');
   if (!filtered.length) {
-    el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:24px;font-size:13px">' + (q ? 'No orders match “' + n2h(q) + '”.' : (_archOrdersLoading ? 'Loading…' : 'No orders yet.')) + '</div>';
+    el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:24px;font-size:13px">' + (payF !== 'all' ? 'No ' + payF + ' orders' + (q ? ' match “' + n2h(q) + '”' : '') + '.' : (q ? 'No orders match “' + n2h(q) + '”.' : (_archOrdersLoading ? 'Loading…' : 'No orders yet.'))) + '</div>';
     return;
   }
   el.innerHTML = filtered.slice(0, 400).map(function(o) {
