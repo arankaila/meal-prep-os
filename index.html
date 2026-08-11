@@ -11854,22 +11854,27 @@ function openDiscountModal(id) {
       + '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:2px">'
       + '<div style="display:flex;align-items:center;gap:10px">'
       + '<input type="checkbox" id="dm-referral" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer" onchange="_dmToggleReferral()">'
-      + '<label for="dm-referral" style="font-size:13px;cursor:pointer;color:var(--text);font-weight:600">🤝 Referral / affiliate code (pays a partner per new customer)</label>'
+      + '<label for="dm-referral" style="font-size:13px;cursor:pointer;color:var(--text);font-weight:600">🤝 Referral / affiliate code (pays a partner — £ per new customer or % of orders)</label>'
       + '</div>'
       + '<div id="dm-referral-fields" style="display:none;flex-direction:column;gap:14px;margin-top:12px;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:6px">'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
       + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Partner name *</label><input type="text" id="dm-ref-name" placeholder="e.g. Push Gym / Jane (PT)" style="' + inputStyle + '"></div>'
       + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Partner contact</label><input type="text" id="dm-ref-contact" placeholder="email / phone for payout" style="' + inputStyle + '"></div>'
       + '</div>'
+      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Referral fee type *</label>'
+      + '<select id="dm-ref-feetype" onchange="_dmToggleFeeType()" style="' + inputStyle + '"><option value="fixed">Fixed £ per new customer</option><option value="percent">% of each order value (ongoing)</option></select></div>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
-      + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Referral fee — £ per new customer *</label><input type="number" id="dm-ref-fee" min="0" step="0.01" placeholder="e.g. 10" style="' + inputStyle + '"></div>'
+      + '<div>'
+      + '<div id="dm-ref-fee-wrap"><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">£ per new customer *</label><input type="number" id="dm-ref-fee" min="0" step="0.01" placeholder="e.g. 10" style="' + inputStyle + '"></div>'
+      + '<div id="dm-ref-pct-wrap" style="display:none"><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">% of gross order value *</label><input type="number" id="dm-ref-pct" min="0" max="100" step="0.1" placeholder="e.g. 5" style="' + inputStyle + '"></div>'
+      + '</div>'
       + '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Max discount cap (£) — % codes</label><input type="number" id="dm-ref-cap" min="0" step="0.01" placeholder="blank = no cap" style="' + inputStyle + '"></div>'
       + '</div>'
       + '<div style="display:flex;align-items:center;gap:10px">'
       + '<input type="checkbox" id="dm-ref-firstonly" checked style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">'
-      + '<label for="dm-ref-firstonly" style="font-size:13px;cursor:pointer;color:var(--text)">First order only — fee earned once per genuinely new customer</label>'
+      + '<label for="dm-ref-firstonly" style="font-size:13px;cursor:pointer;color:var(--text)">First order only — fee earned once per genuinely new customer (untick for ongoing, every order)</label>'
       + '</div>'
-      + '<div style="font-size:11px;color:var(--text3);line-height:1.5">The discount applies at checkout for anyone using the code. The referral fee is only <b>owed</b> once the new customer’s first order is marked <b>Paid</b> in Orders. Returning customers still get the discount but earn the partner no fee.</div>'
+      + '<div style="font-size:11px;color:var(--text3);line-height:1.5">The discount applies at checkout for anyone using the code. The referral fee is only <b>owed</b> once an order is marked <b>Paid</b> in Orders. <b>Fixed</b> pays a set £ per new customer; <b>%</b> pays a share of each order’s gross item value (before the customer discount, excluding delivery). Untick “First order only” for an ongoing partnership that earns on every order.</div>'
       + '</div>'
       + '</div>'
       + '</div></div>'
@@ -11890,6 +11895,8 @@ function openDiscountModal(id) {
   document.getElementById('dm-ref-name').value       = existing ? (existing.referrerName || '') : '';
   document.getElementById('dm-ref-contact').value    = existing ? (existing.referrerContact || '') : '';
   document.getElementById('dm-ref-fee').value        = existing ? (existing.referralFee || '') : '';
+  document.getElementById('dm-ref-feetype').value    = existing ? (existing.referralType || 'fixed') : 'fixed';
+  document.getElementById('dm-ref-pct').value        = existing ? (existing.referralPct || '') : '';
   document.getElementById('dm-ref-cap').value        = existing ? (existing.maxDiscount || '') : '';
   document.getElementById('dm-ref-firstonly').checked = existing ? (existing.firstOrderOnly !== false) : true;
   _dmToggleReferral();
@@ -11899,6 +11906,13 @@ function openDiscountModal(id) {
 function _dmToggleReferral() {
   var on = document.getElementById('dm-referral').checked;
   document.getElementById('dm-referral-fields').style.display = on ? 'flex' : 'none';
+  _dmToggleFeeType();
+}
+function _dmToggleFeeType() {
+  var t = (document.getElementById('dm-ref-feetype') || {}).value || 'fixed';
+  var fw = document.getElementById('dm-ref-fee-wrap'), pw = document.getElementById('dm-ref-pct-wrap');
+  if (fw) fw.style.display = (t === 'percent') ? 'none' : 'block';
+  if (pw) pw.style.display = (t === 'percent') ? 'block' : 'none';
 }
 
 function saveDiscount() {
@@ -11915,6 +11929,8 @@ function saveDiscount() {
   var refName     = (document.getElementById('dm-ref-name').value || '').trim();
   var refContact  = (document.getElementById('dm-ref-contact').value || '').trim();
   var refFee      = parseFloat(document.getElementById('dm-ref-fee').value) || 0;
+  var refType     = document.getElementById('dm-ref-feetype').value || 'fixed';
+  var refPct      = parseFloat(document.getElementById('dm-ref-pct').value) || 0;
   var refCap      = parseFloat(document.getElementById('dm-ref-cap').value) || 0;
   var refFirstOnly = document.getElementById('dm-ref-firstonly').checked;
 
@@ -11923,14 +11939,15 @@ function saveDiscount() {
   if (isNaN(value) || value <= 0)  { notify('Please enter a valid discount value', 'warn'); return; }
   if (type === 'percent' && value > 100) { notify('Percentage discount cannot exceed 100%', 'warn'); return; }
   if (isReferral && !refName) { notify('Referral codes need a partner name', 'warn'); return; }
-  if (isReferral && refFee <= 0) { notify('Set a referral fee (£ per new customer)', 'warn'); return; }
+  if (isReferral && refType === 'fixed' && refFee <= 0) { notify('Set a referral fee (£ per new customer)', 'warn'); return; }
+  if (isReferral && refType === 'percent' && (refPct <= 0 || refPct > 100)) { notify('Set a referral % between 0 and 100', 'warn'); return; }
   if (!Array.isArray(DB.discountCodes)) DB.discountCodes = [];
 
   // Duplicate check
   var dupe = DB.discountCodes.find(function(c) { return c.code === code && c.id !== _editingDiscountId; });
   if (dupe) { notify('A code with that name already exists', 'warn'); return; }
 
-  var refFields = { isReferral: isReferral, referrerName: isReferral ? refName : '', referrerContact: isReferral ? refContact : '', referralFee: isReferral ? refFee : 0, maxDiscount: refCap, firstOrderOnly: isReferral ? refFirstOnly : false };
+  var refFields = { isReferral: isReferral, referrerName: isReferral ? refName : '', referrerContact: isReferral ? refContact : '', referralType: isReferral ? refType : 'fixed', referralFee: isReferral ? refFee : 0, referralPct: isReferral ? refPct : 0, maxDiscount: refCap, firstOrderOnly: isReferral ? refFirstOnly : false };
 
   if (_editingDiscountId) {
     var idx = DB.discountCodes.findIndex(function(c) { return c.id === _editingDiscountId; });
@@ -12014,7 +12031,17 @@ function _refSettled(codeId, orderId) {
   return !!(DB.referralSettlements && DB.referralSettlements[codeId] && DB.referralSettlements[codeId][orderId]);
 }
 
-// Build the per-partner ledger. Each qualified order = one new customer (it's their first).
+// The referral fee earned on ONE order for a given code.
+//  • fixed   → flat £ per (qualifying) order.
+//  • percent → referralPct % of the order's GROSS item value (_orderValue = items only,
+//              before the customer discount, excluding delivery).
+function _refFeeForOrder(dc, o) {
+  if (dc && dc.referralType === 'percent') return _orderValue(o) * (parseFloat(dc.referralPct) || 0) / 100;
+  return parseFloat(dc.referralFee) || 0;
+}
+
+// Build the per-partner ledger. A qualifying order = first order (fixed/first-order codes)
+// or any order (ongoing codes, firstOrderOnly=false). Fees sum per order so % codes total correctly.
 function buildReferralLedger() {
   var refCodes = (DB.discountCodes || []).filter(function(c) { return c.isReferral; });
   var allOrders = (DB.weeklyOrders || []).concat(_custArchOrders || []);
@@ -12030,19 +12057,24 @@ function buildReferralLedger() {
     var paid      = qualified.filter(function(o) { return getPayStatus(o) === 'paid'; });       // fee earned
     var pending   = qualified.filter(function(o) { return getPayStatus(o) !== 'paid'; });        // referred, awaiting payment
     var fee       = parseFloat(dc.referralFee) || 0;
+    var isPercent = dc.referralType === 'percent';
+    var pct       = parseFloat(dc.referralPct) || 0;
     var owedOrders = paid.filter(function(o) { return !_refSettled(dc.id, o.id); });
+    function feeSum(arr) { return arr.reduce(function(s, o) { return s + _refFeeForOrder(dc, o); }, 0); }
     // Raw uptake — every order placed with the code (any status), and unique customers
     var custSeen = {}; used.forEach(function(o) { if (o.customerId) custSeen[o.customerId] = 1; });
     return {
       dc: dc,
+      isPercent: isPercent,
+      pct: pct,
       ordersPlaced: used.length,
       customersReached: Object.keys(custSeen).length,
-      newCustomers: paid.length,
+      newCustomers: paid.length,          // for ongoing codes this is "paid qualifying orders"
       pending: pending.length,
       revenue: paid.reduce(function(s, o) { return s + _orderValue(o); }, 0),
       fee: fee,
-      feeEarned: paid.length * fee,
-      feeOwed: owedOrders.length * fee,
+      feeEarned: feeSum(paid),
+      feeOwed: feeSum(owedOrders),
       paidOrders: paid,
       owedOrders: owedOrders
     };
@@ -12062,7 +12094,7 @@ function renderReferralLedger() {
   var totOwed = ledger.reduce(function(s, r) { return s + r.feeOwed; }, 0);
   var totNew  = ledger.reduce(function(s, r) { return s + r.newCustomers; }, 0);
   var head = '<div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)">'
-    + '<div><div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px">New customers</div><div style="font-size:18px;font-weight:700;font-family:var(--mono)">' + totNew + '</div></div>'
+    + '<div><div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Paid orders</div><div style="font-size:18px;font-weight:700;font-family:var(--mono)">' + totNew + '</div></div>'
     + '<div><div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Fees owed now</div><div style="font-size:18px;font-weight:700;font-family:var(--mono);color:' + (totOwed > 0 ? 'var(--gold)' : 'var(--text)') + '">£' + totOwed.toFixed(2) + '</div></div>'
     + '<div><div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Partners</div><div style="font-size:18px;font-weight:700;font-family:var(--mono)">' + ledger.length + '</div></div>'
     + '</div>';
@@ -12083,9 +12115,11 @@ function renderReferralLedger() {
       + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px 16px">'
       + stat('Orders placed', r.ordersPlaced)
       + stat('New customers', r.newCustomers)
+      + stat(r.dc.firstOrderOnly === false ? 'Paid orders' : 'New customers', r.newCustomers)
       + stat('Awaiting payment', r.pending, r.pending > 0 ? 'var(--text2)' : '')
-      + stat('First-order rev', '£' + r.revenue.toFixed(2))
-      + stat('Fee / customer', '£' + r.fee.toFixed(2))
+      + stat(r.dc.firstOrderOnly === false ? 'Revenue (paid)' : 'First-order rev', '£' + r.revenue.toFixed(2))
+      + stat(r.isPercent ? 'Rate' : 'Fee / customer', r.isPercent ? (r.pct + '% / order') : ('£' + r.fee.toFixed(2)))
+      + stat('Fees earned', '£' + r.feeEarned.toFixed(2))
       + stat('Owed now', '£' + r.feeOwed.toFixed(2), r.feeOwed > 0 ? 'var(--gold)' : 'var(--green)')
       + '</div></div>'
       + '<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">'
@@ -12110,7 +12144,7 @@ function _referralPayoutHistory(codeId) {
     + '<div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Payout history · £' + paidTotal.toFixed(2) + ' paid to date</div>'
     + payouts.map(function(p) {
         return '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);padding:2px 0">'
-          + '<span>' + new Date(p.paidAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' · ' + p.count + ' customer' + (p.count !== 1 ? 's' : '') + '</span>'
+          + '<span>' + new Date(p.paidAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' · ' + p.count + ' order' + (p.count !== 1 ? 's' : '') + '</span>'
           + '<span style="font-family:var(--mono)">£' + (p.amount || 0).toFixed(2) + '</span></div>';
       }).join('')
     + '</div>';
@@ -12120,7 +12154,7 @@ function _referralPayoutHistory(codeId) {
 function settleReferral(codeId) {
   var row = buildReferralLedger().find(function(r) { return r.dc.id === codeId; });
   if (!row || !row.owedOrders.length) { notify('Nothing owed for this partner'); return; }
-  if (!confirm('Mark £' + row.feeOwed.toFixed(2) + ' as paid to ' + (row.dc.referrerName || 'this partner') + '? (' + row.owedOrders.length + ' new customer' + (row.owedOrders.length !== 1 ? 's' : '') + ')')) return;
+  if (!confirm('Mark £' + row.feeOwed.toFixed(2) + ' as paid to ' + (row.dc.referrerName || 'this partner') + '? (' + row.owedOrders.length + ' order' + (row.owedOrders.length !== 1 ? 's' : '') + ')')) return;
   if (!DB.referralSettlements) DB.referralSettlements = {};
   if (!DB.referralSettlements[codeId]) DB.referralSettlements[codeId] = {};
   var now = new Date().toISOString();
@@ -12134,25 +12168,36 @@ function settleReferral(codeId) {
   notify('Marked £' + row.feeOwed.toFixed(2) + ' paid to ' + (row.dc.referrerName || 'partner') + ' ✓');
 }
 
-// Download a CSV statement of every qualified new customer for a partner.
+// Download a PARTNER-FACING CSV statement — every earning order for a partner.
+// Privacy-clean by design: no customer names, emails, addresses, food costs or margins —
+// only order reference, date, week, order value and the fee earned. Safe to send the partner.
 function exportReferralStatement(codeId) {
   var row = buildReferralLedger().find(function(r) { return r.dc.id === codeId; });
   if (!row) return;
-  var rows = [['Partner', 'Code', 'Date', 'Customer', 'Email', 'First order £', 'Fee £', 'Paid out']];
-  row.paidOrders.slice().sort(function(a, b) { return _refOrderDate(a) - _refOrderDate(b); }).forEach(function(o) {
+  var dc = row.dc;
+  var rate = row.isPercent ? (row.pct + '% of order') : ('£' + row.fee.toFixed(2) + ' / order');
+  var rows = [['Partner', 'Code', 'Date', 'Week', 'Order ref', 'Order value £', 'Rate', 'Fee £', 'Status']];
+  var earned = row.paidOrders.slice().sort(function(a, b) { return _refOrderDate(a) - _refOrderDate(b); });
+  var totVal = 0, totFee = 0;
+  earned.forEach(function(o) {
+    var val = _orderValue(o), fee = _refFeeForOrder(dc, o);
+    totVal += val; totFee += fee;
     rows.push([
-      row.dc.referrerName || '', row.dc.code,
+      dc.referrerName || '', dc.code,
       new Date(_refOrderDate(o)).toLocaleDateString('en-GB'),
-      (o.recipientName || '').replace(/,/g, ' '), (o.email || '').replace(/,/g, ' '),
-      _orderValue(o).toFixed(2), row.fee.toFixed(2),
-      _refSettled(codeId, o.id) ? 'Yes' : 'No'
+      (o.week || '').replace(/,/g, ' '),
+      (o.id || '').replace(/,/g, ' '),
+      val.toFixed(2), rate, fee.toFixed(2),
+      _refSettled(codeId, o.id) ? 'Paid out' : 'Owed'
     ]);
   });
-  var csv = rows.map(function(r) { return r.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
-  var blob = new Blob([csv], { type: 'text/csv' });
+  rows.push([]);
+  rows.push(['', '', '', '', 'TOTAL (' + earned.length + ' order' + (earned.length !== 1 ? 's' : '') + ')', totVal.toFixed(2), '', totFee.toFixed(2), '']);
+  var csv = rows.map(function(r) { return r.map(function(c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(','); }).join('\r\n');
+  var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'referral-statement-' + (row.dc.code || 'partner') + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+  a.download = 'referral-statement-' + (dc.code || 'partner') + '-' + new Date().toISOString().slice(0, 10) + '.csv';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
 }
