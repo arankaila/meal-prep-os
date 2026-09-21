@@ -15125,7 +15125,6 @@ function renderOrderCard(ord, dishes) {
   // removing the fat-finger delete that used to sit next to Edit on live orders.
   var acts = '';
   if (status==='pending') acts += '<button class="ord-action-btn confirm" onclick="confirmOrder(\''+ord.id+'\')">✓ Confirm</button>';
-  if (status!=='cancelled' && pay!=='paid' && pay!=='comped') acts += '<button class="ord-action-btn" onclick="erpSendInvoice(\''+ord.id+'\')" title="Create a Stripe payment link to send the customer">💳 Invoice</button>';
   if (status!=='cancelled') acts += '<button class="ord-action-btn" onclick="openOrderModal(\''+ord.id+'\')" title="Edit">✏️</button>';
   if (status!=='cancelled' && status!=='delivered') acts += '<button class="ord-action-btn cancel" onclick="cancelOrder(\''+ord.id+'\')">✕ Cancel</button>';
   if (status==='cancelled') {
@@ -15150,7 +15149,11 @@ function renderOrderCard(ord, dishes) {
       '</div>' +
       '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">' +
         '<span class="order-status-badge '+status+'">'+orderStatusLabel(status)+'</span>' +
-        (status!=='cancelled' ? '<span class="order-status-badge pay-'+pay+'" onclick="cyclePayStatus(\''+ord.id+'\')" title="Tap to cycle: Unpaid → Paid → Comped">'+payStatusLabel(pay)+'</span>' : '') +
+        (status!=='cancelled'
+          ? (source==='manual'
+             ? '<span class="order-status-badge pay-'+pay+'" onclick="cyclePayStatus(\''+ord.id+'\')" title="Tap to cycle: Unpaid → Paid → Comped">'+payStatusLabel(pay)+'</span>'
+             : '<span class="order-status-badge pay-'+pay+'" style="cursor:default" title="Paid via Stripe at checkout">'+payStatusLabel(pay)+'</span>')
+          : '') +
       '</div>' +
     '</div>' +
     '<div class="order-card-body" style="padding:8px 12px">' +
@@ -15172,39 +15175,6 @@ function renderOrderCard(ord, dishes) {
   '</div>';
 }
 
-// Create a Stripe payment link (hosted invoice) for a manual/unpaid order and
-// show a copyable link to send the customer. Keeps the bank-transfer option open:
-// they can still just mark it paid. Uses the createPaymentLink Cloud Function.
-var CREATE_INVOICE_FN_URL = 'https://europe-west2-performance-meal-prep-os.cloudfunctions.net/createPaymentLink';
-function erpSendInvoice(orderId) {
-  var ord = (DB.weeklyOrders||[]).find(function(o){ return o.id===orderId; });
-  if (!ord) { notify('Order not found'); return; }
-  var dishes = (ord.slot==='next') ? (DB.nextMenuDishes||[]) : (DB.menuDishes||[]);
-  var itemsSum = (ord.items && ord.items.length)
-    ? ord.items.reduce(function(s,i){ return s+(parseFloat(i.unitPrice)||0)*(i.qty||0); }, 0)
-    : Object.keys(ord.allocation||{}).reduce(function(s,dId){ var d=dishes.find(function(x){return x.id===dId;}); return s+(d?(parseFloat(d.sellPrice)||0):0)*(ord.allocation[dId]||0); }, 0);
-  var deliv = parseFloat(ord.deliveryFee)||0;
-  var disc  = (ord.discount && parseFloat(ord.discount.amount)>0 && !_orderDiscountVoid(ord)) ? parseFloat(ord.discount.amount) : 0;
-  var amount = Math.max(0, itemsSum + deliv - disc);
-  if (amount <= 0) { notify('Order total is £0 — nothing to invoice'); return; }
-  notify('Creating payment link…');
-  fetch(CREATE_INVOICE_FN_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-    orderId: ord.id, amount: amount, email: ord.email||'', name: ord.recipientName||'',
-    description: '29 Performance order — ' + (ord.week||'') + ' ' + (ord.session||'')
-  })}).then(function(r){ return r.json(); }).then(function(j){
-    if (j && j.url) {
-      ord.stripeInvoiceUrl = j.url; save();
-      showInfoModal('💳 Payment link created', ''+
-        '<p style="font-size:13px;color:var(--text2);margin-bottom:10px">Send this to <b>'+n2h(ord.recipientName||'the customer')+'</b> — £'+amount.toFixed(2)+'. They pay by card and the order marks itself paid automatically.</p>'+
-        '<div style="display:flex;gap:8px;align-items:center"><input readonly value="'+n2h(j.url)+'" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface2);color:var(--text1)" onclick="this.select()">'+
-        '<button class="btn btn-gold btn-sm" onclick="navigator.clipboard.writeText(this.previousElementSibling.value);notify(\'Link copied ✓\')">Copy</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="window.open(this.parentNode.querySelector(\'input\').value,\'_blank\')">Open</button></div>'+
-        '<p style="font-size:11px;color:var(--text3);margin-top:10px">Prefer to avoid the Stripe fee? Ask for a bank transfer instead and tap the payment badge to mark it paid.</p>');
-    } else {
-      notify((j && j.error) ? j.error : 'Could not create payment link');
-    }
-  }).catch(function(){ notify('Connection problem creating the payment link'); });
-}
 
 // ══════════════════════════════════════════════════════════════════
 // ORDER HISTORY — every order across every week, searchable, full detail.
