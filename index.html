@@ -1590,6 +1590,11 @@ tr:hover .inv-row-actions{opacity:1;}
 .order-dish-qty { font-family:var(--mono); font-size:11px; color:var(--text3); min-width:28px; text-align:right; }
 .order-dish-price { font-family:var(--mono); font-size:11px; color:var(--text2); min-width:52px; text-align:right; }
 .order-total-row { display:flex; justify-content:space-between; font-weight:700; font-size:13px; color:var(--text1); padding:8px 0 4px; margin-top:4px; border-top:1px solid var(--border2); }
+/* Dense multi-column order grid — see many orders at once instead of one per row. */
+.orders-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:10px; align-items:start; }
+.orders-grid .order-card { margin-bottom:0; }
+.order-src-tag { font-size:8px; font-family:var(--mono); font-weight:700; letter-spacing:.5px; padding:1px 5px; border-radius:3px; background:var(--surface3); color:var(--text3); }
+.order-src-tag.portal { background:rgba(74,222,128,.12); color:#4ade80; }
 
 /* Dish qty input rows in order modal */
 .alloc-dish-input-row { display:grid; grid-template-columns:1fr 70px; gap:8px; align-items:center; padding:5px 0; border-bottom:1px solid var(--border); }
@@ -2950,12 +2955,10 @@ input:focus, select:focus, textarea:focus { border-color:var(--gold) !important;
       <div class="orders-bulk-bar no-print" id="orders-bulk-bar">
         <span class="bulk-label" id="orders-bulk-count">—</span>
         <button class="btn btn-ghost btn-sm" onclick="bulkConfirmOrders()">✓ Confirm All Pending</button>
-        <button class="btn btn-ghost btn-sm" onclick="bulkMarkConfirmedPaid()">💳 Mark Confirmed as Paid</button>
         <button class="btn btn-ghost btn-sm" onclick="exportOrdersCSV()">↓ Export CSV</button>
       </div>
 
-      <div id="orders-alloc-summary"></div>
-      <div id="orders-list"></div>
+      <div id="orders-list" class="orders-grid"></div>
       <div id="orders-empty" class="del-empty" style="display:none">&#x1F4E6; No orders this week. Click <strong>+ Add Order</strong> to create one.</div>
 
       <!-- Next week incoming orders section -->
@@ -15093,22 +15096,13 @@ function renderOrderCard(ord, dishes) {
   var status  = getOrderStatus(ord);
   var session = (ord.session||'').toLowerCase();
   var sessCls = session==='sunday'?'s1':session==='wednesday'?'s2':'both';
-  var sessLabel = session==='sunday'?'🌅 Sunday':session==='wednesday'?'🌿 Wednesday':(ord.session||'');
-  var source  = ord.source||'manual';
+  var sessLabel = session==='sunday'?'🌅 Sun':session==='wednesday'?'🌿 Wed':(ord.session||'');
+  var source  = (ord.source||'manual').toLowerCase();
+  var pay     = getPayStatus(ord);
 
-  // Customer info — read from order object directly
-  var name    = ord.recipientName || (ord.customer&&ord.customer.name) || 'Unknown Customer';
+  var name    = ord.recipientName || (ord.customer&&ord.customer.name) || 'Unknown';
   var phone   = ord.phone || (ord.customer&&ord.customer.phone) || '';
-  var email   = ord.email || (ord.customer&&ord.customer.email) || '';
-  var addr    = '';
-  if (ord.address1) {
-    addr = [ord.address1, ord.address2, ord.city, ord.postcode].filter(Boolean).join(', ');
-  } else if (ord.customer&&ord.customer.address) {
-    addr = ord.customer.address;
-  } else {
-    var c = getCustById(ord.customerId);
-    if (c) addr = [c.addr1||c.address1, c.addr2||c.address2, c.city, c.postcode].filter(Boolean).join(', ');
-  }
+  var postcode= ord.postcode || (ord.customer&&ord.customer.postcode) || '';
 
   // Item lines — use items[] if present, else allocation
   var itemLines;
@@ -15120,71 +15114,96 @@ function renderOrderCard(ord, dishes) {
       return { name: d?d.name:dId, qty: ord.allocation[dId]||0, unitPrice: d?(parseFloat(d.sellPrice)||0):0 };
     }).filter(function(i){ return i.qty>0; });
   }
+  var total  = itemLines.reduce(function(s,i){ return s+(i.unitPrice*i.qty); }, 0);
+  var qtyTot = itemLines.reduce(function(s,i){ return s+i.qty; }, 0);
+  var deliv  = parseFloat(ord.deliveryFee) || 0;
+  var voided = !!(ord.discount && parseFloat(ord.discount.amount) > 0 && _orderDiscountVoid(ord));
+  var disc   = (ord.discount && parseFloat(ord.discount.amount) > 0 && !voided) ? parseFloat(ord.discount.amount) : 0;
+  var grand  = Math.max(0, total + deliv - disc);
 
-  var total = itemLines.reduce(function(s,i){ return s+(i.unitPrice*i.qty); }, 0);
-
-  // Action buttons
-  var actions = '';
-  if (status==='pending')  actions += '<button class="ord-action-btn confirm" onclick="confirmOrder(\''+ord.id+'\')">✓ Confirm</button>';
-  if (status!=='cancelled'&&status!=='delivered') actions += '<button class="ord-action-btn cancel" onclick="cancelOrder(\''+ord.id+'\')">✕ Cancel</button>';
+  // Compact action row. Delete is only offered on cancelled orders (cancel first),
+  // removing the fat-finger delete that used to sit next to Edit on live orders.
+  var acts = '';
+  if (status==='pending') acts += '<button class="ord-action-btn confirm" onclick="confirmOrder(\''+ord.id+'\')">✓ Confirm</button>';
+  if (status!=='cancelled' && pay!=='paid' && pay!=='comped') acts += '<button class="ord-action-btn" onclick="erpSendInvoice(\''+ord.id+'\')" title="Create a Stripe payment link to send the customer">💳 Invoice</button>';
+  if (status!=='cancelled') acts += '<button class="ord-action-btn" onclick="openOrderModal(\''+ord.id+'\')" title="Edit">✏️</button>';
+  if (status!=='cancelled' && status!=='delivered') acts += '<button class="ord-action-btn cancel" onclick="cancelOrder(\''+ord.id+'\')">✕ Cancel</button>';
   if (status==='cancelled') {
-    actions += '<button class="ord-action-btn restore" onclick="restoreOrder(\''+ord.id+'\')">↩ Restore</button>';
-    actions += '<button class="ord-action-btn perm-remove" onclick="permanentlyRemoveOrder(\''+ord.id+'\')">🗑 Remove</button>';
+    acts += '<button class="ord-action-btn restore" onclick="restoreOrder(\''+ord.id+'\')">↩ Restore</button>';
+    acts += '<button class="ord-action-btn perm-remove" onclick="permanentlyRemoveOrder(\''+ord.id+'\')" title="Delete permanently">🗑</button>';
   }
 
-  var cancelNote = ord.cancelledReason ? '<div class="order-notes-row" style="color:#f87171;margin-top:4px">✕ '+n2h(ord.cancelledReason)+'</div>' : '';
-  var notesNote  = ord.notes ? '<div class="order-notes-row" style="margin-top:4px">📝 '+n2h(ord.notes)+'</div>' : '';
+  var extraRows = '';
+  if (deliv > 0) extraRows += '<div class="order-dish-row" style="font-size:11px;color:var(--text3)"><span style="flex:1">Delivery</span><span>£'+deliv.toFixed(2)+'</span></div>';
+  if (voided) extraRows += '<div class="order-dish-row" style="font-size:10px;color:#f87171"><span style="flex:1">⚠ '+n2h(ord.discount.code||'')+' void (returning)</span><span></span></div>';
+  else if (disc > 0) extraRows += '<div class="order-dish-row" style="font-size:11px;color:var(--green)"><span style="flex:1">'+n2h(ord.discount.code||'Discount')+'</span><span>−£'+disc.toFixed(2)+'</span></div>';
+
+  var cancelNote = ord.cancelledReason ? '<div style="color:#f87171;font-size:10px;margin-top:4px">✕ '+n2h(ord.cancelledReason)+'</div>' : '';
+  var notesNote  = ord.notes ? '<div style="color:var(--text3);font-size:10px;margin-top:4px">📝 '+n2h(ord.notes)+'</div>' : '';
 
   return '<div class="order-card'+(status==='cancelled'?' ord-cancelled':'')+'" id="oc-'+ord.id+'">' +
-    // Header
-    '<div class="order-card-hdr">' +
+    '<div class="order-card-hdr" style="padding:8px 12px">' +
       '<div class="order-card-identity">' +
         '<div class="order-card-name">'+n2h(name)+'</div>' +
-        (phone||email ? '<div style="font-size:11px;color:var(--text3);margin-top:2px">'+
-          (phone?'📞 '+n2h(phone):'')+(phone&&email?' &nbsp;·&nbsp; ':'')+(email?'✉ '+n2h(email):'')+'</div>' : '') +
-        (addr ? '<div style="font-size:11px;color:var(--text3);margin-top:1px">📍 '+n2h(addr)+'</div>' : '') +
+        '<div style="font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+
+          (phone?n2h(phone):'')+((phone&&postcode)?' · ':'')+(postcode?n2h(postcode):'')+'</div>' +
       '</div>' +
-      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">' +
-        '<div style="display:flex;gap:4px">' +
-          '<span class="order-session-badge '+sessCls+'">'+sessLabel+'</span>' +
-          '<span class="order-status-badge '+status+'">'+orderStatusLabel(status)+'</span>' +
-          (status!=='cancelled' ? '<span class="order-status-badge pay-'+getPayStatus(ord)+'" onclick="cyclePayStatus(\''+ord.id+'\')" title="Tap to cycle: Unpaid → Paid → Comped">'+payStatusLabel(getPayStatus(ord))+'</span>' : '') +
-        '</div>' +
-        '<span class="order-source-badge '+source+'">'+source.toUpperCase()+'</span>' +
-        '<div style="display:flex;gap:6px">' +
-          '<button class="action-btn no-print" onclick="openOrderModal(\''+ord.id+'\')" title="Edit">✏️</button>' +
-          '<button class="action-btn r no-print" onclick="permanentlyRemoveOrder(\''+ord.id+'\')" title="Delete order">🗑</button>' +
-        '</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">' +
+        '<span class="order-status-badge '+status+'">'+orderStatusLabel(status)+'</span>' +
+        (status!=='cancelled' ? '<span class="order-status-badge pay-'+pay+'" onclick="cyclePayStatus(\''+ord.id+'\')" title="Tap to cycle: Unpaid → Paid → Comped">'+payStatusLabel(pay)+'</span>' : '') +
       '</div>' +
     '</div>' +
-    // Body
-    '<div class="order-card-body">' +
+    '<div class="order-card-body" style="padding:8px 12px">' +
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">' +
+        '<span class="order-session-badge '+sessCls+'">'+sessLabel+'</span>' +
+        '<span class="order-src-tag'+(source==='portal'?' portal':'')+'">'+source.toUpperCase()+'</span>' +
+        '<span style="font-size:10px;color:var(--text3);margin-left:auto">'+qtyTot+' item'+(qtyTot!==1?'s':'')+'</span>' +
+      '</div>' +
       itemLines.map(function(i){
         return '<div class="order-dish-row"><span class="order-dish-name">'+n2h(i.name)+'</span>'+
           '<span class="order-dish-qty">&times;'+i.qty+'</span>'+
           '<span class="order-dish-price">£'+(i.unitPrice*i.qty).toFixed(2)+'</span></div>';
       }).join('') +
-      (function(){
-        var deliv  = parseFloat(ord.deliveryFee) || 0;
-        var hasDisc = !!(ord.discount && parseFloat(ord.discount.amount) > 0);
-        var voided = hasDisc && _orderDiscountVoid(ord);
-        var disc   = (hasDisc && !voided) ? parseFloat(ord.discount.amount) : 0;
-        var lineStyle = 'font-size:11px;color:var(--text3)';
-        var rows = '';
-        if (deliv > 0 || hasDisc) {
-          rows += '<div class="order-dish-row" style="'+lineStyle+'"><span style="flex:1">Subtotal</span><span></span><span>£'+total.toFixed(2)+'</span></div>';
-          if (deliv > 0) rows += '<div class="order-dish-row" style="'+lineStyle+'"><span style="flex:1">Delivery</span><span></span><span>£'+deliv.toFixed(2)+'</span></div>';
-          if (voided) rows += '<div class="order-dish-row" style="font-size:11px;color:#f87171"><span style="flex:1">⚠ '+n2h(ord.discount.code||'')+' void — returning customer, charge full price</span><span></span><span style="text-decoration:line-through;color:var(--text3)">−£'+parseFloat(ord.discount.amount).toFixed(2)+'</span></div>';
-          else if (disc > 0) rows += '<div class="order-dish-row" style="font-size:11px;color:var(--green)"><span style="flex:1">Discount ('+n2h(ord.discount.code||'')+')</span><span></span><span>−£'+disc.toFixed(2)+'</span></div>';
-        }
-        var grand = Math.max(0, total + deliv - disc);
-        return rows + '<div class="order-total-row"><span>Total</span><span>£'+grand.toFixed(2)+'</span></div>';
-      })() +
+      extraRows +
+      '<div class="order-total-row"><span>Total</span><span>£'+grand.toFixed(2)+'</span></div>' +
       cancelNote + notesNote +
+      (acts ? '<div class="no-print" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">'+acts+'</div>' : '') +
     '</div>' +
-    // Actions
-    (actions ? '<div class="order-status-actions no-print">'+actions+'</div>' : '') +
   '</div>';
+}
+
+// Create a Stripe payment link (hosted invoice) for a manual/unpaid order and
+// show a copyable link to send the customer. Keeps the bank-transfer option open:
+// they can still just mark it paid. Uses the createPaymentLink Cloud Function.
+var CREATE_INVOICE_FN_URL = 'https://europe-west2-performance-meal-prep-os.cloudfunctions.net/createPaymentLink';
+function erpSendInvoice(orderId) {
+  var ord = (DB.weeklyOrders||[]).find(function(o){ return o.id===orderId; });
+  if (!ord) { notify('Order not found'); return; }
+  var dishes = (ord.slot==='next') ? (DB.nextMenuDishes||[]) : (DB.menuDishes||[]);
+  var itemsSum = (ord.items && ord.items.length)
+    ? ord.items.reduce(function(s,i){ return s+(parseFloat(i.unitPrice)||0)*(i.qty||0); }, 0)
+    : Object.keys(ord.allocation||{}).reduce(function(s,dId){ var d=dishes.find(function(x){return x.id===dId;}); return s+(d?(parseFloat(d.sellPrice)||0):0)*(ord.allocation[dId]||0); }, 0);
+  var deliv = parseFloat(ord.deliveryFee)||0;
+  var disc  = (ord.discount && parseFloat(ord.discount.amount)>0 && !_orderDiscountVoid(ord)) ? parseFloat(ord.discount.amount) : 0;
+  var amount = Math.max(0, itemsSum + deliv - disc);
+  if (amount <= 0) { notify('Order total is £0 — nothing to invoice'); return; }
+  notify('Creating payment link…');
+  fetch(CREATE_INVOICE_FN_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
+    orderId: ord.id, amount: amount, email: ord.email||'', name: ord.recipientName||'',
+    description: '29 Performance order — ' + (ord.week||'') + ' ' + (ord.session||'')
+  })}).then(function(r){ return r.json(); }).then(function(j){
+    if (j && j.url) {
+      ord.stripeInvoiceUrl = j.url; save();
+      showInfoModal('💳 Payment link created', ''+
+        '<p style="font-size:13px;color:var(--text2);margin-bottom:10px">Send this to <b>'+n2h(ord.recipientName||'the customer')+'</b> — £'+amount.toFixed(2)+'. They pay by card and the order marks itself paid automatically.</p>'+
+        '<div style="display:flex;gap:8px;align-items:center"><input readonly value="'+n2h(j.url)+'" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--surface2);color:var(--text1)" onclick="this.select()">'+
+        '<button class="btn btn-gold btn-sm" onclick="navigator.clipboard.writeText(this.previousElementSibling.value);notify(\'Link copied ✓\')">Copy</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="window.open(this.parentNode.querySelector(\'input\').value,\'_blank\')">Open</button></div>'+
+        '<p style="font-size:11px;color:var(--text3);margin-top:10px">Prefer to avoid the Stripe fee? Ask for a bank transfer instead and tap the payment badge to mark it paid.</p>');
+    } else {
+      notify((j && j.error) ? j.error : 'Could not create payment link');
+    }
+  }).catch(function(){ notify('Connection problem creating the payment link'); });
 }
 
 // ══════════════════════════════════════════════════════════════════
