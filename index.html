@@ -5598,7 +5598,7 @@ function showPage(id) {
     menu: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="quickArchive()">💾 Archive Week</button></div>`,
     quickbuild: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="qbResetTemplate()">↺ Reset</button><button class="btn btn-ghost btn-sm" onclick="qbAddSlot()">+ Slot</button><button class="btn btn-ghost btn-sm" onclick="qbSaveTemplate()">💾 Save as Menu</button><button class="btn btn-gold btn-sm" onclick="qbPushAllToMenu()">→ Push All to Menu</button></div>`,
     orders: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-gold btn-sm" onclick="openOrderModal()">+ Add Order</button></div>`,
-    delivery: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-gold" onclick="openCustomerModal()">+ Add Customer</button></div>`,
+    delivery: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="openMergeDuplicates()" title="Find and merge duplicate customer records (matched by email)">🔗 Merge duplicates</button><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-gold" onclick="openCustomerModal()">+ Add Customer</button></div>`,
     inventory: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button><button class="btn btn-ghost btn-sm" onclick="openInvReceiveModal()">+ Receive Stock</button><button class="btn btn-ghost btn-sm" onclick="openInvCountModal()">📋 Stock Count</button><button class="btn btn-gold" onclick="openInvAdjustModal()">⚡ Quick Adjust</button></div>`,
     production: ()=>`<div class="flex gap-8 items-center prod-no-print"><button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Print Station Sheets</button><button class="btn btn-green" onclick="saveProductionAdjustments()">✓ Save</button></div>`,
     purchasing: ()=>`<div class="flex gap-8 items-center"><div class="tabs" style="margin-bottom:0" id="purch-session-tabs-top"><div class="tab ${purchSessionFilter==='all'?'active':''}" onclick="setPurchSession('all',this)">All</div><div class="tab ${purchSessionFilter==='sunday'?'active':''}" onclick="setPurchSession('sunday',this)">Sunday</div><div class="tab ${purchSessionFilter==='wednesday'?'active':''}" onclick="setPurchSession('wednesday',this)">Wednesday</div></div><div class="tabs" style="margin-bottom:0"><div class="tab purch-view-btn ${purchViewMode==='supplier'?'active':''}" data-view="supplier" onclick="setPurchView('supplier')">🚚 By Supplier</div><div class="tab purch-view-btn ${purchViewMode==='category'?'active':''}" data-view="category" onclick="setPurchView('category')">🏷 By Category</div></div><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">🖨 Print</button></div>`,
@@ -13660,6 +13660,88 @@ function _nextCustomerId() {
   return 'CUST' + String(n).padStart(3, '0');
 }
 
+// ── Customer de-duplication — email is the stable identity ──────────────────
+// The portal keys customers by c_<email>; manual entry now does the same, so the
+// two channels converge on ONE record instead of diverging (the bug that filed a
+// portal order under an old "Leon Edwards" record sharing the same email).
+function _normEmail(e){ return (e || '').trim().toLowerCase(); }
+function _custKeyFromEmail(e){ return 'c_' + _normEmail(e).replace(/[^a-z0-9]/g, '_').slice(0, 60); }
+
+// Groups of customer records that share an email — the real duplicates.
+function findCustomerEmailGroups(){
+  var map = {};
+  (DB.customers || []).forEach(function(c){ var e = _normEmail(c && c.email); if (!e) return; (map[e] = map[e] || []).push(c); });
+  return Object.keys(map).map(function(e){ return { email: e, records: map[e] }; })
+    .filter(function(g){ return g.records.length > 1; });
+}
+
+// Merge records sharing an email into one keyed by c_<email>. Reassigns every
+// order (live + archived-in-memory) to the survivor; most recent details win.
+function mergeCustomerGroup(records){
+  if (!records || records.length < 2) return null;
+  var email = _normEmail((records.find(function(r){ return r.email; }) || {}).email);
+  var survId = email ? _custKeyFromEmail(email) : records[0].id;
+  var byRecent = records.slice().sort(function(a, b){ return (Date.parse(b.updatedAt) || 0) - (Date.parse(a.updatedAt) || 0); });
+  var surv = { id: survId };
+  ['name','phone','email','addr1','addr2','city','postcode','type','status','dietary','notes'].forEach(function(f){
+    var hit = byRecent.find(function(r){ return r[f]; });
+    surv[f] = hit ? hit[f] : '';
+  });
+  surv.type = surv.type || 'recurring';
+  surv.status = surv.status || 'active';
+  surv.source = byRecent[0].source || 'portal';
+  surv.updatedAt = new Date().toISOString();
+  var oldIds = records.map(function(r){ return r.id; });
+  (DB.weeklyOrders || []).forEach(function(o){ if (o.customerId && oldIds.indexOf(o.customerId) !== -1) o.customerId = survId; });
+  if (Array.isArray(_custArchOrders)) _custArchOrders.forEach(function(o){ if (o.customerId && oldIds.indexOf(o.customerId) !== -1) o.customerId = survId; });
+  DB.customers = (DB.customers || []).filter(function(c){ return oldIds.indexOf(c.id) === -1; });
+  DB.customers.push(surv);
+  oldIds.filter(function(id){ return id !== survId; }).forEach(function(id){ _tombstone(id); });
+  return surv;
+}
+
+// Review-and-merge UI for existing duplicates.
+function openMergeDuplicates(){
+  var m = document.getElementById('merge-dupes-modal');
+  if (!m) {
+    m = document.createElement('div'); m.className = 'modal-overlay'; m.id = 'merge-dupes-modal';
+    m.innerHTML = '<div class="modal modal-lg"><div class="modal-header"><div class="modal-title">🔗 Merge duplicate customers</div><button class="modal-close" onclick="closeModal(\'merge-dupes-modal\')">×</button></div><div class="modal-body" id="merge-dupes-body"></div></div>';
+    document.body.appendChild(m);
+  }
+  renderMergeDuplicates();
+  openModal('merge-dupes-modal');
+}
+function renderMergeDuplicates(){
+  var el = document.getElementById('merge-dupes-body'); if (!el) return;
+  var groups = findCustomerEmailGroups();
+  if (!groups.length) { el.innerHTML = '<div style="color:var(--text3);text-align:center;padding:24px;font-size:13px">✓ No duplicate customers found (matching by email).</div>'; return; }
+  el.innerHTML = '<div style="font-size:12px;color:var(--text3);margin-bottom:12px">' + groups.length + ' email' + (groups.length !== 1 ? 's have' : ' has') + ' more than one record. Review each and merge — the orders move to a single record and the most recent name/address is kept. Records without an email are left alone.</div>' +
+    groups.map(function(g){
+      var byRecent = g.records.slice().sort(function(a, b){ return (Date.parse(b.updatedAt) || 0) - (Date.parse(a.updatedAt) || 0); });
+      var name = (byRecent.find(function(r){ return r.name; }) || {}).name || '(no name)';
+      return '<div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px">'
+        + '<div style="font-family:var(--mono);font-size:11px;color:var(--gold);margin-bottom:8px">' + n2h(g.email) + '</div>'
+        + g.records.map(function(r){
+            var n = (DB.weeklyOrders || []).concat(_custArchOrders || []).filter(function(o){ return o.customerId === r.id; }).length;
+            return '<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--text2)"><span>' + n2h(r.name || '(no name)') + ' <span style="color:var(--text3);font-family:var(--mono);font-size:10px">' + n2h(r.id) + '</span></span><span style="color:var(--text3)">' + n + ' order' + (n !== 1 ? 's' : '') + '</span></div>';
+          }).join('')
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">'
+        + '<span style="font-size:11px;color:var(--text3)">→ Keeps <b style="color:var(--text1)">' + n2h(name) + '</b> (latest details), one record</span>'
+        + '<button class="btn btn-gold btn-sm" onclick="_doMergeGroup(\'' + encodeURIComponent(g.email) + '\')">Merge</button>'
+        + '</div></div>';
+    }).join('');
+}
+function _doMergeGroup(emailEnc){
+  var email = decodeURIComponent(emailEnc);
+  var g = findCustomerEmailGroups().find(function(x){ return x.email === email; });
+  if (!g) { renderMergeDuplicates(); return; }
+  var surv = mergeCustomerGroup(g.records);
+  save();
+  renderMergeDuplicates();
+  if (typeof renderCustomersTable === 'function') renderCustomersTable();
+  notify('Merged into ' + ((surv && surv.name) || 'one record') + ' ✓');
+}
+
 function saveCustomer() {
   var name = (document.getElementById('cust-name').value || '').trim();
   if (!name) { alert('Customer name is required.'); return; }
@@ -13680,7 +13762,7 @@ function saveCustomer() {
   }
 
   var data = {
-    id:       _editingCustomerId || _nextCustomerId(),
+    id:       _editingCustomerId || (emailVal ? _custKeyFromEmail(emailVal) : _nextCustomerId()),
     name:     name,
     phone:    (document.getElementById('cust-phone').value    || '').trim(),
     email:    (document.getElementById('cust-email').value    || '').trim(),
