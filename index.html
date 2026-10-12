@@ -2217,6 +2217,95 @@ body.light-mode .ord-slot-tab.active{background:var(--ink) !important;color:var(
 /* Light mode: gold fills stay brand-bright with ink text */
 body.light-mode :is(.wk-stage.active .wk-dot, .btn-gold, .progress-fill, .tl-seq, .bar-fill, .gs-step-num, .hc-bar, .pack-box-num, .step-num, .dup-tag-btn.active, .route-stop-num, .fb-step-num, .qbi-icon-btn.on, .bb-fill-btn, .qb-slot-option-badge, .mr-fuel .fuel.plus){background:#fad02c !important;color:#1d1813 !important;}
 body.light-mode [style*="background:var(--gold)"]:not(.label-card *){background:#fad02c !important;color:#1d1813 !important;border-color:#fad02c !important;}
+
+/* ════════════════════════════════════════════════════════════════
+   ORDERS PAGE (Phase 2a, Oct 2026) — two calm rows, then the cards.
+   ════════════════════════════════════════════════════════════════ */
+.ord-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.ord-head .ord-slot-tabs{margin:0;}
+.ord-week{font-size:13px;color:var(--text3);}
+.ord-head-actions{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.ord-add-mobile{display:none !important;}
+.ord-slot-tabs{background:var(--surface2);border-radius:999px;padding:3px;gap:2px;}
+.ord-slot-tab{border:none !important;background:transparent;color:var(--text2);padding:6px 16px;}
+.ord-slot-tab.active{background:var(--surface) !important;color:var(--text) !important;box-shadow:var(--shadow);}
+body.light-mode .ord-slot-tab.active{background:#fff !important;color:var(--ink) !important;border:none !important;}
+/* Portal line */
+.portal-publish-strip{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:18px;flex-wrap:wrap;}
+.pp-dot{width:9px;height:9px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+.pp-dot.open{background:var(--green);box-shadow:0 0 0 4px rgba(124,199,149,.16);}
+.pp-main{flex:1;min-width:220px;}
+.pp-title{font-size:14px;font-weight:700;}
+.pp-ctx{font-weight:400;color:var(--text3);margin-left:8px;font-size:12.5px;}
+.pp-sub{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:4px;font-size:12px;color:var(--text3);}
+.pp-sess{display:inline-flex;align-items:center;gap:6px;}
+.pp-sess i{width:6px;height:6px;border-radius:50%;background:var(--text3);opacity:.6;}
+.pp-sess.open{color:var(--text2);} .pp-sess.open i{background:var(--green);opacity:1;}
+.pp-warn{color:var(--amber);font-weight:600;}
+.pp-note{color:var(--green);}
+/* Summary + filters */
+.ord-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.ord-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;color:var(--text2);}
+.ord-sum-main{font-weight:700;color:var(--text);}
+.ord-sum-money{font-weight:700;color:var(--text);}
+.ord-sum-sep{color:var(--text3);}
+.ord-sum-warn{color:var(--amber);font-weight:600;}
+.ord-sum-muted{color:var(--text3);}
+.ord-sum-btn{margin-left:6px;}
+.ord-filters{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
+.ord-seg{display:inline-flex;background:var(--surface2);border-radius:999px;padding:3px;gap:2px;}
+.ord-seg .ord-status-tab,.ord-seg .ord-sess-btn{border:none !important;background:transparent !important;color:var(--text2) !important;padding:5px 12px !important;font-size:12px;font-weight:600;border-radius:999px !important;cursor:pointer;font-family:var(--sans);white-space:nowrap;}
+.ord-seg .ord-status-tab:hover,.ord-seg .ord-sess-btn:hover{color:var(--text) !important;}
+.ord-seg .ord-status-tab.active,.ord-seg .ord-sess-btn.active{background:var(--surface) !important;color:var(--text) !important;box-shadow:var(--shadow);}
+body.light-mode .ord-seg .ord-status-tab.active,body.light-mode .ord-seg .ord-sess-btn.active{background:#fff !important;color:var(--ink) !important;}
+body.kitchen-mode .ord-seg .ord-status-tab,body.kitchen-mode .ord-seg .ord-sess-btn{padding:9px 16px !important;font-size:12.5px;}
+/* Cards */
+.orders-grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.order-card{margin:0;padding:14px 16px 12px;display:flex;flex-direction:column;}
+.order-card.ord-pending{border-color:rgba(220,159,114,.45) !important;}
+.oc-top{display:flex;align-items:flex-start;gap:10px;}
+.order-card-name{font-size:14px;font-weight:700;}
+.oc-meta{font-size:12px;color:var(--text3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.oc-amt{font-size:16px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;}
+.oc-pills{display:flex;gap:6px;margin-top:8px;}
+.order-status-badge{font-family:var(--sans) !important;text-transform:none !important;letter-spacing:0 !important;font-size:11px;font-weight:600;padding:2px 9px;border:none !important;}
+.order-status-badge.pending{background:rgba(220,159,114,.16);color:var(--amber);}
+.order-status-badge.cancelled{background:rgba(232,128,108,.14);color:var(--red);}
+.order-status-badge.pay-unpaid{background:rgba(220,159,114,.16);color:var(--amber);}
+.order-status-badge.pay-paid{background:rgba(124,199,149,.14);color:var(--green);}
+.order-status-badge.pay-comped{background:rgba(195,167,224,.14);color:var(--purple);}
+.oc-items{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);}
+.order-dish-row{border:none !important;padding:3px 0;font-size:12.5px;gap:8px;align-items:baseline;}
+.order-dish-qty{order:-1;min-width:22px;text-align:left;font-family:var(--sans);font-size:12px;color:var(--text3);}
+.order-dish-name{color:var(--text);}
+.order-dish-price{font-family:var(--sans);font-size:12px;color:var(--text2);min-width:auto;}
+.order-dish-row.sub .order-dish-name{color:var(--text3);padding-left:30px;}
+.order-dish-row.sub.good .order-dish-name,.order-dish-row.sub.good .order-dish-price{color:var(--green);}
+.order-dish-row.sub.bad .order-dish-name{color:var(--red);}
+.oc-note{font-size:12px;color:var(--text3);margin-top:8px;line-height:1.4;}
+.oc-note.bad{color:var(--red);}
+.oc-foot{display:flex;align-items:center;gap:6px;margin-top:auto;padding-top:10px;}
+.oc-count{font-size:12px;color:var(--text3);margin-right:auto;}
+.ord-action-btn{font-family:var(--sans);font-size:12px;font-weight:600;padding:5px 12px;border-radius:999px;background:transparent;border:1px solid var(--border2);color:var(--text2);}
+.ord-action-btn.confirm{background:#fad02c;border-color:#fad02c;color:#1d1813;}
+.ord-action-btn.confirm:hover{background:#ffdb5c;}
+.ord-action-btn.cancel{border-color:transparent;color:var(--text3);}
+.ord-action-btn.cancel:hover{color:var(--red);background:rgba(232,128,108,.1);}
+.ord-action-btn.restore{background:transparent;color:var(--green);border-color:rgba(124,199,149,.4);}
+.ord-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:999px;border:none;background:transparent;color:var(--text3);cursor:pointer;}
+.ord-icon-btn:hover{background:var(--surface2);color:var(--text);}
+.ord-icon-btn.danger:hover{color:var(--red);}
+.ord-cancelled{opacity:.6;}
+.ord-next-link{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding:12px 16px;border:1px dashed var(--border2);border-radius:var(--radius);font-size:13px;color:var(--text2);cursor:pointer;}
+.ord-next-link:hover{border-color:var(--text3);color:var(--text);}
+.ord-next-go{font-weight:600;color:var(--text);white-space:nowrap;}
+@media (max-width:768px){
+  .ord-head-actions{margin-left:0;width:100%;}
+  .ord-add-mobile{display:inline-flex !important;margin-left:auto;}
+  .ord-filters{margin-left:0;width:100%;}
+  .ord-seg{overflow-x:auto;max-width:100%;}
+  .portal-publish-strip .btn{flex:1;justify-content:center;}
+}
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -3042,60 +3131,48 @@ body.light-mode [style*="background:var(--gold)"]:not(.label-card *){background:
     <!-- ORDERS PAGE (standalone — extracted from Delivery) -->
     <div class="page" id="page-orders">
 
-      <!-- Portal publish strip -->
-      <div class="portal-publish-strip no-print" id="portal-publish-strip">
-        <div class="portal-publish-status">
-          <div class="portal-publish-label">Customer Portal</div>
-          <div class="portal-publish-value" id="portal-publish-value">—</div>
+      <!-- Header row: week switcher + secondary actions (+ Add Order lives in the top bar) -->
+      <div class="ord-head no-print">
+        <div class="ord-slot-tabs" id="ord-slot-tabs">
+          <button class="ord-slot-tab active" onclick="setOrderSlotFilter('current',this)">Current Week</button>
+          <button class="ord-slot-tab" onclick="setOrderSlotFilter('next',this)">Next Week</button>
         </div>
-        <div id="portal-deadline-display" style="font-size:11px;font-family:var(--mono);color:var(--text3)"></div>
-        <button class="btn btn-ghost btn-sm" id="portal-toggle-btn" onclick="togglePortal()">—</button>
-        <button class="btn btn-ghost btn-sm" onclick="showPortalSettings()">Settings</button>
-      </div>
-
-      <!-- Slot switcher tabs (Current / Next) -->
-      <div class="ord-slot-tabs no-print" id="ord-slot-tabs">
-        <button class="ord-slot-tab active" onclick="setOrderSlotFilter('current',this)">Current Week</button>
-        <button class="ord-slot-tab" onclick="setOrderSlotFilter('next',this)">Next Week</button>
-      </div>
-
-      <!-- Toolbar -->
-      <div class="del-toolbar no-print">
-        <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">WEEK:&nbsp;<strong id="orders-week-label" style="color:var(--text)"></strong></div>
-        <div style="display:flex;gap:6px;margin-left:auto">
-          <button class="del-filter-btn active" onclick="setOrderSessionFilter(this,'all')">All Sessions</button>
-          <button class="del-filter-btn" onclick="setOrderSessionFilter(this,'Sunday')">Sunday</button>
-          <button class="del-filter-btn" onclick="setOrderSessionFilter(this,'Wednesday')">Wednesday</button>
+        <span class="ord-week" id="orders-week-label"></span>
+        <div class="ord-head-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openOrderHistory()" title="All orders across every week — searchable, with full detail">Order History</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportOrdersCSV()">Export CSV</button>
+          <button class="btn btn-gold btn-sm ord-add-mobile" onclick="openOrderModal()">+ Add Order</button>
         </div>
-        <button class="btn btn-ghost btn-sm no-print" onclick="openOrderHistory()" title="All orders across every week — searchable, with full detail">Order History</button>
-        <button class="btn btn-gold btn-sm no-print" onclick="openOrderModal()">+ Add Order</button>
       </div>
 
-      <!-- Status filter tabs -->
-      <div class="ord-status-tabs no-print" id="ord-status-tabs">
-        <button class="ord-status-tab active" onclick="setOrderStatusFilter('all',this)">All</button>
-        <button class="ord-status-tab" onclick="setOrderStatusFilter('pending',this)"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--amber);margin-right:6px;vertical-align:1px"></span>Pending</button>
-        <button class="ord-status-tab" onclick="setOrderStatusFilter('confirmed',this)"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:1px"></span>Confirmed</button>
-        <button class="ord-status-tab" onclick="setOrderStatusFilter('cancelled',this)" style="color:#f87171;border-color:rgba(248,113,113,.3)">✕ Cancelled</button>
-      </div>
+      <!-- Customer portal status — one quiet line (rendered by renderPortalPublishStrip) -->
+      <div class="portal-publish-strip no-print" id="portal-publish-strip"></div>
 
       <!-- Orphaned orders warning (orders filed under unknown week labels) -->
       <div id="orders-orphan-warning" style="display:none"></div>
 
-      <!-- KPI strip -->
-      <div id="orders-kpi-strip" class="orders-kpi-strip no-print"></div>
-
-      <!-- Bulk actions bar -->
-      <div class="orders-bulk-bar no-print" id="orders-bulk-bar">
-        <span class="bulk-label" id="orders-bulk-count">—</span>
-        <button class="btn btn-ghost btn-sm" onclick="bulkConfirmOrders()">✓ Confirm All Pending</button>
-        <button class="btn btn-ghost btn-sm" onclick="exportOrdersCSV()">↓ Export CSV</button>
+      <!-- Summary + filters -->
+      <div class="ord-bar no-print">
+        <div class="ord-summary" id="orders-summary"></div>
+        <div class="ord-filters">
+          <div class="ord-seg">
+            <button class="ord-sess-btn active" onclick="setOrderSessionFilter(this,'all')">All drops</button>
+            <button class="ord-sess-btn" onclick="setOrderSessionFilter(this,'Sunday')">Sunday</button>
+            <button class="ord-sess-btn" onclick="setOrderSessionFilter(this,'Wednesday')">Wednesday</button>
+          </div>
+          <div class="ord-seg" id="ord-status-tabs">
+            <button class="ord-status-tab active" onclick="setOrderStatusFilter('all',this)">All</button>
+            <button class="ord-status-tab" onclick="setOrderStatusFilter('pending',this)">Pending</button>
+            <button class="ord-status-tab" onclick="setOrderStatusFilter('confirmed',this)">Confirmed</button>
+            <button class="ord-status-tab" onclick="setOrderStatusFilter('cancelled',this)">Cancelled</button>
+          </div>
+        </div>
       </div>
 
       <div id="orders-list" class="orders-grid"></div>
-      <div id="orders-empty" class="del-empty" style="display:none">No orders this week. Click <strong>+ Add Order</strong> to create one.</div>
+      <div id="orders-empty" class="del-empty" style="display:none"></div>
 
-      <!-- Next week incoming orders section -->
+      <!-- Next week: a one-line pointer (full list lives on the Next Week tab) -->
       <div id="orders-next-week-section" style="display:none"></div>
     </div><!-- /page-orders -->
 
@@ -5606,7 +5683,6 @@ let lastPage = 'dashboard';
 var STATS_SECTIONS = {
   dashboard:  { els: ['dash-kpi-row','dash-row-1','dash-row-2','dash-row-3','dash-row-4'], def: false },
   menu:       { els: ['menu-kpi-grid'],                  def: true  },
-  orders:     { els: ['orders-kpi-strip'],               def: true  },
   purchasing: { els: ['purch-kpi-grid'],                 def: false },
   production: { els: ['prod-kpi-grid'],                  def: false },
   inventory:  { els: ['inv-kpi-strip'],                  def: false },
@@ -5652,7 +5728,7 @@ function applyStatsCollapse(id) {
 // NEXT-STEP HINTS — every ops page says what to do now and what's next
 // ═══════════════════════════════════════════════════════════════
 function renderNextHint(id) {
-  var pages = ['menu','orders','purchasing','production','packsheet','delivery'];
+  var pages = ['menu','purchasing','production','packsheet','delivery'];  // Orders: summary line covers it
   if (pages.indexOf(id) === -1) return;
   var st;
   try { st = getWeekStageState(); } catch(e) { return; }
@@ -14179,7 +14255,7 @@ function renderPortalPublishStrip() {
   var weekDisp  = weekLabel ? ' · ' + weekLabel
     : (!hasNext && !(DB.menuDishes && DB.menuDishes.length) ? ' · no menu built yet' : '');
   var noLblWarn = !weekLabel
-    ? ' <span style="color:var(--gold);font-weight:600">⚠ set a week label before opening</span>' : '';
+    ? '<span class="pp-warn">Set a week label before opening</span>' : '';
 
   // Show scheduled auto-publish time when next menu is ready but not yet published
   var autoPublishNote = '';
@@ -14187,23 +14263,24 @@ function renderPortalPublishStrip() {
     var goLive = new Date(DB.s2Deadline);
     var now    = new Date();
     if (goLive > now) {
-      autoPublishNote = ' <span style="color:var(--green);font-weight:600">auto-switches to ' + DB.nextMenuWeekLabel + ' at ' +
+      autoPublishNote = '<span class="pp-note">Auto-switches to ' + DB.nextMenuWeekLabel + ' at ' +
         goLive.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}) + ' ' +
         goLive.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + '</span>';
     }
   }
 
-  var dot = function(s) { return s.open ? '<span style="color:var(--green)">🟢</span>' : '<span style="color:var(--text3)">⚫</span>'; };
+  var sess = function(name, st1) {
+    return '<span class="pp-sess' + (st1.open ? ' open' : '') + '"><i></i>' + name + ' · ' + n2h(st1.text) + '</span>';
+  };
   strip.innerHTML =
-    '<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">' +
-      '<div style="font-size:9px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.8px">Customer Portal — ' + slotLabel + weekDisp + noLblWarn + autoPublishNote + liveNote + '</div>' +
-      '<div style="display:flex;gap:16px;flex-wrap:wrap">' +
-        '<span style="font-size:12px;font-weight:600;color:' + (st.s1.open?'var(--green)':'var(--text3)') + '">' + dot(st.s1) + ' Sunday — ' + st.s1.text + '</span>' +
-        '<span style="font-size:12px;font-weight:600;color:' + (st.s2.open?'var(--green)':'var(--text3)') + '">' + dot(st.s2) + ' Wednesday — ' + st.s2.text + '</span>' +
-      '</div>' +
+    '<span class="pp-dot' + (pub ? ' open' : '') + '"></span>' +
+    '<div class="pp-main">' +
+      '<div class="pp-title">Ordering ' + (pub ? 'open' : 'closed') +
+        '<span class="pp-ctx">' + slotLabel + weekDisp + '</span>' + liveNote + '</div>' +
+      '<div class="pp-sub">' + sess('Sunday', st.s1) + sess('Wednesday', st.s2) + noLblWarn + autoPublishNote + '</div>' +
     '</div>' +
-    '<button id="portal-toggle-btn" class="btn btn-sm ' + (pub?'btn-ghost':'btn-gold') + '" onclick="togglePortal()">' + (pub?'Close Portal':'Open for Orders') + '</button>' +
-    '<button class="btn btn-ghost btn-sm" onclick="showPortalSettings()">Deadlines</button>';
+    '<button class="btn btn-ghost btn-sm" onclick="showPortalSettings()">Deadlines</button>' +
+    '<button id="portal-toggle-btn" class="btn btn-sm ' + (pub?'btn-ghost':'btn-gold') + '" onclick="togglePortal()">' + (pub?'Close ordering':'Open for orders') + '</button>';
 }
 
 // Determines which slot the Open/Close button should control.
@@ -15023,7 +15100,7 @@ function bulkConfirmOrders(slotArg) {
 // Encodes the manual rule "only confirm once payment is checked", and makes
 // free partnership meals a measured cost instead of invisible leakage.
 function getPayStatus(o) { return o.payStatus || 'unpaid'; }
-function payStatusLabel(ps) { return { unpaid: '💳 Unpaid', paid: '✓ Paid', comped: '🎁 Comped' }[ps] || ps; }
+function payStatusLabel(ps) { return { unpaid: 'Unpaid', paid: 'Paid', comped: 'Comped' }[ps] || ps; }
 
 function cyclePayStatus(id) {
   var ord = (DB.weeklyOrders || []).find(function(o) { return o.id === id; });
@@ -15171,7 +15248,7 @@ function setOrderSlotFilter(slot, btn) {
 
 function setOrderSessionFilter(btn, session) {
   window._orderSessionFilter = (session || 'all').toLowerCase();
-  var btns = document.querySelectorAll('.del-filter-btn');
+  var btns = document.querySelectorAll('.ord-sess-btn');
   btns.forEach(function(b) { b.classList.remove('active'); });
   if (btn) btn.classList.add('active');
   renderOrdersPanel();
@@ -15242,20 +15319,20 @@ function renderOrdersPanel() {
     return s + calcOrderTotal(o, slotDishes);
   }, 0);
 
-  var kpiEl = document.getElementById('orders-kpi-strip');
-  if (kpiEl) {
-    // First-principles: the Orders job is "clear the pending queue." Show the to-do
-    // (Pending), the progress (Confirmed), and the money (live revenue). Total Orders
-    // = pending+confirmed+cancelled (derivable); Cancelled rarely drives an action.
-    kpiEl.innerHTML =
-      '<div class="kpi-card"><div class="kpi-label">Pending — action needed</div><div class="kpi-value" style="color:var(--gold)">'+pending+'</div></div>' +
-      '<div class="kpi-card"><div class="kpi-label">Confirmed</div><div class="kpi-value" style="color:var(--green)">'+confirmed+'</div></div>' +
-      '<div class="kpi-card"><div class="kpi-label">Order Revenue</div><div class="kpi-value">£'+revenue.toFixed(2)+'</div><div class="kpi-sub" style="font-size:10px;color:var(--text3);margin-top:3px">pending + confirmed (excl. cancelled)</div></div>';
+  // Summary line — replaces the KPI cards + bulk bar. With Stripe, portal orders arrive
+  // confirmed + paid, so the only things that need attention are pending/unpaid (manual) orders.
+  var unpaid = allSlotOrders.filter(function(o){ return getOrderStatus(o)!=='cancelled' && getPayStatus(o)==='unpaid'; }).length;
+  var live   = allSlotOrders.length - cancelled;
+  var sumEl  = document.getElementById('orders-summary');
+  if (sumEl) {
+    sumEl.innerHTML =
+      '<span class="ord-sum-main">' + live + ' order' + (live!==1?'s':'') + '</span>' +
+      '<span class="ord-sum-sep">·</span><span class="ord-sum-money">£' + revenue.toFixed(2) + '</span>' +
+      (pending ? '<span class="ord-sum-sep">·</span><span class="ord-sum-warn">' + pending + ' pending</span>' : '') +
+      (unpaid  ? '<span class="ord-sum-sep">·</span><span class="ord-sum-warn">' + unpaid + ' unpaid</span>' : '') +
+      (cancelled ? '<span class="ord-sum-sep">·</span><span class="ord-sum-muted">' + cancelled + ' cancelled</span>' : '') +
+      (pending ? '<button class="btn btn-ghost btn-sm ord-sum-btn" onclick="bulkConfirmOrders()">Confirm ' + pending + ' pending</button>' : '');
   }
-
-  // Bulk bar
-  var bulkCount = document.getElementById('orders-bulk-count');
-  if (bulkCount) bulkCount.textContent = allSlotOrders.length+' order'+(allSlotOrders.length!==1?'s':'')+' · '+pending+' pending';
 
   var wkLbl = document.getElementById('orders-week-label');
   if (wkLbl) wkLbl.textContent = slotLabel;
@@ -15266,7 +15343,13 @@ function renderOrdersPanel() {
 
   if (!orders.length) {
     listEl.innerHTML = '';
-    if (emptyEl) emptyEl.style.display='block';
+    if (emptyEl) {
+      emptyEl.innerHTML = allSlotOrders.length
+        ? 'No orders match these filters.'
+        : 'No orders for this week yet. They appear here as customers check out, or use <strong>+ Add Order</strong>.';
+      emptyEl.style.display='block';
+    }
+    renderNextWeekOrdersSection((DB.weeklyOrders||[]).filter(function(o){ return o.slot==='next'; }), DB.nextMenuDishes||[], DB.nextMenuWeekLabel||'');
     return;
   }
   if (emptyEl) emptyEl.style.display='none';
@@ -15312,7 +15395,7 @@ function renderOrderCard(ord, dishes) {
   var status  = getOrderStatus(ord);
   var session = (ord.session||'').toLowerCase();
   var sessCls = session==='sunday'?'s1':session==='wednesday'?'s2':'both';
-  var sessLabel = session==='sunday'?'🌅 Sun':session==='wednesday'?'🌿 Wed':(ord.session||'');
+  var sessLabel = session==='sunday'?'Sunday':session==='wednesday'?'Wednesday':(ord.session||'');
   var source  = (ord.source||'manual').toLowerCase();
   var pay     = getPayStatus(ord);
 
@@ -15337,57 +15420,54 @@ function renderOrderCard(ord, dishes) {
   var disc   = (ord.discount && parseFloat(ord.discount.amount) > 0 && !voided) ? parseFloat(ord.discount.amount) : 0;
   var grand  = Math.max(0, total + deliv - disc);
 
-  // Compact action row. Delete is only offered on cancelled orders (cancel first),
-  // removing the fat-finger delete that used to sit next to Edit on live orders.
+  // Actions. Delete is only offered on cancelled orders (cancel first) —
+  // no fat-finger delete next to Edit on live orders.
+  var IC = function(n){ return '<svg class="ico"><use href="#i-' + n + '"/></svg>'; };
   var acts = '';
-  if (status==='pending') acts += '<button class="ord-action-btn confirm" onclick="confirmOrder(\''+ord.id+'\')">✓ Confirm</button>';
-  if (status!=='cancelled') acts += '<button class="ord-action-btn" onclick="openOrderModal(\''+ord.id+'\')" title="Edit">✏️</button>';
-  if (status!=='cancelled' && status!=='delivered') acts += '<button class="ord-action-btn cancel" onclick="cancelOrder(\''+ord.id+'\')">✕ Cancel</button>';
+  if (status==='pending') acts += '<button class="ord-action-btn confirm" onclick="confirmOrder(\''+ord.id+'\')">Confirm</button>';
+  if (status!=='cancelled' && status!=='delivered') acts += '<button class="ord-action-btn cancel" onclick="cancelOrder(\''+ord.id+'\')">Cancel</button>';
+  if (status!=='cancelled') acts += '<button class="ord-icon-btn" onclick="openOrderModal(\''+ord.id+'\')" title="Edit">'+IC('pencil')+'</button>';
   if (status==='cancelled') {
-    acts += '<button class="ord-action-btn restore" onclick="restoreOrder(\''+ord.id+'\')">↩ Restore</button>';
-    acts += '<button class="ord-action-btn perm-remove" onclick="permanentlyRemoveOrder(\''+ord.id+'\')" title="Delete permanently">🗑</button>';
+    acts += '<button class="ord-action-btn restore" onclick="restoreOrder(\''+ord.id+'\')">Restore</button>';
+    acts += '<button class="ord-icon-btn danger" onclick="permanentlyRemoveOrder(\''+ord.id+'\')" title="Delete permanently">'+IC('trash')+'</button>';
   }
 
   var extraRows = '';
-  if (deliv > 0) extraRows += '<div class="order-dish-row" style="font-size:11px;color:var(--text3)"><span style="flex:1">Delivery</span><span>£'+deliv.toFixed(2)+'</span></div>';
-  if (voided) extraRows += '<div class="order-dish-row" style="font-size:10px;color:#f87171"><span style="flex:1">⚠ '+n2h(ord.discount.code||'')+' void (returning)</span><span></span></div>';
-  else if (disc > 0) extraRows += '<div class="order-dish-row" style="font-size:11px;color:var(--green)"><span style="flex:1">'+n2h(ord.discount.code||'Discount')+'</span><span>−£'+disc.toFixed(2)+'</span></div>';
+  if (deliv > 0) extraRows += '<div class="order-dish-row sub"><span class="order-dish-name">Delivery</span><span class="order-dish-price">£'+deliv.toFixed(2)+'</span></div>';
+  if (voided) extraRows += '<div class="order-dish-row sub bad"><span class="order-dish-name">'+n2h(ord.discount.code||'')+' void (returning customer)</span><span></span></div>';
+  else if (disc > 0) extraRows += '<div class="order-dish-row sub good"><span class="order-dish-name">'+n2h(ord.discount.code||'Discount')+'</span><span class="order-dish-price">−£'+disc.toFixed(2)+'</span></div>';
 
-  var cancelNote = ord.cancelledReason ? '<div style="color:#f87171;font-size:10px;margin-top:4px">✕ '+n2h(ord.cancelledReason)+'</div>' : '';
-  var notesNote  = ord.notes ? '<div style="color:var(--text3);font-size:10px;margin-top:4px">'+n2h(ord.notes)+'</div>' : '';
+  var cancelNote = ord.cancelledReason ? '<div class="oc-note bad">Cancelled: '+n2h(ord.cancelledReason)+'</div>' : '';
+  var notesNote  = ord.notes ? '<div class="oc-note">'+n2h(ord.notes)+'</div>' : '';
 
-  return '<div class="order-card'+(status==='cancelled'?' ord-cancelled':'')+'" id="oc-'+ord.id+'">' +
-    '<div class="order-card-hdr" style="padding:8px 12px">' +
+  // Pay pill: manual orders keep the tap-to-cycle Unpaid → Paid → Comped selector.
+  // Portal orders are paid at Stripe checkout, so the pill only shows if one isn't paid.
+  var payPill = '';
+  if (status!=='cancelled') {
+    if (source==='manual') payPill = '<span class="order-status-badge pay-'+pay+'" onclick="cyclePayStatus(\''+ord.id+'\')" title="Tap to cycle: Unpaid → Paid → Comped">'+payStatusLabel(pay)+'</span>';
+    else if (pay!=='paid') payPill = '<span class="order-status-badge pay-'+pay+'" style="cursor:default">'+payStatusLabel(pay)+'</span>';
+  }
+  var statusPill = (status==='pending' || status==='cancelled') ? '<span class="order-status-badge '+status+'">'+orderStatusLabel(status)+'</span>' : '';
+  var meta = [sessLabel, source==='manual' ? 'Manual' : '', postcode ? n2h(postcode) : '', phone ? n2h(phone) : ''].filter(Boolean).join(' · ');
+
+  return '<div class="order-card'+(status==='cancelled'?' ord-cancelled':'')+(status==='pending'?' ord-pending':'')+'" id="oc-'+ord.id+'">' +
+    '<div class="oc-top">' +
       '<div class="order-card-identity">' +
         '<div class="order-card-name">'+n2h(name)+'</div>' +
-        '<div style="font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+
-          (phone?n2h(phone):'')+((phone&&postcode)?' · ':'')+(postcode?n2h(postcode):'')+'</div>' +
+        '<div class="oc-meta">'+meta+'</div>' +
       '</div>' +
-      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">' +
-        '<span class="order-status-badge '+status+'">'+orderStatusLabel(status)+'</span>' +
-        (status!=='cancelled'
-          ? (source==='manual'
-             ? '<span class="order-status-badge pay-'+pay+'" onclick="cyclePayStatus(\''+ord.id+'\')" title="Tap to cycle: Unpaid → Paid → Comped">'+payStatusLabel(pay)+'</span>'
-             : '<span class="order-status-badge pay-'+pay+'" style="cursor:default" title="Paid via Stripe at checkout">'+payStatusLabel(pay)+'</span>')
-          : '') +
-      '</div>' +
+      '<div class="oc-amt">£'+grand.toFixed(2)+'</div>' +
     '</div>' +
-    '<div class="order-card-body" style="padding:8px 12px">' +
-      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">' +
-        '<span class="order-session-badge '+sessCls+'">'+sessLabel+'</span>' +
-        '<span class="order-src-tag'+(source==='portal'?' portal':'')+'">'+source.toUpperCase()+'</span>' +
-        '<span style="font-size:10px;color:var(--text3);margin-left:auto">'+qtyTot+' item'+(qtyTot!==1?'s':'')+'</span>' +
-      '</div>' +
+    ((statusPill||payPill) ? '<div class="oc-pills">'+statusPill+payPill+'</div>' : '') +
+    '<div class="oc-items">' +
       itemLines.map(function(i){
-        return '<div class="order-dish-row"><span class="order-dish-name">'+n2h(i.name)+'</span>'+
-          '<span class="order-dish-qty">&times;'+i.qty+'</span>'+
+        return '<div class="order-dish-row"><span class="order-dish-qty">'+i.qty+'×</span><span class="order-dish-name">'+n2h(i.name)+'</span>'+
           '<span class="order-dish-price">£'+(i.unitPrice*i.qty).toFixed(2)+'</span></div>';
       }).join('') +
       extraRows +
-      '<div class="order-total-row"><span>Total</span><span>£'+grand.toFixed(2)+'</span></div>' +
-      cancelNote + notesNote +
-      (acts ? '<div class="no-print" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">'+acts+'</div>' : '') +
     '</div>' +
+    cancelNote + notesNote +
+    '<div class="oc-foot no-print"><span class="oc-count">'+qtyTot+' item'+(qtyTot!==1?'s':'')+'</span>'+acts+'</div>' +
   '</div>';
 }
 
@@ -15606,76 +15686,18 @@ function showOrphanOrders() {
 function renderNextWeekOrdersSection(nextOrders, nextDishes, nextWeek) {
   var el = document.getElementById('orders-next-week-section');
   if (!el) return;
-
-  if (!nextWeek || nextOrders.length === 0) {
+  var live = nextOrders.filter(function(o) { return getOrderStatus(o) !== 'cancelled'; });
+  // Only on the Current Week view — the Next Week tab already lists them in full.
+  if ((window._orderSlotFilter || 'current') !== 'current' || !nextWeek || !live.length) {
     el.style.display = 'none';
+    el.innerHTML = '';
     return;
   }
+  var pending = live.filter(function(o) { return getOrderStatus(o) === 'pending'; }).length;
   el.style.display = '';
-
-  var pending   = nextOrders.filter(function(o) { return getOrderStatus(o) === 'pending'; }).length;
-  var confirmed = nextOrders.filter(function(o) { return getOrderStatus(o) === 'confirmed'; }).length;
-
-  var html = '<div style="margin:20px 0 12px;display:flex;align-items:center;gap:10px">'
-    + '<div style="flex:1;height:1px;background:var(--border)"></div>'
-    + '<span style="font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:0 10px;white-space:nowrap">Next Week — ' + n2h(nextWeek) + '</span>'
-    + '<div style="flex:1;height:1px;background:var(--border)"></div>'
-    + '</div>';
-
-  html += '<div class="orders-bulk-bar no-print" style="margin-bottom:10px">'
-    + '<span class="bulk-label">' + nextOrders.length + ' order' + (nextOrders.length !== 1 ? 's' : '') + ' · ' + pending + ' pending · ' + confirmed + ' confirmed</span>'
-    + '<button class="btn btn-ghost btn-sm" onclick="bulkConfirmNextWeekOrders()">✓ Confirm All Pending</button>'
-    + '</div>';
-
-  var sorted = nextOrders.slice().sort(function(a, b) {
-    var sa = getOrderStatus(a), sb = getOrderStatus(b);
-    if (sa === 'pending' && sb !== 'pending') return -1;
-    if (sb === 'pending' && sa !== 'pending') return 1;
-    var ca = getCustById(a.customerId), cb = getCustById(b.customerId);
-    return (ca ? ca.name : '').localeCompare(cb ? cb.name : '');
-  });
-
-  html += sorted.map(function(ord) {
-    var cust    = getCustById(ord.customerId);
-    var status  = getOrderStatus(ord);
-    var sessCls = ord.session === 'Both' ? 'both' : (ord.session === 'Sunday' ? 's1' : ord.session === 'Wednesday' ? 's2' : (ord.session || '').toLowerCase());
-    var source  = ord.source || 'manual';
-    var dishLines = Object.keys(ord.allocation || {}).map(function(dId) {
-      var dish = nextDishes.find(function(d) { return d.id === dId; });
-      return { name: dish ? dish.name : dId, qty: ord.allocation[dId] };
-    }).filter(function(x) { return x.qty > 0; });
-
-    var actionBtns = '';
-    if (status === 'pending') actionBtns = '<button class="ord-action-btn confirm" onclick="confirmOrder(\'' + ord.id + '\')">✓ Confirm</button>';
-    if (status !== 'cancelled' && status !== 'delivered') actionBtns += '<button class="ord-action-btn cancel" onclick="cancelOrder(\'' + ord.id + '\')">✕ Cancel</button>';
-    if (status === 'cancelled') {
-      actionBtns += '<button class="ord-action-btn restore" onclick="restoreOrder(\'' + ord.id + '\')">↩ Restore</button>';
-      actionBtns += '<button class="ord-action-btn perm-remove" onclick="permanentlyRemoveOrder(\'' + ord.id + '\')">Remove</button>';
-    }
-
-    return '<div class="order-card' + (status === 'cancelled' ? '" style="opacity:.5' : '') + '">'
-      + '<div class="order-card-hdr">'
-        + '<div class="order-card-identity">'
-          + '<div class="order-card-name">' + n2h(cust ? cust.name : (ord.recipientName || 'Unknown Customer')) + '</div>'
-          + '<div class="order-card-addr">' + (cust ? n2h(custFullAddress(cust)) : '') + '</div>'
-        + '</div>'
-        + '<span class="order-status-badge ' + status + '">' + orderStatusLabel(status) + '</span>'
-        + '<span class="order-source-badge ' + source + '">' + source.toUpperCase() + '</span>'
-        + '<span class="order-session-badge ' + sessCls + '">' + (ord.session || '') + '</span>'
-        + '<button class="action-btn no-print" onclick="openOrderModal(\'' + ord.id + '\')" title="Edit">&#x270F;&#xFE0F;</button>'
-        + '<button class="action-btn r no-print" onclick="deleteOrder(\'' + ord.id + '\')" title="Remove"><svg class="ico"><use href="#i-trash"/></svg></button>'
-      + '</div>'
-      + '<div class="order-card-body">'
-        + (dishLines.length
-          ? dishLines.map(function(d) { return '<div class="order-dish-row"><span class="order-dish-name">' + n2h(d.name) + '</span><span class="order-dish-qty">&times;' + d.qty + '</span></div>'; }).join('')
-          : '<div style="font-size:11px;color:var(--text3)">No dishes allocated yet.</div>')
-        + (ord.notes ? '<div class="order-notes-row">' + n2h(ord.notes) + '</div>' : '')
-      + '</div>'
-      + (actionBtns ? '<div class="order-status-actions no-print">' + actionBtns + '</div>' : '')
-      + '</div>';
-  }).join('');
-
-  el.innerHTML = html;
+  el.innerHTML = '<div class="ord-next-link no-print" onclick="setOrderSlotFilter(\'next\', document.querySelectorAll(\'.ord-slot-tab\')[1])">' +
+    '<span><strong>' + live.length + ' order' + (live.length !== 1 ? 's' : '') + '</strong> already in for next week · ' + n2h(nextWeek) +
+    (pending ? ' · ' + pending + ' pending' : '') + '</span><span class="ord-next-go">View →</span></div>';
 }
 
 function bulkConfirmNextWeekOrders() {
