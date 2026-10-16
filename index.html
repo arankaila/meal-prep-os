@@ -2594,6 +2594,54 @@ body.light-mode .del-tab.active{background:#fff !important;color:var(--ink) !imp
 .wk-steps p{font-size:13px;color:var(--text2);line-height:1.55;margin-top:5px;}
 .wk-steps em{font-style:normal;font-weight:600;color:var(--text);}
 .wk-guide-foot{font-size:12.5px;color:var(--text3);margin-top:16px;}
+
+/* ════════════════════════════════════════════════════════════════
+   PRODUCTION (Oct 2026) — Prep + Cook, one summary line
+   ════════════════════════════════════════════════════════════════ */
+#prod-kpi-grid{display:block !important;margin-bottom:16px;}
+.prod-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.prod-head .pd-date{font-weight:500;opacity:.7;margin-left:4px;}
+.prod-sum{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;color:var(--text2);}
+.prod-sum strong{color:var(--text);} .prod-sum span{color:var(--text3);}
+.prod-buf{margin-left:auto;background:transparent;border:1px dashed var(--border2);border-radius:999px;padding:5px 12px;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;}
+.prod-buf:hover{color:var(--text);border-color:var(--text3);}
+#prod-kpi-grid .bb-bar{margin:12px 0 0;}
+#prod-view-tabs{background:var(--surface2);border-radius:999px;padding:3px;gap:2px;width:fit-content;}
+#prod-view-tabs .tab{border:none !important;background:transparent;color:var(--text2);padding:6px 18px;font-size:13px;}
+#prod-view-tabs .tab.active{background:var(--surface3);color:var(--text);box-shadow:var(--shadow);}
+body.light-mode #prod-view-tabs .tab.active{background:#fff;color:var(--ink);}
+@media screen { #prod-station-view, #prod-filter-bar, #prod-progress-overview { display:none !important; } }
+.cook-help{display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--text3);margin:0 0 14px;}
+.cook-help strong{color:var(--text2);}
+.cook-help .btn{margin-left:auto;}
+.cook-station{margin-bottom:18px;}
+.cook-station-hdr{font-family:var(--sans) !important;font-size:11px !important;font-weight:600 !important;letter-spacing:.06em !important;text-transform:uppercase;color:var(--text3) !important;}
+.cook-card{border-radius:var(--radius) !important;border:1px solid var(--border) !important;background:var(--surface) !important;box-shadow:var(--shadow);}
+.cook-card.st-in_progress{border-color:rgba(250,208,44,.55) !important;box-shadow:0 0 0 3px rgba(250,208,44,.10) !important;}
+.cook-card.st-complete{border-color:rgba(124,199,149,.4) !important;opacity:.6;}
+.cook-card .cc-type{font-family:var(--sans) !important;font-size:11px !important;font-weight:600;letter-spacing:.05em !important;}
+.cook-card .cc-qty{font-family:var(--sans) !important;color:var(--text) !important;font-size:13.5px !important;}
+.cook-card .cc-status{font-family:var(--sans) !important;font-size:11px !important;font-weight:700;border-radius:999px !important;padding:2px 9px !important;}
+.cc-status.todo{background:var(--surface3);color:var(--text3);} .cc-status.cooking{background:rgba(250,208,44,.18);color:var(--gold);} .cc-status.done{background:rgba(124,199,149,.16);color:var(--green);}
+.cc-adj{color:var(--amber);font-weight:600;}
+.cook-ov-qty{font-family:var(--sans) !important;font-size:16px !important;color:var(--text2) !important;}
+.cook-ov-section{font-family:var(--sans) !important;font-size:11px !important;font-weight:600;letter-spacing:.06em !important;}
+.cook-adj{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--text2);margin:6px 0 14px;}
+.cook-adj strong{color:var(--amber);}
+.cook-adj-note{font-size:11.5px;color:var(--text3);}
+.cook-log{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-top:6px;}
+.cook-log label{display:flex;flex-direction:column;gap:6px;font-size:12px !important;}
+.cook-log input{width:150px;font-size:18px !important;padding:10px 12px !important;}
+.cook-big{font-size:15px !important;padding:12px 22px !important;}
+.cook-step,.cook-step span{text-transform:none !important;letter-spacing:0 !important;font-family:var(--sans) !important;font-size:15px !important;font-weight:400 !important;color:var(--text) !important;}
+.cook-done-note{font-size:15px;font-weight:700;color:var(--green);margin-right:8px;align-self:center;}
+.prep-comps{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;}
+.prep-comps-h{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+.prep-comps-list{display:flex;flex-wrap:wrap;gap:8px;}
+.prep-comp{font-size:13px;color:var(--text2);background:var(--surface2);border-radius:999px;padding:4px 12px;}
+.prep-comp strong{color:var(--text);margin-right:2px;}
+@media print { #prod-cook-view, #prod-prep-view, #prod-kpi-grid, #prod-view-tabs, .cook-help { display:none !important; } }
+.prep-ports{font-size:12px;font-weight:600;color:var(--text3);margin-left:4px;}
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -3064,9 +3112,8 @@ body.light-mode .del-tab.active{background:#fff !important;color:var(--ink) !imp
         <div id="prod-print-date" style="font-size:12px;margin-top:4px;color:#555;font-family:monospace"></div>
       </div>
       <div class="tabs no-print" id="prod-view-tabs" style="margin-bottom:12px">
-        <div class="tab" data-pview="prep" onclick="setProdView('prep')">Prep Day</div>
-        <div class="tab" data-pview="cook" onclick="setProdView('cook')">Cook Board</div>
-        <div class="tab" data-pview="planner" onclick="setProdView('planner')">Planner</div>
+        <div class="tab" data-pview="prep" onclick="setProdView('prep')">1 · Prep</div>
+        <div class="tab" data-pview="cook" onclick="setProdView('cook')">2 · Cook</div>
       </div>
       <div class="kpi-grid prod-no-print" id="prod-kpi-grid"></div>
       <div id="prod-prep-view" style="display:none"></div>
@@ -4572,7 +4619,7 @@ const PAGE_CFG = {
   quickbuild:{title:'Quick Build',sub:'Flavour-first menu planning · Auto-suggest components · Push to menu'},
   inventory:{title:'Inventory Management',sub:'Live stock · PAR control · Transactions · Source of truth for Purchasing'},
   packsheet:{title:'Packing & Fulfilment',sub:'Pack sheet · Labels · Box Board'},
-  production:{title:'Production Planner',sub:'Batch quantities · Editable labour · Step-by-step instructions'},
+  production:{title:'Production',sub:'Prep the day before · cook on the day · one drop at a time'},
   purchasing:{title:'Purchasing',sub:'Supplier-sorted · PAR from Inventory · Print-friendly'},
   labour:{title:'Labour Planner',sub:'Staff roster · Shift scheduling · Weekly labour costs'},
   discounts:{title:'Discount Codes',sub:'Promotional codes · Usage tracking · Portal integration'},
@@ -4592,7 +4639,6 @@ let lastPage = 'dashboard';
 var STATS_SECTIONS = {
   dashboard:  { els: ['dash-kpi-row','dash-row-1','dash-row-2','dash-row-3','dash-row-4'], def: false },
   purchasing: { els: ['purch-kpi-grid'],                 def: false },
-  production: { els: ['prod-kpi-grid'],                  def: false },
   inventory:  { els: ['inv-kpi-strip'],                  def: false },
   labour:     { els: ['labour-kpi-grid'],                def: true  },
   history:    { els: ['hist-kpi-grid','arc-charts-panel'], def: true }
@@ -4636,7 +4682,7 @@ function applyStatsCollapse(id) {
 // NEXT-STEP HINTS — every ops page says what to do now and what's next
 // ═══════════════════════════════════════════════════════════════
 function renderNextHint(id) {
-  var pages = ['menu','purchasing','production','packsheet','delivery'];  // Orders: summary line covers it
+  var pages = ['menu','purchasing','packsheet','delivery'];  // Production: its summary line covers it  // Orders: summary line covers it
   if (pages.indexOf(id) === -1) return;
   var st;
   try { st = getWeekStageState(); } catch(e) { return; }
@@ -4780,7 +4826,7 @@ function showPage(id) {
     orders: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-gold btn-sm" onclick="openOrderModal()">+ Add Order</button></div>`,
     delivery: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="openMergeDuplicates()" title="Find and merge duplicate customer records (matched by email)">Merge duplicates</button><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button><button class="btn btn-gold" onclick="openCustomerModal()">+ Add Customer</button></div>`,
     inventory: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button><button class="btn btn-ghost btn-sm" onclick="openInvReceiveModal()">+ Receive Stock</button><button class="btn btn-ghost btn-sm" onclick="openInvCountModal()">Stock Count</button><button class="btn btn-gold" onclick="openInvAdjustModal()">Quick Adjust</button></div>`,
-    production: ()=>`<div class="flex gap-8 items-center prod-no-print"><button class="btn btn-ghost btn-sm" onclick="window.print()">Print Station Sheets</button><button class="btn btn-green" onclick="saveProductionAdjustments()">✓ Save</button></div>`,
+    production: ()=>`<div class="flex gap-8 items-center prod-no-print"><button class="btn btn-ghost btn-sm" onclick="window.print()" title="Prints one sheet per station for the selected drop">Print station sheets</button></div>`,
     purchasing: ()=>`<div class="flex gap-8 items-center"><div class="tabs" style="margin-bottom:0" id="purch-session-tabs-top"><div class="tab ${purchSessionFilter==='all'?'active':''}" onclick="setPurchSession('all',this)">All</div><div class="tab ${purchSessionFilter==='sunday'?'active':''}" onclick="setPurchSession('sunday',this)">Sunday</div><div class="tab ${purchSessionFilter==='wednesday'?'active':''}" onclick="setPurchSession('wednesday',this)">Wednesday</div></div><div class="tabs" style="margin-bottom:0"><div class="tab purch-view-btn ${purchViewMode==='supplier'?'active':''}" data-view="supplier" onclick="setPurchView('supplier')">By Supplier</div><div class="tab purch-view-btn ${purchViewMode==='category'?'active':''}" data-view="category" onclick="setPurchView('category')">By Category</div></div><button class="btn btn-ghost btn-sm no-print" id="purch-detail-btn" onclick="togglePurchDetail()" title="Show yield, edible weight, cost per 100g and PAR columns">${document.body.classList.contains('purch-detail') ? 'Hide detail' : 'Show detail'}</button><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button></div>`,
     packsheet: ()=>`<div class="flex gap-8 items-center no-print"><div class="tabs" style="margin-bottom:0" id="pack-session-tabs-top"><div class="tab ${packSessionFilter==='all'?'active':''}" onclick="setPackSession('all',this);document.querySelectorAll('[id^=pack-session]').forEach(t=>{t.querySelectorAll('.tab').forEach((tt,i)=>{tt.classList.toggle('active',i==0)})})">All</div><div class="tab ${packSessionFilter==='sunday'?'active':''}" onclick="setPackSession('sunday',this)">Sunday</div><div class="tab ${packSessionFilter==='wednesday'?'active':''}" onclick="setPackSession('wednesday',this)">Wednesday</div></div><button class="btn btn-ghost btn-sm" onclick="setPackView('sheet');setTimeout(function(){window.print()},60)" title="Switches to the Pack Sheet and prints it">Print pack sheet</button></div>`,
     coststack: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button><button class="btn btn-gold" onclick="addCostItem()">+ Add Cost Item</button></div>`,
@@ -7862,7 +7908,8 @@ function renderProduction(){
   // Use the auto-detected production slot (whichever has dishes)
   var prodSlot   = getProductionSlot();
   var prodDishes = getProductionDishes();
-  var prodWeek   = getProductionWeekLabel();
+  var prodWeekLbl = getProductionWeekLabel();
+  var _pd = prodDrop();   // production is always for ONE drop (cooked separately)
 
   // Sync portion counts from confirmed orders for this slot
   recalcDishPortions(prodSlot);
@@ -7891,7 +7938,7 @@ function renderProduction(){
     const overall=n(dish.scaleOverall)||1;
     slots.forEach(({slot,scale})=>{
       if(!dish[slot]) return;
-      const ports=dishPortions(dish, prodSessionFilter);
+      const ports=dishPortions(dish, _pd);
       if(ports===0) return;
       if(!compDemand[dish[slot]]) compDemand[dish[slot]]={portions:0,scale:scale*overall};
       compDemand[dish[slot]].portions+=ports;
@@ -7904,21 +7951,27 @@ function renderProduction(){
     if(!compCooked[compName]) return null;   // only cold sides use it → not a cook-board task (still prepped/bought)
     const rec=DB.recipes.find(r=>r.name===compName&&r.status==='Active');
     if(!rec) return null;
+    // Permanent per-component overrides (DB.productionAdjustments) are no longer applied to
+    // quantities — they silently carried over week to week. One-offs use prodWeekAdj (this week + drop only).
     const adj=DB.productionAdjustments[compName]||{};
+    const wkAdj=prodWeekAdj(compName);
+    const ports2=Math.max(0, portions + wkAdj);
+    const buf=prodBufferFactor(rec.type);
     const rawQty=rec.lines?.reduce((s,l)=>s+n(l.qty),0)||0;
     const ty=rec.lines?.length>0?rec.lines.reduce((s,l)=>{const ing=DB.ingredients.find(i=>i.id===l.ingId);return ing?s+n(l.qty)*calcTY(ing):s;},0)/Math.max(rawQty,0.01):1;
-    const batchRaw=rawQty*portions*scale;
+    const batchRaw=rawQty*ports2*scale*buf;
     const batchCooked=batchRaw*ty;
     return {
-      name:compName, type:rec.type, portions:(adj.portions!==undefined?adj.portions:portions),
-      batchRaw:(adj.batchRaw!==undefined?adj.batchRaw:Math.round(batchRaw)), batchCooked:(adj.batchCooked!==undefined?adj.batchCooked:Math.round(batchCooked)),
+      name:compName, type:rec.type, portions:ports2, ordered:portions, wkAdj, buf,
+      batchRaw:Math.round(batchRaw), batchCooked:Math.round(batchCooked),
       cookMethod:(adj.cookMethod!==undefined?adj.cookMethod:(rec.cookMethod||'—')), station:(adj.station!==undefined?adj.station:(rec.station||'Unassigned')),
-      prepTime:(adj.prepTime!==undefined?adj.prepTime:(rec.prepTime||0)), cookTime:(adj.cookTime!==undefined?adj.cookTime:(rec.cookTime||0)),
-      staffCount:(adj.staffCount!==undefined?adj.staffCount:1), labour:(adj.labour!==undefined?adj.labour:((rec.prepTime+rec.cookTime)/60).toFixed(2)),
+      prepTime:n(rec.prepTime)||0, cookTime:n(rec.cookTime)||0,
+      staffCount:1, labour:((n(rec.prepTime)+n(rec.cookTime))/60).toFixed(2),
       notes:adj.notes||'', steps:rec.steps||[], targetTemp:rec.targetTemp, servingNote:rec.servingNote,
       seq:{Protein:2,Carb:1,Veg:3,Condiment:4,Complete:2}[rec.type]||5, scale,
     };
-  }).filter(Boolean).sort((a,b)=>a.seq-b.seq||a.station.localeCompare(b.station));
+  // Start order: longest jobs first (they gate the day), quick finishes last.
+  }).filter(Boolean).sort((a,b)=>(n(b.prepTime)+n(b.cookTime))-(n(a.prepTime)+n(a.cookTime))||a.seq-b.seq||a.name.localeCompare(b.name));
 
   const totalMins=prodRows.reduce((s,r)=>s+n(r.prepTime)+n(r.cookTime),0);
   const totalPorts=prodRows.reduce((s,r)=>s+r.portions,0);
@@ -7927,11 +7980,20 @@ function renderProduction(){
   // First-principles for prep day: "how much am I making and will I get through it?"
   // Portions = the load, Est. time = will it fit the day, Dishes = distinct cooks to plan.
   // Cut Stations (layout, not a decision); Components folded into the time/dishes view.
-  document.getElementById('prod-kpi-grid').innerHTML=`
-    <div class="kpi-card b"><div class="kpi-label">Total Portions${prodSessionLabel}</div><div class="kpi-value">${totalPorts}</div><div class="kpi-sub">${prodWeek||'this week'}</div></div>
-    <div class="kpi-card"><div class="kpi-label">Est. Total Time</div><div class="kpi-value">${Math.floor(totalMins/60)}h ${totalMins%60}m</div><div class="kpi-sub">prep + cook across all components</div></div>
-    <div class="kpi-card g"><div class="kpi-label">Dishes to Make</div><div class="kpi-value">${prodDishes.length}</div><div class="kpi-sub">${prodRows.length} components</div></div>
-  `;
+  // One summary line + the drop switch (replaces the KPI cards and the progress panel)
+  const _dd = (getProductionSlot()==='next' ? DB.nextDropDates : DB.dropDates) || {};
+  const _dropBtn = (sx)=>{ const d=_dd[sx]?new Date(_dd[sx]).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):(sx==='sunday'?'Sunday':'Wednesday');
+    return '<button class="ord-sess-btn'+(sx===_pd?' active':'')+'" onclick="setGlobalSession(\''+sx+'\')">'+(sx==='sunday'?'Sunday drop':'Wednesday drop')+' <span class="pd-date">'+(_dd[sx]?d:'')+'</span></button>'; };
+  const _done = prodRows.filter(r=>getComponentStatus(r.name)==='complete').length;
+  const _pct = prodRows.length ? Math.round(_done/prodRows.length*100) : 0;
+  const _bp = prodBufferPct();
+  document.getElementById('prod-kpi-grid').innerHTML =
+    '<div class="prod-head">' +
+      '<div class="ord-seg">' + _dropBtn('sunday') + _dropBtn('wednesday') + '</div>' +
+      '<div class="prod-sum"><strong>' + prodRows.length + ' components</strong><span>·</span>' + totalPorts + ' portions<span>·</span>~' + Math.floor(totalMins/60) + 'h ' + (totalMins%60) + 'm<span>·</span><strong>' + _done + '/' + prodRows.length + ' done</strong></div>' +
+      '<button class="prod-buf" onclick="editCookBuffer()" title="Extra cooked on protein and carb batches — also added to prep and the shopping list">' + (_bp>0 ? 'Buffer +' + _bp + '% protein &amp; carb' : 'No cook buffer') + '</button>' +
+    '</div>' +
+    '<div class="bb-bar"><i style="width:' + _pct + '%"></i></div>';
 
   // Build type filter buttons
   const types=['all',...new Set(prodRows.map(r=>r.type))];
@@ -7946,7 +8008,8 @@ function renderProduction(){
 }
 
 function getProdView() {
-  try { return localStorage.getItem('29perf_prodView') || 'planner'; } catch(e) { return 'planner'; }
+  var v; try { v = localStorage.getItem('29perf_prodView'); } catch(e) {}
+  return v === 'prep' ? 'prep' : 'cook';   // 'planner' retired → Cook
 }
 function setProdView(v) {
   try { localStorage.setItem('29perf_prodView', v); } catch(e) {}
@@ -7967,10 +8030,10 @@ function applyProdView() {
   var po   = document.getElementById('prod-progress-overview');
   if (prep) prep.style.display = v === 'prep' ? '' : 'none';
   if (cook) cook.style.display = v === 'cook' ? '' : 'none';
-  if (stn)  stn.style.display  = v === 'planner' ? '' : 'none';
-  if (fb)   fb.style.display   = v === 'planner' ? '' : 'none';
-  if (v === 'planner') { renderProdStationView(); renderProdProgressOverview(); }
-  else if (po) po.style.display = 'none';
+  if (fb)   fb.style.display   = 'none';
+  if (po)   po.style.display   = 'none';
+  // Station sheets are print-only now; keep them current so Print always works.
+  try { renderProdStationView(); } catch(e) {}
   if (v === 'prep') renderPrepView();
   if (v === 'cook') renderCookBoard();
 }
@@ -7980,7 +8043,7 @@ function applyProdView() {
 // total to take out, how to process it, and the per-component
 // container splits. Checkable, synced via DB.prepProgress.
 // ═══════════════════════════════════════════════════════════════
-function prepProgressKey() { return (getProductionWeekLabel() || 'wk') + '|' + prodSessionFilter; }
+function prepProgressKey() { return (getProductionWeekLabel() || 'wk') + '|' + prodDrop(); }
 function prepProgress() {
   var key = prepProgressKey();
   if (!DB.prepProgress || DB.prepProgress.key !== key) DB.prepProgress = { key: key, items: {} };
@@ -8044,12 +8107,14 @@ function buildPrepData() {
     seenIssue[k] = 1;
     issues.push({ dish: dishName, comp: compName, msg: msg });
   }
+  var _pdP = prodDrop();
+  var compPorts = {};   // component → portions this drop (shown on Prep)
   getProductionDishes().forEach(function(dish) {
-    var ports = dishPortions(dish, prodSessionFilter);
+    var ports = dishPortions(dish, _pdP);
     if (!ports) {
       // Not an error — but if this dish has portions on the OTHER drop, remember
-      // so an empty view can say "switch the session filter" instead of "no orders".
-      if (prodSessionFilter !== 'all') otherSessionPorts += dishPortions(dish, 'all');
+      // so an empty view can say "switch drop" instead of "no orders".
+      otherSessionPorts += dishPortions(dish, 'all');
       return;
     }
     var dishName = dish.name || dish.id;
@@ -8062,12 +8127,14 @@ function buildPrepData() {
       var rec = found.rec;
       if (!rec) { addIssue(dishName, compName, found.msg); return; }
       if (!rec.lines || !rec.lines.length) { addIssue(dishName, compName, 'recipe has no ingredients'); return; }
+      compPorts[compName] = (compPorts[compName] || 0) + ports;
+      var _bufP = prodBufferFactor(rec.type);
       rec.lines.forEach(function(l) {
         if (l.prepNeeded === false) return; // spices/oils/seasonings — added during cooking, not prepped
         if (!l.ingId) return;               // truly blank line — nothing to resolve
         var ing = DB.ingredients.find(function(i){ return i.id === l.ingId; });
         if (!ing) { addIssue(dishName, compName, 'an ingredient is no longer in the database'); return; }
-        var edible = n(l.qty) * pair[1] * overall * ports;
+        var edible = n(l.qty) * pair[1] * overall * ports * _bufP;
         if (!map[ing.id]) map[ing.id] = { ing: ing, rawG: 0, splits: {} };
         map[ing.id].rawG += edible / ((n(ing.proc) || 100) / 100);
         var sp = map[ing.id].splits[compName] || { comp: compName, edibleG: 0, prep: '' };
@@ -8078,7 +8145,7 @@ function buildPrepData() {
     });
   });
   var items = Object.values(map).sort(function(a, b){ return b.rawG - a.rawG; });
-  return { items: items, issues: issues, otherSessionPorts: otherSessionPorts };
+  return { items: items, issues: issues, otherSessionPorts: otherSessionPorts, compPorts: compPorts };
 }
 
 function renderPrepView() {
@@ -8092,10 +8159,9 @@ function renderPrepView() {
     built.issues.map(function(is){ return '<span style="font-size:12px;color:var(--text2)">• <strong>' + escHtml(is.dish) + '</strong> → ' + escHtml(is.comp) + ': ' + escHtml(is.msg) + '</span>'; }).join('<br>') +
     '</span></div>' : '';
   if (!data.length) {
-    var sessName = prodSessionFilter === 'sunday' || prodSessionFilter === 's1' ? 'Sunday'
-                 : prodSessionFilter === 'wednesday' || prodSessionFilter === 's2' ? 'Wednesday' : '';
+    var sessName = prodDrop() === 'sunday' ? 'Sunday' : 'Wednesday';
     var emptyMsg = (built.otherSessionPorts > 0 && sessName)
-      ? 'Nothing to prep for <strong>' + sessName + '</strong> — but there are ' + Math.round(built.otherSessionPorts) + ' portions on the other drop. Switch the session filter above.'
+      ? 'Nothing to prep for the <strong>' + sessName + '</strong> drop — but there are ' + Math.round(built.otherSessionPorts) + ' portions on the other drop. Switch drop above.'
       : 'Nothing to prep — confirm orders so portions sync, then come back.';
     el.innerHTML = warnHtml + '<div class="empty-state"><div class="big">🔪</div><div class="msg">' + emptyMsg + '</div></div>';
     return;
@@ -8126,7 +8192,7 @@ function renderPrepView() {
       var done = !!checks[sid];
       return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border)">' +
         '<input type="checkbox" ' + (done ? 'checked' : '') + ' onchange="tickPrepSplit(\'' + sid.replace(/'/g, "\\'") + '\',this.checked)" style="width:22px;height:22px;accent-color:var(--gold);cursor:pointer;flex-shrink:0">' +
-        '<span style="flex:1;font-size:13px;' + (done ? 'text-decoration:line-through;color:var(--text3)' : '') + '">→ <strong>' + Math.round(sp.edibleG) + ' g</strong> · ' + sp.comp + ' 🥡' +
+        '<span style="flex:1;font-size:13px;' + (done ? 'text-decoration:line-through;color:var(--text3)' : '') + '">→ <strong>' + Math.round(sp.edibleG) + ' g</strong> · ' + sp.comp + ' <span class="prep-ports">' + (built.compPorts[sp.comp] || 0) + ' portions</span>' +
         (sp.prep ? ' <span style="color:var(--gold);font-size:11px">(' + sp.prep + ')</span>' : '') + '</span>' +
       '</div>';
     }).join('');
@@ -8163,9 +8229,13 @@ function renderPrepView() {
     return header + list.map(buildIngCard).join('');
   }).join('');
 
+  // Portions per component for this drop — what each labelled container is for
+  var cpKeys = Object.keys(built.compPorts).sort(function(a, b){ return built.compPorts[b] - built.compPorts[a]; });
+  var compStrip = cpKeys.length ? '<div class="prep-comps"><div class="prep-comps-h">Components this drop · portions</div><div class="prep-comps-list">' +
+    cpKeys.map(function(c){ return '<span class="prep-comp"><strong>' + built.compPorts[c] + '</strong> ' + escHtml(c) + '</span>'; }).join('') + '</div></div>' : '';
   el.innerHTML = warnHtml +
-    '<div class="next-hint no-print"><span class="nh-icon">🔪</span><span><strong>Prep day:</strong> take out the total, process it as shown, weigh each split into its labelled container, tick it off. ' +
-    '<strong>' + doneCount + '/' + totalSplits + ' splits done.</strong> Tomorrow Mum cooks straight from the containers.</span></div>' + cards;
+    '<div class="cook-help no-print"><span>Take out each total, process it as shown, weigh each split into its labelled container, tick it off. <strong>' + doneCount + '/' + totalSplits + ' done.</strong>' +
+    (prodBufferPct() > 0 ? ' Protein and carb amounts include the +' + prodBufferPct() + '% cook buffer.' : '') + '</span></div>' + compStrip + cards;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -8180,7 +8250,7 @@ function renderCookBoard() {
     return;
   }
   var done = prodRows.filter(function(r){ return getComponentStatus(r.name) === 'complete'; }).length;
-  var stLabel = { not_started: ['TO DO', 'var(--surface3);color:var(--text3)'], in_progress: ['ON THE STOVE', 'rgba(96,165,250,.2);color:#60a5fa'], complete: ['DONE ✓', 'rgba(74,222,128,.18);color:#4ade80'] };
+  var stLabel = { not_started: ['To do', 'todo'], in_progress: ['Cooking', 'cooking'], complete: ['Done', 'done'] };
   // Group by station — the chef thinks in stations, not in a flat list
   var byStation = {};
   prodRows.forEach(function(r, i) {
@@ -8199,18 +8269,18 @@ function renderCookBoard() {
         var st = getComponentStatus(r.name);
         var lab = stLabel[st] || stLabel.not_started;
         return '<div class="cook-card st-' + st + '" onclick="openCookCard(' + i + ')">' +
-          '<span class="cc-status" style="background:' + lab[1] + '">' + lab[0] + '</span>' +
+          '<span class="cc-status ' + lab[1] + '">' + lab[0] + '</span>' +
           '<div class="cc-type">' + r.type + '</div>' +
           '<div class="cc-name">' + r.name + '</div>' +
           '<div class="cc-qty">' + (r.batchRaw >= 1000 ? (r.batchRaw / 1000).toFixed(1) + ' kg' : r.batchRaw + ' g') + ' raw → ~' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(1) + ' kg' : r.batchCooked + ' g') + '</div>' +
-          '<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px">' + r.portions + ' portions' + (st === 'complete' ? ' ' + prodYieldChip(r.name) : '') + '</div>' +
+          '<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px">' + r.portions + ' portions' + (r.buf > 1 ? ' · incl. +' + prodBufferPct() + '%' : '') + (r.wkAdj ? ' · <span class="cc-adj">adjusted ' + (r.wkAdj > 0 ? '+' : '') + r.wkAdj + '</span>' : '') + (st === 'complete' ? ' ' + prodYieldChip(r.name) : '') + '</div>' +
         '</div>';
       }).join('') + '</div>' +
     '</div>';
   }).join('');
 
   el.innerHTML =
-    '<div class="next-hint no-print" style="align-items:center"><span class="nh-icon">🍳</span><span style="flex:1"><strong>Cook day:</strong> tap a card to open it full-screen. Run as many at once as the hobs allow. <strong>' + done + '/' + prodRows.length + ' done.</strong></span>' +
+    '<div class="cook-help no-print"><span>Cards run in start order — longest jobs first. Tap a card for the recipe, then Start → Done with weight and temperature.</span>' +
     '<button class="btn btn-ghost btn-sm" onclick="toggleFocusMode()" title="Hide all menus and bars — just the board. Stops mis-taps mid-cook.">' + (document.body.classList.contains('focus-mode') ? 'Exit Focus' : 'Focus') + '</button></div>' +
     stationsHtml;
 }
@@ -8248,7 +8318,7 @@ function openCookCard(i) {
   var rawQty = (rec && rec.lines) ? rec.lines.reduce(function(sum, l){ return sum + n(l.qty); }, 0) : 0;
   var lines = (rec && rec.lines || []).map(function(l) {
     var ing = DB.ingredients.find(function(x){ return x.id === l.ingId; });
-    var grams = n(l.qty) * r.portions * r.scale;
+    var grams = n(l.qty) * r.portions * r.scale * (r.buf || 1);
     return '<div class="cook-ov-line"><span>' + (ing ? ing.name : l.ingId) +
       (l.prep ? ' <span style="color:var(--gold);font-size:12px">(' + l.prep + ')</span>' : '') + '</span>' +
       '<strong style="font-family:var(--mono)">' + (grams >= 1000 ? (grams / 1000).toFixed(2) + ' kg' : Math.round(grams) + ' g') + '</strong></div>';
@@ -8262,12 +8332,21 @@ function openCookCard(i) {
         ' onchange="tickCookStep(\'' + sid.replace(/'/g, "\\'") + '\',this.checked)"><span>' + stp + '</span></label>';
     }).join('');
   }
+  var esc = r.name.replace(/'/g, "\\'");
   var actions = st === 'complete'
-    ? '<button class="btn btn-ghost" onclick="setComponentStatus(\'' + r.name.replace(/'/g, "\\'") + '\',\'not_started\');openCookCard(' + i + ')">↺ Reset</button>'
+    ? '<div class="cook-done-note">Done' + (prodLogFind(r.name) && prodLogFind(r.name).actualWeight != null ? ' · ' + Math.round(prodLogFind(r.name).actualWeight) + ' g logged' : '') + '</div>' +
+      '<button class="btn btn-ghost" onclick="setComponentStatus(\'' + esc + '\',\'not_started\');openCookCard(' + i + ')">Undo done</button>'
     : (st === 'not_started'
-        ? '<button class="btn btn-gold" style="font-size:15px;padding:12px 22px" onclick="setComponentStatus(\'' + r.name.replace(/'/g, "\\'") + '\',\'in_progress\');openCookCard(' + i + ')">▶ Start Cooking</button>'
+        ? '<button class="btn btn-gold cook-big" onclick="setComponentStatus(\'' + esc + '\',\'in_progress\');openCookCard(' + i + ')">Start cooking</button>'
         : '') +
-      '<button class="btn btn-green" style="font-size:15px;padding:12px 22px" onclick="promptCompleteComponent(\'' + r.name.replace(/'/g, "\\'") + '\');closeCookCard()">✓ Done — weigh &amp; log</button>';
+      '<div class="cook-log">' +
+        '<label>Cooked weight (g)<input id="cook-w" type="number" inputmode="decimal" placeholder="~' + r.batchCooked + '"></label>' +
+        '<label>Core temp (°C)<input id="cook-t" type="number" inputmode="decimal" placeholder="' + (r.targetTemp || '') + '"></label>' +
+        '<button class="btn btn-green cook-big" onclick="cookCardDone(\'' + esc + '\',' + i + ')">Done — save</button>' +
+      '</div>';
+  var adjRow = '<div class="cook-adj">This week: ' + r.ordered + ' ordered' + (r.wkAdj ? ' <strong>' + (r.wkAdj > 0 ? '+' : '') + r.wkAdj + ' adjusted</strong>' : '') +
+    ' <button class="btn btn-ghost btn-sm" onclick="setProdWeekAdj(\'' + esc + '\',-1,' + i + ')">−1</button><button class="btn btn-ghost btn-sm" onclick="setProdWeekAdj(\'' + esc + '\',1,' + i + ')">+1</button>' +
+    '<span class="cook-adj-note">resets next week</span></div>';
   ov.innerHTML =
     '<div style="max-width:760px;margin:0 auto">' +
       '<div style="display:flex;justify-content:space-between;align-items:center">' +
@@ -8278,12 +8357,12 @@ function openCookCard(i) {
         '</div>' +
       '</div>' +
       '<div class="cook-ov-name">' + r.name + '</div>' +
-      '<div class="cook-ov-qty">' + (r.batchRaw >= 1000 ? (r.batchRaw / 1000).toFixed(2) + ' kg' : r.batchRaw + ' g') + ' raw · ' + r.portions + ' portions · ' + r.cookMethod + '</div>' +
-      '<div class="cook-ov-target">Finish with ~<strong>' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(2) + ' kg' : r.batchCooked + ' g') + '</strong>' + (r.targetTemp ? ' · 🌡 ' + r.targetTemp + '°C core' : '') + '</div>' +
+      '<div class="cook-ov-qty">' + (r.batchRaw >= 1000 ? (r.batchRaw / 1000).toFixed(2) + ' kg' : r.batchRaw + ' g') + ' raw · ' + r.portions + ' portions · ' + r.cookMethod + (r.buf > 1 ? ' · incl. +' + prodBufferPct() + '% buffer' : '') + '</div>' + adjRow +
+      '<div class="cook-ov-target">Finish with ~<strong>' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(2) + ' kg' : r.batchCooked + ' g') + '</strong>' + (r.targetTemp ? ' · core ' + r.targetTemp + '°C' : '') + '</div>' +
       '<div class="cook-ov-section">This batch needs</div>' + (lines || '<div style="color:var(--text3);font-size:13px">No ingredient lines on this recipe.</div>') +
       // Cook day leads with COOK steps (legacy recipes stored them in `steps`)
-      steps((rec && rec.cookSteps && rec.cookSteps.length ? rec.cookSteps : (rec && rec.steps) || (r.steps || [])), '🍳 Cook') +
-      steps(rec && rec.finishSteps, '✨ Finish') +
+      steps((rec && rec.cookSteps && rec.cookSteps.length ? rec.cookSteps : (rec && rec.steps) || (r.steps || [])), 'Cook') +
+      steps(rec && rec.finishSteps, 'Finish') +
       ((r.prepSteps || (rec && rec.prepSteps) || []).length
         ? '<details style="margin-top:14px"><summary style="font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);cursor:pointer">Prep steps (done yesterday)</summary>' +
           steps(r.prepSteps || (rec && rec.prepSteps), 'Prep') + '</details>'
@@ -8291,6 +8370,12 @@ function openCookCard(i) {
       '<div style="display:flex;gap:10px;margin:22px 0 40px;flex-wrap:wrap">' + actions + '</div>' +
     '</div>';
   ov.classList.add('open');
+}
+function cookCardDone(comp, i) {
+  var w = (document.getElementById('cook-w') || {}).value, t = (document.getElementById('cook-t') || {}).value;
+  var row = (prodRows || []).find(function(r){ return r.name === comp; });
+  completeComponent(comp, t && String(t).trim() ? parseFloat(t) : null, w && String(w).trim() ? parseFloat(w) : null, row ? n(row.batchCooked) || null : null);
+  closeCookCard();
 }
 function closeCookCard() {
   var ov = document.getElementById('cook-overlay');
@@ -8319,52 +8404,102 @@ function renderProdProgressOverview() {
     (inProg ? '<span style="color:#60a5fa">' + inProg + ' in progress</span>' : '');
 }
 
+// ═══════════════════════════════════════════════════════════════
+// PRODUCTION STATE (Oct 2026) — one week label, status per DROP (Sunday and
+// Wednesday are cooked separately), saved in DB.productionLog so every device
+// sees it. Legacy entries (no session / 'all') still count for either drop.
+// ═══════════════════════════════════════════════════════════════
+function prodWeek() { return getProductionWeekLabel() || DB.menuWeekLabel || ''; }
+// The drop being produced: the global Sun/Wed switch if set, else the next upcoming drop date.
+function prodDrop() {
+  var gs = (typeof getGlobalSession === 'function') ? getGlobalSession() : 'all';
+  if (gs === 'sunday' || gs === 'wednesday') return gs;
+  var dd = (getProductionSlot() === 'next' ? DB.nextDropDates : DB.dropDates) || {};
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var next = ['sunday', 'wednesday'].filter(function(s){ return dd[s]; })
+    .map(function(s){ return { s: s, t: new Date(dd[s]).getTime() }; })
+    .filter(function(x){ return x.t >= today.getTime(); })
+    .sort(function(a, b){ return a.t - b.t; });
+  return next.length ? next[0].s : 'sunday';
+}
+function prodLogFind(comp, drop) {
+  var w = prodWeek(); drop = drop || prodDrop();
+  var L = DB.productionLog || [];
+  return L.find(function(p){ return p.week === w && p.component === comp && p.session === drop; })
+      || L.find(function(p){ return p.week === w && p.component === comp && (!p.session || p.session === 'all'); });
+}
+// Cooked? For a specific drop, or (drop omitted) for any drop this week.
+function prodCooked(comp, drop) {
+  if (drop) { var l = prodLogFind(comp, drop); return !!(l && l.status === 'complete'); }
+  var w = prodWeek();
+  return (DB.productionLog || []).some(function(p){ return p.week === w && p.component === comp && p.status === 'complete'; });
+}
+// Cook buffer — a visible safety margin on batch quantities (default +5% on protein + carb).
+function prodBufferPct() { var b = DB.cookBuffer; return (b && b.pct != null) ? n(b.pct) : 5; }
+function prodBufferTypes() { var b = DB.cookBuffer; return (b && Array.isArray(b.types)) ? b.types : ['Protein', 'Carb']; }
+function prodBufferFactor(type) { return prodBufferTypes().indexOf(type) !== -1 ? 1 + prodBufferPct() / 100 : 1; }
+function editCookBuffer() {
+  var v = prompt('Cook buffer — extra % cooked on protein and carb batches (0 for none):', String(prodBufferPct()));
+  if (v === null) return;
+  var p = Math.max(0, Math.min(50, parseFloat(v) || 0));
+  DB.cookBuffer = { pct: p, types: prodBufferTypes() };
+  save(); renderProduction();
+  notify('Cook buffer set to +' + p + '% — applies to production, prep and the shopping list');
+}
+// One-off portion adjustment for THIS week + drop only (resets automatically next week).
+function prodAdjKey(comp) { return prodWeek() + '|' + prodDrop() + '|' + comp; }
+function prodWeekAdj(comp) { return n((DB.prodWeekAdj || {})[prodAdjKey(comp)]) || 0; }
+function setProdWeekAdj(comp, delta, idx) {
+  if (!DB.prodWeekAdj) DB.prodWeekAdj = {};
+  var k = prodAdjKey(comp), v = (n(DB.prodWeekAdj[k]) || 0) + delta;
+  if (v === 0) delete DB.prodWeekAdj[k]; else DB.prodWeekAdj[k] = v;
+  // keep only this week's adjustments
+  var w = prodWeek() + '|';
+  Object.keys(DB.prodWeekAdj).forEach(function(key){ if (key.indexOf(w) !== 0) delete DB.prodWeekAdj[key]; });
+  save(); renderProduction();
+  if (idx != null) { var j = prodRows.findIndex(function(r){ return r.name === comp; }); openCookCard(j >= 0 ? j : idx); }
+}
+
 function getComponentStatus(compName) {
-  var week = getProductionWeekLabel() || DB.menuWeekLabel || '';
-  // Check productionLog first (authoritative after COMPLETE)
-  var log = (DB.productionLog || []).find(function(p){ return p.week === week && p.component === compName; });
-  if (log) return log.status || 'not_started';
-  // Fall back to in-memory session state
-  if (!window._compStatus) window._compStatus = {};
-  return window._compStatus[(week + '_' + compName)] || 'not_started';
+  var log = prodLogFind(compName);
+  return log ? (log.status || 'not_started') : 'not_started';
 }
 
 function setComponentStatus(compName, status) {
   var prodSlot = getProductionSlot();
-  var week     = getProductionWeekLabel() || DB.menuWeekLabel || '';
-  if (!window._compStatus) window._compStatus = {};
-  window._compStatus[(week + '_' + compName)] = status;
-
+  var week = prodWeek(), drop = prodDrop();
+  if (!DB.productionLog) DB.productionLog = [];
   if (status === 'in_progress') {
-    // Auto-set confirmed orders to in_production for the production slot
+    var log = prodLogFind(compName, drop);
+    if (log && (log.session === drop)) { log.status = 'in_progress'; log.startedAt = log.startedAt || new Date().toISOString(); }
+    else {
+      if (!DB.nextProductionLogId) DB.nextProductionLogId = 1;
+      DB.productionLog.push({ id: 'PROD' + String(DB.nextProductionLogId++).padStart(4, '0'), week: week, component: compName, session: drop,
+        status: 'in_progress', startedAt: new Date().toISOString(), completedAt: null, coreTemp: null, actualWeight: null, expectedWeight: null, staffName: '' });
+    }
+    // Auto-set this drop's confirmed orders to in_production
     (DB.weeklyOrders || []).forEach(function(o) {
-      var inProdSlot;
-      if (o.slot) {
-        inProdSlot = o.slot === prodSlot && (!week || !o.week || o.week === week);
-      } else {
-        inProdSlot = !!(week && o.week === week);
-      }
-      if (inProdSlot && getOrderStatus(o) === 'confirmed') {
-        o.status = 'in_production';
-      }
+      var inProdSlot = o.slot ? (o.slot === prodSlot && (!week || !o.week || o.week === week)) : !!(week && o.week === week);
+      if (inProdSlot && String(o.session || '').toLowerCase() === drop && getOrderStatus(o) === 'confirmed') o.status = 'in_production';
     });
-    save();
   } else if (status === 'not_started') {
-    // Remove any existing log entry for this component/week
-    var idx = (DB.productionLog || []).findIndex(function(p){ return p.week === week && p.component === compName; });
-    if (idx >= 0) DB.productionLog.splice(idx, 1);
-    save();
+    // Remove this drop's entry (and a legacy week-wide entry, which would otherwise still count)
+    DB.productionLog = DB.productionLog.filter(function(p){
+      return !(p.week === week && p.component === compName && (p.session === drop || !p.session || p.session === 'all'));
+    });
   }
-  renderProdStationView();
-  renderProdProgressOverview();
-  try { renderCookBoard(); } catch(e) {}
-  renderFulfillmentStation && renderFulfillmentStation();
+  save();
+  _prodRerender();
+}
+function _prodRerender() {
+  try { renderProduction(); } catch(e) {}
+  try { if (document.getElementById('pack-boxes-view') && document.getElementById('pack-boxes-view').style.display !== 'none') renderBoxBoard(); } catch(e) {}
+  try { renderWeekTracker(); } catch(e) {}
 }
 
 /* Yield variance chip — actual vs expected cooked weight from the production log */
 function prodYieldChip(compName) {
-  var week = getProductionWeekLabel() || DB.menuWeekLabel || '';
-  var log = (DB.productionLog || []).find(function(p){ return p.week === week && p.component === compName; });
+  var log = prodLogFind(compName);
   if (!log || log.actualWeight == null || !log.expectedWeight) return '';
   var pct = (log.actualWeight - log.expectedWeight) / log.expectedWeight * 100;
   var col = Math.abs(pct) <= 5 ? 'var(--green)' : Math.abs(pct) <= 12 ? '#ff9f0a' : 'var(--red)';
@@ -8386,41 +8521,31 @@ function promptCompleteComponent(compName) {
 }
 
 function completeComponent(compName, coreTemp, actualWeight, expectedWeight) {
-  var week = DB.menuWeekLabel || '';
-  if (!window._compStatus) window._compStatus = {};
-  window._compStatus[(week + '_' + compName)] = 'complete';
-
+  var week = prodWeek(), drop = prodDrop();
   if (!DB.productionLog) DB.productionLog = [];
   if (!DB.nextProductionLogId) DB.nextProductionLogId = 1;
-
-  var existing = DB.productionLog.find(function(p){ return p.week === week && p.component === compName; });
+  // Replace any legacy week-wide entry for this component with a per-drop one
+  DB.productionLog = DB.productionLog.filter(function(p){ return !(p.week === week && p.component === compName && (!p.session || p.session === 'all')); });
+  var existing = DB.productionLog.find(function(p){ return p.week === week && p.component === compName && p.session === drop; });
   if (existing) {
-    existing.status      = 'complete';
+    existing.status = 'complete';
     existing.completedAt = new Date().toISOString();
     if (coreTemp !== null) existing.coreTemp = coreTemp;
     if (actualWeight != null)   existing.actualWeight   = actualWeight;
     if (expectedWeight != null) existing.expectedWeight = expectedWeight;
   } else {
     DB.productionLog.push({
-      id:          'PROD' + String(DB.nextProductionLogId++).padStart(4,'0'),
-      week:        week,
-      component:   compName,
-      session:     prodSessionFilter || 'all',
-      status:      'complete',
-      coreTemp:    coreTemp !== null ? coreTemp : null,
-      actualWeight:   actualWeight != null ? actualWeight : null,
+      id: 'PROD' + String(DB.nextProductionLogId++).padStart(4,'0'),
+      week: week, component: compName, session: drop, status: 'complete',
+      coreTemp: coreTemp !== null ? coreTemp : null,
+      actualWeight: actualWeight != null ? actualWeight : null,
       expectedWeight: expectedWeight != null ? expectedWeight : null,
-      startedAt:   null,
-      completedAt: new Date().toISOString(),
-      staffName:   '',
+      startedAt: null, completedAt: new Date().toISOString(), staffName: '',
     });
   }
   save();
-  renderProdStationView();
-  renderProdProgressOverview();
-  // Trigger fulfillment station re-render if visible
-  if (typeof renderFulfillmentStation === 'function') renderFulfillmentStation();
-  notify(compName + ' marked complete ✓');
+  _prodRerender();
+  notify(compName + ' done ✓');
 }
 
 function renderProdStationView(){
@@ -8462,7 +8587,7 @@ function renderProdStationView(){
         return rec.lines.map(l=>{
           const ing=DB.ingredients.find(i=>i.id===l.ingId);
           if(!ing) return '';
-          const totalG=Math.round(n(l.qty)*r.portions*(r.scale||1));
+          const totalG=Math.round(n(l.qty)*r.portions*(r.scale||1)*(r.buf||1));   // same buffered amount as the cook card
           const displayWt = totalG>=1000 ? (totalG/1000).toFixed(2)+'<span class="prod-ing-qty-unit">kg</span>' : totalG+'<span class="prod-ing-qty-unit">g</span>';
           return `<div class="prod-ing-row">
             <span class="prod-ing-name">${ing.name}</span>
@@ -8473,7 +8598,7 @@ function renderProdStationView(){
 
       const compStatus = getComponentStatus(r.name);
       const compCardCls = compStatus === 'complete' ? ' complete' : compStatus === 'in_progress' ? ' in-progress' : '';
-      const existingLog = (DB.productionLog || []).find(function(p){ return p.week === (DB.menuWeekLabel||'') && p.component === r.name && p.status === 'complete'; });
+      const existingLog = (function(){ var l = prodLogFind(r.name); return l && l.status === 'complete' ? l : null; })();
       const loggedTemp  = existingLog ? existingLog.coreTemp : '';
       // Right column: build phase panels (always expanded, no tabs)
       const mkPhasePanel=(label,icon,color,steps)=>{
@@ -8518,12 +8643,12 @@ function renderProdStationView(){
           <div class="prod-panel-nums">
             <div class="prod-panel-nums-cell" style="background:rgba(201,168,76,.06)">
               <div class="prod-panel-nums-label">Portions</div>
-              <input class="prod-panel-nums-input" type="number" value="${r.portions}" onchange="updateProdAdj('${r.name}','portions',this.value)">
+              <div class="prod-panel-nums-input">${r.portions}</div>
             </div>
             <div class="prod-panel-nums-cell">
               <div class="prod-panel-nums-label">Cooked Weight</div>
               <div style="display:flex;align-items:baseline;gap:2px">
-                <input class="prod-panel-nums-input" type="number" value="${r.batchCooked}" onchange="updateProdAdj('${r.name}','batchCooked',this.value)">
+                <div class="prod-panel-nums-input">${r.batchCooked}</div>
                 <span class="prod-panel-nums-unit">g</span>
               </div>
             </div>
@@ -9196,7 +9321,7 @@ function renderPurchasing(){
       rec.lines.forEach(l=>{
         const ing=DB.ingredients.find(i=>i.id===l.ingId);
         if(!ing) return;
-        ingDemand[ing.id]=(ingDemand[ing.id]||0)+n(l.qty)*scale*overall*totalPorts;
+        ingDemand[ing.id]=(ingDemand[ing.id]||0)+n(l.qty)*scale*overall*totalPorts*prodBufferFactor(rec.type);
       });
     });
   });
@@ -13473,14 +13598,13 @@ function getWeekStageState() {
   // Production: distinct components on dishes with portions this week
   var comps = {};
   dishes.forEach(function(d) {
-    if ((n(d.drop1) + n(d.drop2)) <= 0) return;
+    var _gsC = (typeof getGlobalSession === 'function') ? getGlobalSession() : 'all';
+    if (dishPortions(d, _gsC === 'all' ? prodDrop() : _gsC) <= 0) return;   // the drop being produced
     ['protein','carb','veg','condiment','complete'].forEach(function(s){ if (d[s]) comps[d[s]] = 1; });
   });
   var compNames = Object.keys(comps);
-  var compDone  = compNames.filter(function(c) {
-    var log = (DB.productionLog || []).find(function(p){ return p.week === week && p.component === c; });
-    return log && log.status === 'complete';
-  }).length;
+  var _gsT = (typeof getGlobalSession === 'function') ? getGlobalSession() : 'all';
+  var compDone  = compNames.filter(function(c) { return prodCooked(c, _gsT === 'all' ? prodDrop() : _gsT); }).length;
   var anyProdLog = (DB.productionLog || []).some(function(p){ return p.week === week; });
 
   // Packing: order × dish slots ticked in the fulfilment station
@@ -15626,7 +15750,8 @@ function fillBoxComp(ordId, dishId, comp, idx, qty, noRender) {
 // Reconciliation + learning trend for a component: cooked-vs-needed flag (±10%) and rolling yield drift.
 function _bbReconcileHtml(comp, needed, week) {
   var out = '';
-  var log = (DB.productionLog || []).find(function(p){ return p.week === week && p.component === comp; });
+  var _gsR = (typeof getGlobalSession === 'function') ? getGlobalSession() : 'all';
+  var log = prodLogFind(comp, _gsR === 'all' ? null : _gsR);
   if (log && log.actualWeight != null && needed > 0) {
     var pct = (log.actualWeight - needed) / needed * 100;
     var ok = Math.abs(pct) <= 10;
@@ -15715,8 +15840,7 @@ function renderBoxBoard() {
   groups.forEach(function(g) {
     g.comps.forEach(function(c) {
       if (!compState[c]) {
-        var log = (DB.productionLog || []).find(function(p){ return p.week === week && p.component === c; });
-        compState[c] = { cooked: !!(log && log.status === 'complete'), needed: 0, filled: 0 };
+        compState[c] = { cooked: (function(){ var g = getGlobalSession(); return prodCooked(c, g === 'all' ? null : g); })(), needed: 0, filled: 0 };
       }
       compState[c].needed += g.qty;
       compState[c].filled += bbFilledBoxCount(g.ord, g.dish.id, c, g.qty);
