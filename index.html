@@ -2687,6 +2687,72 @@ body.light-mode #prod-view-tabs .tab.active{background:#fff;color:var(--ink);}
 .cl-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--surface3);margin-right:9px;vertical-align:1px;}
 .cook-ov-line.ok .cl-dot{background:var(--green);}
 @media (max-width:600px){ .prep-grid{grid-template-columns:1fr;} }
+
+/* Prep v3 (Oct 2026): narrower cards, prep notes behind a toggle */
+.prep-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr)) !important;gap:10px !important;}
+.prep-ing{padding:12px 14px 8px !important;}
+.pi-name{font-size:14.5px !important;}
+.prep-row{display:block !important;padding:8px 0 !important;border-top:1px solid var(--border);}
+.pr-main{display:grid !important;grid-template-columns:24px 64px 1fr;align-items:center;gap:2px 8px;cursor:pointer;font-family:var(--sans) !important;font-size:13.5px !important;font-weight:400 !important;letter-spacing:0 !important;text-transform:none !important;color:var(--text) !important;}
+.pr-main input{width:22px;height:22px;accent-color:#fad02c;margin:0;}
+.prep-row.done .pr-amt,.prep-row.done .pr-comp{text-decoration:line-through;color:var(--text3);}
+details.pr-how{margin:4px 0 0 32px;font-size:12px;color:var(--text2);}
+.prep-ing > details.pr-how{margin:2px 0 6px 0;}
+details.pr-how summary{cursor:pointer;list-style:none;font-weight:600;color:var(--amber);font-size:12px;display:inline-flex;align-items:center;gap:4px;}
+details.pr-how summary::-webkit-details-marker{display:none;}
+details.pr-how summary::before{content:'▸';font-size:10px;}
+details.pr-how[open] summary::before{content:'▾';}
+details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
+
+/* ════════════════════════════════════════════════════════════════
+   MOBILE + iPAD (Oct 2026)
+   ════════════════════════════════════════════════════════════════ */
+/* The top bar is the page header at every size (actions move to their own row on small screens) */
+.page:not(#page-packsheet) > .section-header { display:none !important; }
+.topbar-titles{min-width:0;flex:1 1 auto;}
+.topbar-title,.topbar-subtitle{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* Tablets + phones: sidebar becomes a slide-out drawer so pages get the full width */
+@media (max-width:1100px){
+  .sidebar{position:fixed !important;top:0;left:0;bottom:0;transform:translateX(-100%);box-shadow:4px 0 24px rgba(0,0,0,.5);}
+  .sidebar.mobile-open{transform:translateX(0);}
+  .sidebar-close-btn{display:flex !important;align-items:center;justify-content:center;}
+  .hamburger-btn{display:flex !important;align-items:center;font-size:22px;padding:6px 10px;}
+  .main{width:100%;}
+  .topbar{flex-wrap:wrap;height:auto !important;min-height:56px;padding:8px 16px !important;row-gap:8px;}
+  .topbar-right{order:5;flex:1 1 100%;overflow-x:auto;scrollbar-width:none;}
+  .topbar-right::-webkit-scrollbar{display:none;}
+  .topbar-right:empty{display:none;}
+  .topbar-right > div{flex-wrap:nowrap !important;}
+  .topbar-right .btn,.topbar-right .tab{white-space:nowrap;flex-shrink:0;}
+}
+@media (max-width:768px){
+  .topbar-search{flex:0 0 40px;width:40px;min-width:0 !important;height:40px;justify-content:center;padding:0 !important;margin-left:auto;}
+  .topbar-subtitle{display:none;}
+  .content{padding:14px !important;}
+  /* Weekly Menu: key columns only (photo · dish · fuel · Sun · Wed · price · margin · actions) */
+  #menu-card-grid{--mcols:34px minmax(100px,1fr) 24px 24px 60px 58px !important;}
+  .menu-row-head,.menu-row{gap:6px !important;padding-left:8px !important;padding-right:8px !important;}
+  .menu-row-head > div:nth-child(5),.menu-row > div:nth-child(5),
+  .menu-row-head > div:nth-child(13),.menu-row > div:nth-child(13){display:none !important;}
+  .ord-add-mobile{display:none !important;}
+  .menu-row-head > div{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .menu-row-head,.menu-row{min-width:0 !important;}
+  .menu-row-head > div:nth-child(1),.menu-row > div:nth-child(1),
+  .menu-row-head > div:nth-child(4),.menu-row > div:nth-child(4),
+  .menu-row-head > div:nth-child(n+8):nth-child(-n+11),.menu-row > div:nth-child(n+8):nth-child(-n+11),
+  .menu-row-head > div:nth-child(14),.menu-row > div:nth-child(14){display:none !important;}
+  .mr-price .fp{display:none;}
+  .modal{max-height:92vh;}
+}
+/* Touch screens: comfortable targets, and 16px inputs so iOS doesn't zoom in when you tap a field */
+@media (pointer:coarse){
+  .btn{min-height:40px;}
+  .btn-sm{min-height:36px;}
+  .nav-item{padding:11px 12px !important;}
+  input,select,textarea{font-size:16px !important;min-height:40px;}
+  input[type="checkbox"],input[type="radio"]{min-height:0;}
+  .ord-seg button,.group-tab{min-height:36px;}
+}
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -2763,13 +2829,13 @@ body.light-mode #prod-view-tabs .tab.active{background:#fff;color:var(--ink);}
 <!-- MAIN -->
 <div class="main">
   <div class="topbar">
-    <button class="hamburger-btn" onclick="openSidebar()">☰</button>
-    <div>
+    <button class="hamburger-btn" onclick="openSidebar()" aria-label="Menu">☰</button>
+    <div class="topbar-titles">
       <div class="topbar-title" id="topbar-title">Dashboard</div>
       <div class="topbar-subtitle" id="topbar-sub">Operational overview</div>
     </div>
     <div class="topbar-search no-print" onclick="gsOpenPalette()" title="Search everything (⌘K)">
-      <span>🔍</span><span class="ph">Search…</span><span class="kbd">⌘K</span>
+      <svg class="ico"><use href="#i-search"/></svg><span class="ph">Search…</span><span class="kbd">⌘K</span>
     </div>
     <div class="topbar-right" id="topbar-right"></div>
   </div>
@@ -3149,7 +3215,6 @@ body.light-mode #prod-view-tabs .tab.active{background:#fff;color:var(--ink);}
             <div class="tab" onclick="setProdSession('wednesday',this)">Wednesday</div>
           </div>
           <button class="btn btn-ghost btn-sm prod-no-print" onclick="window.print()">Print Station Sheets</button>
-          <button class="btn btn-green prod-no-print" onclick="saveProductionAdjustments()">✓ Save</button>
         </div>
       </div>
       <div class="prod-print-header">
@@ -4850,7 +4915,7 @@ function showPage(id) {
     return;
   }
   lastPage = id;
-  if (window.innerWidth <= 768) closeSidebar();
+  if (window.innerWidth <= 1100) closeSidebar();
 
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -8037,7 +8102,7 @@ function renderProduction(){
   document.getElementById('prod-kpi-grid').innerHTML =
     '<div class="prod-head">' +
       '<div class="ord-seg">' + _dropBtn('sunday') + _dropBtn('wednesday') + '</div>' +
-      '<div class="prod-sum"><strong>' + prodRows.length + ' components</strong><span>·</span>' + totalPorts + ' portions<span>·</span>~' + Math.floor(totalMins/60) + 'h ' + (totalMins%60) + 'm<span>·</span><strong>' + _done + '/' + prodRows.length + ' done</strong></div>' +
+      '<div class="prod-sum"><strong>' + prodRows.length + ' components</strong><span>·</span>' + prodDishes.filter(function(d){ return dishPortions(d, _pd) > 0; }).length + ' dishes<span>·</span>' + getProductionOrders().filter(function(o){ return String(o.session || '').toLowerCase() === _pd; }).length + ' orders<span>·</span>~' + Math.floor(totalMins/60) + 'h ' + (totalMins%60) + 'm<span>·</span><strong>' + _done + '/' + prodRows.length + ' done</strong></div>' +
       '<button class="prod-buf" onclick="editCookBuffer()" title="Extra cooked on protein and carb batches — also added to prep and the shopping list">' + (_bp>0 ? 'Buffer +' + _bp + '% protein &amp; carb' : 'No cook buffer') + '</button>' +
     '</div>' +
     '<div class="bb-bar"><i style="width:' + _pct + '%"></i></div>';
@@ -8240,21 +8305,28 @@ function renderPrepView() {
       totalTxt = '≈' + units + ' ' + (ing.unitName || 'unit') + (units !== 1 ? 's' : '') + ' <span class="pi-sub">(' + kg(d.rawG) + ')</span>';
     }
     var procNote = (n(ing.proc) || 100) < 100 ? '<span class="pi-sub">raw — trims to ' + kg(splits.reduce(function(t, sp){ return t + sp.edibleG; }, 0)) + '</span>' : '';
+    // Prep instructions sit behind a small "How to prep" toggle. When every container of this
+    // ingredient has the same instruction it's shown once for the card, not repeated per row.
+    var preps = splits.map(function(sp){ return (sp.prep || '').trim(); });
+    var sharedPrep = preps[0] && preps.every(function(p){ return p === preps[0]; }) ? preps[0] : '';
+    var how = function(txt){ return txt ? '<details class="pr-how"><summary>How to prep</summary><div>' + escHtml(txt) + '</div></details>' : ''; };
     var rows = splits.map(function(sp) {
       var sid = ing.id + '|' + sp.comp;
       var done = !!checks[sid];
-      return '<label class="prep-row' + (done ? ' done' : '') + '">' +
-        '<input type="checkbox" ' + (done ? 'checked' : '') + ' onchange="tickPrepSplit(\'' + sid.replace(/'/g, "\\'") + '\',this.checked)">' +
-        '<span class="pr-amt">' + kg(sp.edibleG) + '</span>' +
-        '<span class="pr-comp">' + escHtml(sp.comp) + '<span class="pr-ports">' + (built.compPorts[sp.comp] || 0) + ' portions</span></span>' +
-        (sp.prep ? '<span class="pr-how">' + escHtml(sp.prep) + '</span>' : '') +
-      '</label>';
+      return '<div class="prep-row' + (done ? ' done' : '') + '">' +
+        '<label class="pr-main">' +
+          '<input type="checkbox" ' + (done ? 'checked' : '') + ' onchange="tickPrepSplit(\'' + sid.replace(/'/g, "\\'") + '\',this.checked)">' +
+          '<span class="pr-amt">' + kg(sp.edibleG) + '</span>' +
+          '<span class="pr-comp">' + escHtml(sp.comp) + '<span class="pr-ports">' + (built.compPorts[sp.comp] || 0) + ' portions</span></span>' +
+        '</label>' +
+        (sharedPrep ? '' : how((sp.prep || '').trim())) +
+      '</div>';
     }).join('');
     return '<div class="prep-ing' + (allDone ? ' done' : '') + '">' +
       '<div class="pi-h"><span class="pi-name">' + escHtml(ing.name) + '</span>' +
         '<span class="pi-total">Take out <strong>' + totalTxt + '</strong>' + procNote + '</span>' +
         (allDone ? '<span class="pi-done">Done</span>' : '') +
-      '</div>' + rows +
+      '</div>' + how(sharedPrep) + rows +
       '<button class="pi-notprep no-print" onclick="prepExcludeIngredient(\'' + ing.id + '\')" title="Spice / oil / seasoning — added while cooking, never prepped">Not a prep item</button>' +
     '</div>';
   }
@@ -12693,7 +12765,7 @@ function closeSidebar() {
 document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.nav-item').forEach(function(item) {
     item.addEventListener('click', function() {
-      if (window.innerWidth <= 768) closeSidebar();
+      if (window.innerWidth <= 1100) closeSidebar();
     });
   });
 });
