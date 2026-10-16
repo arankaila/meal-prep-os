@@ -2642,6 +2642,51 @@ body.light-mode #prod-view-tabs .tab.active{background:#fff;color:var(--ink);}
 .prep-comp strong{color:var(--text);margin-right:2px;}
 @media print { #prod-cook-view, #prod-prep-view, #prod-kpi-grid, #prod-view-tabs, .cook-help { display:none !important; } }
 .prep-ports{font-size:12px;font-weight:600;color:var(--text3);margin-left:4px;}
+
+/* ════════════════════════════════════════════════════════════════
+   PRODUCTION v2 (Oct 2026) — Prep checklist + Cook link
+   ════════════════════════════════════════════════════════════════ */
+.prep-top{margin-bottom:14px;}
+.prep-top-l{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--text3);}
+.prep-top-l strong{font-size:14px;color:var(--text);}
+.prep-top .bb-bar{margin:10px 0 0;}
+.prep-cat{display:flex;align-items:center;gap:9px;margin:22px 0 10px;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);}
+.prep-cat i{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+.prep-cat em{font-style:normal;color:var(--text3);font-weight:600;letter-spacing:0;text-transform:none;}
+.prep-cat em.ok{color:var(--green);}
+.prep-cat::after{content:'';flex:1;height:1px;background:var(--border);}
+.prep-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;}
+.prep-ing{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px 10px;box-shadow:var(--shadow);display:flex;flex-direction:column;}
+.prep-ing.done{opacity:.5;}
+.pi-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.pi-name{font-size:15px;font-weight:700;}
+.pi-total{font-size:13px;color:var(--text2);}
+.pi-total strong{font-size:15px;color:var(--text);}
+.pi-sub{font-size:11.5px;color:var(--text3);margin-left:6px;}
+.pi-done{margin-left:auto;font-size:11px;font-weight:700;color:var(--green);background:rgba(124,199,149,.15);border-radius:999px;padding:2px 9px;}
+.prep-row{display:grid !important;grid-template-columns:26px 74px 1fr;align-items:center;gap:4px 10px;padding:9px 0;border-top:1px solid var(--border);cursor:pointer;font-family:var(--sans) !important;font-size:13.5px !important;font-weight:400 !important;letter-spacing:0 !important;text-transform:none !important;color:var(--text) !important;}
+.prep-row input{width:22px;height:22px;accent-color:#fad02c;margin:0;}
+.pr-amt{font-weight:700;font-size:15px;}
+.pr-comp{display:flex;flex-direction:column;}
+.pr-ports{font-size:11.5px;color:var(--text3);}
+.pr-how{grid-column:3;font-size:12px;color:var(--amber);}
+.prep-row.done .pr-amt,.prep-row.done .pr-comp{text-decoration:line-through;color:var(--text3);}
+.pi-notprep{align-self:flex-end;margin-top:6px;background:none;border:none;font-family:var(--sans);font-size:11.5px;color:var(--text3);cursor:pointer;padding:2px 0;}
+.pi-notprep:hover{color:var(--red);}
+.cc-prep{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:1px 8px;margin:4px 0 6px;}
+.cc-prep.ok{background:rgba(124,199,149,.15);color:var(--green);}
+.cc-prep.todo{background:rgba(220,159,114,.16);color:var(--amber);}
+.cc-prep.none{background:var(--surface2);color:var(--text3);}
+.cook-card .cc-name{font-size:16px !important;font-weight:700 !important;}
+.cook-card .cc-qty{font-size:15px !important;font-weight:700;}
+.cook-ov-sub{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin:18px 0 6px;}
+.cook-ov-sub span{text-transform:none;letter-spacing:0;color:var(--text2);margin-left:6px;}
+.cook-ov-line{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:15px;}
+.cook-ov-line strong{font-family:var(--sans) !important;font-size:16px;}
+.cook-ov-line em{font-style:normal;font-size:12.5px;color:var(--amber);margin-left:4px;}
+.cl-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--surface3);margin-right:9px;vertical-align:1px;}
+.cook-ov-line.ok .cl-dot{background:var(--green);}
+@media (max-width:600px){ .prep-grid{grid-template-columns:1fr;} }
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -7943,11 +7988,12 @@ function renderProduction(){
       if(!compDemand[dish[slot]]) compDemand[dish[slot]]={portions:0,scale:scale*overall};
       compDemand[dish[slot]].portions+=ports;
       compDemand[dish[slot]].scale=Math.max(compDemand[dish[slot]].scale,scale*overall);
+      compDemand[dish[slot]].sp=(compDemand[dish[slot]].sp||0)+ports*scale*overall;   // scaled portions — the true batch size
       if(!isColdSide) compCooked[dish[slot]]=true;   // a meal or a hot side uses this → it's cooked
     });
   });
 
-  prodRows=Object.entries(compDemand).map(([compName,{portions,scale}])=>{
+  prodRows=Object.entries(compDemand).map(([compName,{portions,scale,sp}])=>{
     if(!compCooked[compName]) return null;   // only cold sides use it → not a cook-board task (still prepped/bought)
     const rec=DB.recipes.find(r=>r.name===compName&&r.status==='Active');
     if(!rec) return null;
@@ -7959,10 +8005,11 @@ function renderProduction(){
     const buf=prodBufferFactor(rec.type);
     const rawQty=rec.lines?.reduce((s,l)=>s+n(l.qty),0)||0;
     const ty=rec.lines?.length>0?rec.lines.reduce((s,l)=>{const ing=DB.ingredients.find(i=>i.id===l.ingId);return ing?s+n(l.qty)*calcTY(ing):s;},0)/Math.max(rawQty,0.01):1;
-    const batchRaw=rawQty*ports2*scale*buf;
+    const scaledPorts=Math.max(0,(sp!=null?sp:portions*scale)+wkAdj*scale);
+    const batchRaw=rawQty*scaledPorts*buf;
     const batchCooked=batchRaw*ty;
     return {
-      name:compName, type:rec.type, portions:ports2, ordered:portions, wkAdj, buf,
+      name:compName, type:rec.type, portions:ports2, ordered:portions, wkAdj, buf, scaledPorts,
       batchRaw:Math.round(batchRaw), batchCooked:Math.round(batchCooked),
       cookMethod:(adj.cookMethod!==undefined?adj.cookMethod:(rec.cookMethod||'—')), station:(adj.station!==undefined?adj.station:(rec.station||'Unassigned')),
       prepTime:n(rec.prepTime)||0, cookTime:n(rec.cookTime)||0,
@@ -8043,6 +8090,15 @@ function applyProdView() {
 // total to take out, how to process it, and the per-component
 // container splits. Checkable, synced via DB.prepProgress.
 // ═══════════════════════════════════════════════════════════════
+// Prep containers for a component (one per prepped ingredient) and how many are ticked on Prep.
+function prodPrepState(compName) {
+  var f = _findPrepRecipe(compName), rec = f && f.rec;
+  if (!rec) return { done: 0, total: 0, ids: {} };
+  var checks = prepProgress(), ids = {};
+  (rec.lines || []).forEach(function(l){ if (l.prepNeeded !== false && l.ingId && DB.ingredients.some(function(i){ return i.id === l.ingId; })) ids[l.ingId] = 1; });
+  var keys = Object.keys(ids);
+  return { done: keys.filter(function(k){ return checks[k + '|' + compName]; }).length, total: keys.length, ids: ids, checks: checks };
+}
 function prepProgressKey() { return (getProductionWeekLabel() || 'wk') + '|' + prodDrop(); }
 function prepProgress() {
   var key = prepProgressKey();
@@ -8177,32 +8233,30 @@ function renderPrepView() {
     var ing = d.ing;
     var splits = Object.values(d.splits);
     var allDone = splits.every(function(sp){ return checks[ing.id + '|' + sp.comp]; });
-    // Total line: countable units if known, else kg/g
-    var totalTxt = d.rawG >= 1000 ? (d.rawG / 1000).toFixed(2) + ' kg' : Math.round(d.rawG) + ' g';
+    var kg = function(g){ return g >= 1000 ? (g / 1000).toFixed(2) + ' kg' : Math.round(g) + ' g'; };
+    var totalTxt = kg(d.rawG);
     if (n(ing.unitWeight) > 0) {
       var units = Math.ceil(d.rawG / n(ing.unitWeight));
-      totalTxt = '≈' + units + ' ' + (ing.unitName || 'unit') + (units !== 1 ? 's' : '') + ' <span style="color:var(--text3);font-size:12px">(' + totalTxt + ' raw)</span>';
-    } else {
-      totalTxt += ' <span style="color:var(--text3);font-size:12px">raw</span>';
+      totalTxt = '≈' + units + ' ' + (ing.unitName || 'unit') + (units !== 1 ? 's' : '') + ' <span class="pi-sub">(' + kg(d.rawG) + ')</span>';
     }
-    var preps = splits.map(function(sp){ return sp.prep; }).filter(Boolean);
-    var prepSet = preps.filter(function(v, i){ return preps.indexOf(v) === i; });
-    var splitRows = splits.map(function(sp) {
+    var procNote = (n(ing.proc) || 100) < 100 ? '<span class="pi-sub">raw — trims to ' + kg(splits.reduce(function(t, sp){ return t + sp.edibleG; }, 0)) + '</span>' : '';
+    var rows = splits.map(function(sp) {
       var sid = ing.id + '|' + sp.comp;
       var done = !!checks[sid];
-      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border)">' +
-        '<input type="checkbox" ' + (done ? 'checked' : '') + ' onchange="tickPrepSplit(\'' + sid.replace(/'/g, "\\'") + '\',this.checked)" style="width:22px;height:22px;accent-color:var(--gold);cursor:pointer;flex-shrink:0">' +
-        '<span style="flex:1;font-size:13px;' + (done ? 'text-decoration:line-through;color:var(--text3)' : '') + '">→ <strong>' + Math.round(sp.edibleG) + ' g</strong> · ' + sp.comp + ' <span class="prep-ports">' + (built.compPorts[sp.comp] || 0) + ' portions</span>' +
-        (sp.prep ? ' <span style="color:var(--gold);font-size:11px">(' + sp.prep + ')</span>' : '') + '</span>' +
-      '</div>';
+      return '<label class="prep-row' + (done ? ' done' : '') + '">' +
+        '<input type="checkbox" ' + (done ? 'checked' : '') + ' onchange="tickPrepSplit(\'' + sid.replace(/'/g, "\\'") + '\',this.checked)">' +
+        '<span class="pr-amt">' + kg(sp.edibleG) + '</span>' +
+        '<span class="pr-comp">' + escHtml(sp.comp) + '<span class="pr-ports">' + (built.compPorts[sp.comp] || 0) + ' portions</span></span>' +
+        (sp.prep ? '<span class="pr-how">' + escHtml(sp.prep) + '</span>' : '') +
+      '</label>';
     }).join('');
-    return '<div class="card" style="margin-bottom:10px;padding:14px 16px;' + (allDone ? 'opacity:.55;border-color:rgba(74,222,128,.4)' : '') + '">' +
-      '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">' +
-        '<button class="qbi-icon-btn no-print" style="order:99;margin-left:auto" onclick="prepExcludeIngredient(\'' + ing.id + '\')" title="Not a prep item (spice/oil/seasoning) — remove from prep lists permanently">✕ not prepped</button>' +
-        '<span style="font-size:16px;font-weight:800">' + (allDone ? '✅ ' : '') + ing.name + '</span>' +
-        '<span style="font-family:var(--mono);font-size:15px;color:var(--gold);font-weight:700">' + totalTxt + '</span>' +
-        (prepSet.length ? '<span style="font-size:12px;color:var(--text2);background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:2px 8px">' + prepSet.join(' · ') + '</span>' : '') +
-      '</div>' + splitRows + '</div>';
+    return '<div class="prep-ing' + (allDone ? ' done' : '') + '">' +
+      '<div class="pi-h"><span class="pi-name">' + escHtml(ing.name) + '</span>' +
+        '<span class="pi-total">Take out <strong>' + totalTxt + '</strong>' + procNote + '</span>' +
+        (allDone ? '<span class="pi-done">Done</span>' : '') +
+      '</div>' + rows +
+      '<button class="pi-notprep no-print" onclick="prepExcludeIngredient(\'' + ing.id + '\')" title="Spice / oil / seasoning — added while cooking, never prepped">Not a prep item</button>' +
+    '</div>';
   }
 
   // Group by ingredient category (Protein / Carb / Veg…) so the prep team works one
@@ -8221,12 +8275,11 @@ function renderPrepView() {
     var secDone = 0, secTotal = 0;
     list.forEach(function(d){ Object.values(d.splits).forEach(function(sp){ secTotal++; if (checks[d.ing.id + '|' + sp.comp]) secDone++; }); });
     var allSec = secTotal > 0 && secDone === secTotal;
-    var header = '<div class="prep-cat-hdr" style="display:flex;align-items:center;gap:9px;margin:18px 0 9px">' +
-      '<span style="width:11px;height:11px;border-radius:3px;background:' + color + ';flex-shrink:0"></span>' +
-      '<span style="font-family:var(--mono);font-size:12px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:var(--text)">' + n2h(cat.replace(/_/g, ' + ')) + '</span>' +
-      '<span style="font-family:var(--mono);font-size:10px;color:' + (allSec ? 'var(--green)' : 'var(--text3)') + '">' + (allSec ? '✅ ' : '') + secDone + '/' + secTotal + '</span>' +
-      '<div style="flex:1;height:1px;background:var(--border)"></div></div>';
-    return header + list.map(buildIngCard).join('');
+    var header = '<div class="prep-cat"><i style="background:' + color + '"></i><span>' + n2h(cat.replace(/_/g, ' + ')) + '</span>' +
+      '<em class="' + (allSec ? 'ok' : '') + '">' + secDone + '/' + secTotal + '</em></div>';
+    // finished ingredients drop to the bottom of their section
+    var isDone = function(d){ return Object.values(d.splits).every(function(sp){ return checks[d.ing.id + '|' + sp.comp]; }); };
+    return header + '<div class="prep-grid">' + list.slice().sort(function(a, b){ return isDone(a) - isDone(b); }).map(buildIngCard).join('') + '</div>';
   }).join('');
 
   // Portions per component for this drop — what each labelled container is for
@@ -8234,8 +8287,10 @@ function renderPrepView() {
   var compStrip = cpKeys.length ? '<div class="prep-comps"><div class="prep-comps-h">Components this drop · portions</div><div class="prep-comps-list">' +
     cpKeys.map(function(c){ return '<span class="prep-comp"><strong>' + built.compPorts[c] + '</strong> ' + escHtml(c) + '</span>'; }).join('') + '</div></div>' : '';
   el.innerHTML = warnHtml +
-    '<div class="cook-help no-print"><span>Take out each total, process it as shown, weigh each split into its labelled container, tick it off. <strong>' + doneCount + '/' + totalSplits + ' done.</strong>' +
-    (prodBufferPct() > 0 ? ' Protein and carb amounts include the +' + prodBufferPct() + '% cook buffer.' : '') + '</span></div>' + compStrip + cards;
+    '<div class="prep-top no-print"><div class="prep-top-l"><strong>' + doneCount + '/' + totalSplits + ' containers ready</strong>' +
+      '<span>Take each ingredient out, process it, weigh it into a container labelled with the component, tick it. Cook day uses these containers.' +
+      (prodBufferPct() > 0 ? ' Protein and carb amounts include the +' + prodBufferPct() + '% buffer.' : '') + '</span></div>' +
+      '<div class="bb-bar"><i style="width:' + (totalSplits ? Math.round(doneCount / totalSplits * 100) : 0) + '%"></i></div></div>' + compStrip + cards;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -8272,6 +8327,7 @@ function renderCookBoard() {
           '<span class="cc-status ' + lab[1] + '">' + lab[0] + '</span>' +
           '<div class="cc-type">' + r.type + '</div>' +
           '<div class="cc-name">' + r.name + '</div>' +
+          (function(){ var p = prodPrepState(r.name); return '<div class="cc-prep ' + (!p.total ? 'none' : p.done === p.total ? 'ok' : 'todo') + '">' + (!p.total ? 'No prep needed' : p.done === p.total ? 'Prep ready' : 'Prep ' + p.done + '/' + p.total) + '</div>'; })() +
           '<div class="cc-qty">' + (r.batchRaw >= 1000 ? (r.batchRaw / 1000).toFixed(1) + ' kg' : r.batchRaw + ' g') + ' raw → ~' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(1) + ' kg' : r.batchCooked + ' g') + '</div>' +
           '<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px">' + r.portions + ' portions' + (r.buf > 1 ? ' · incl. +' + prodBufferPct() + '%' : '') + (r.wkAdj ? ' · <span class="cc-adj">adjusted ' + (r.wkAdj > 0 ? '+' : '') + r.wkAdj + '</span>' : '') + (st === 'complete' ? ' ' + prodYieldChip(r.name) : '') + '</div>' +
         '</div>';
@@ -8316,13 +8372,20 @@ function openCookCard(i) {
   }
   // Scaled ingredient lines for THIS batch (per-line grams × portions × scale)
   var rawQty = (rec && rec.lines) ? rec.lines.reduce(function(sum, l){ return sum + n(l.qty); }, 0) : 0;
-  var lines = (rec && rec.lines || []).map(function(l) {
+  var ps = prodPrepState(r.name);
+  var fromPrep = [], addNow = [];
+  (rec && rec.lines || []).forEach(function(l) {
     var ing = DB.ingredients.find(function(x){ return x.id === l.ingId; });
-    var grams = n(l.qty) * r.portions * r.scale * (r.buf || 1);
-    return '<div class="cook-ov-line"><span>' + (ing ? ing.name : l.ingId) +
-      (l.prep ? ' <span style="color:var(--gold);font-size:12px">(' + l.prep + ')</span>' : '') + '</span>' +
-      '<strong style="font-family:var(--mono)">' + (grams >= 1000 ? (grams / 1000).toFixed(2) + ' kg' : Math.round(grams) + ' g') + '</strong></div>';
-  }).join('');
+    var grams = n(l.qty) * (r.scaledPorts != null ? r.scaledPorts : r.portions * r.scale) * (r.buf || 1);
+    var prepped = l.prepNeeded !== false;
+    var ticked = prepped && ps.checks && ps.checks[l.ingId + '|' + r.name];
+    var row = '<div class="cook-ov-line' + (ticked ? ' ok' : '') + '"><span>' + (prepped ? '<i class="cl-dot"></i>' : '') + (ing ? ing.name : l.ingId) +
+      (l.prep ? ' <em>' + l.prep + '</em>' : '') + '</span>' +
+      '<strong>' + (grams >= 1000 ? (grams / 1000).toFixed(2) + ' kg' : Math.round(grams) + ' g') + '</strong></div>';
+    (prepped ? fromPrep : addNow).push(row);
+  });
+  var lines = (fromPrep.length ? '<div class="cook-ov-sub">From prep containers' + (ps.total ? ' <span>' + ps.done + '/' + ps.total + ' ready</span>' : '') + '</div>' + fromPrep.join('') : '') +
+              (addNow.length ? '<div class="cook-ov-sub">Add while cooking</div>' + addNow.join('') : '');
   function steps(arr, phase) {
     if (!arr || !arr.length) return '';
     return '<div class="cook-ov-section">' + phase + '</div>' + arr.map(function(stp, j) {
@@ -8359,7 +8422,7 @@ function openCookCard(i) {
       '<div class="cook-ov-name">' + r.name + '</div>' +
       '<div class="cook-ov-qty">' + (r.batchRaw >= 1000 ? (r.batchRaw / 1000).toFixed(2) + ' kg' : r.batchRaw + ' g') + ' raw · ' + r.portions + ' portions · ' + r.cookMethod + (r.buf > 1 ? ' · incl. +' + prodBufferPct() + '% buffer' : '') + '</div>' + adjRow +
       '<div class="cook-ov-target">Finish with ~<strong>' + (r.batchCooked >= 1000 ? (r.batchCooked / 1000).toFixed(2) + ' kg' : r.batchCooked + ' g') + '</strong>' + (r.targetTemp ? ' · core ' + r.targetTemp + '°C' : '') + '</div>' +
-      '<div class="cook-ov-section">This batch needs</div>' + (lines || '<div style="color:var(--text3);font-size:13px">No ingredient lines on this recipe.</div>') +
+      (lines || '<div style="color:var(--text3);font-size:13px">No ingredient lines on this recipe.</div>') +
       // Cook day leads with COOK steps (legacy recipes stored them in `steps`)
       steps((rec && rec.cookSteps && rec.cookSteps.length ? rec.cookSteps : (rec && rec.steps) || (r.steps || [])), 'Cook') +
       steps(rec && rec.finishSteps, 'Finish') +
@@ -8587,7 +8650,7 @@ function renderProdStationView(){
         return rec.lines.map(l=>{
           const ing=DB.ingredients.find(i=>i.id===l.ingId);
           if(!ing) return '';
-          const totalG=Math.round(n(l.qty)*r.portions*(r.scale||1)*(r.buf||1));   // same buffered amount as the cook card
+          const totalG=Math.round(n(l.qty)*(r.scaledPorts!=null?r.scaledPorts:r.portions*(r.scale||1))*(r.buf||1));   // same amount as the cook card + prep
           const displayWt = totalG>=1000 ? (totalG/1000).toFixed(2)+'<span class="prod-ing-qty-unit">kg</span>' : totalG+'<span class="prod-ing-qty-unit">g</span>';
           return `<div class="prod-ing-row">
             <span class="prod-ing-name">${ing.name}</span>
