@@ -2839,6 +2839,102 @@ details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
 #print-sheet .ps-t{table-layout:auto;}
 #print-sheet .ps-t td.c-sig{border-bottom:1px solid #bbb !important;}
 #print-sheet .ps-pack .ps-sub{font-size:7pt !important;line-height:1.3;}
+
+/* ── Drop switcher (top bar) ─────────────────────────────────────── */
+:root{--drop-sun:#e9b949;--drop-wed:#7fa3e0;}
+.drop-ctx{display:flex;align-items:center;gap:10px;flex-shrink:0;min-width:0;}
+.drop-ctx:empty{display:none;}
+.dc-week{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:5px 11px;white-space:nowrap;}
+.dc-segs{display:inline-flex;background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:3px;gap:2px;}
+.dc-seg{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--text2);font:600 12px var(--sans);padding:5px 12px;border-radius:999px;cursor:pointer;white-space:nowrap;}
+.dc-seg:hover{color:var(--text);}
+.dc-seg .dc-n{font-family:var(--mono);font-size:10px;opacity:.65;}
+.dc-seg.on{color:#111;}
+.dc-seg.on .dc-n{opacity:.75;}
+.dc-seg.dc-all.on{background:var(--text);color:var(--bg);}
+.dc-seg.dc-sunday.on{background:var(--drop-sun);}
+.dc-seg.dc-wednesday.on{background:var(--drop-wed);}
+.dc-seg.dis{opacity:.45;}
+.dc-auto{font-size:9px;text-transform:uppercase;letter-spacing:.06em;background:rgba(0,0,0,.14);border-radius:4px;padding:1px 4px;}
+/* The bar edge carries the drop colour on drop pages */
+.topbar{border-bottom:2px solid transparent;}
+body[data-drop="sunday"] .topbar{border-bottom-color:var(--drop-sun);}
+body[data-drop="wednesday"] .topbar{border-bottom-color:var(--drop-wed);}
+@media (max-width:1100px){
+  .drop-ctx{order:4;flex:1 1 100%;overflow-x:auto;scrollbar-width:none;}
+  .drop-ctx::-webkit-scrollbar{display:none;}
+}
+@media (max-width:768px){
+  .dc-segs{flex:1;justify-content:space-between;}
+  .dc-seg{flex:1;justify-content:center;padding:7px 8px;font-size:12px;}
+  .dc-week{padding:6px 9px;font-size:10px;}
+  .dc-mon,.dc-auto{display:none;}
+  .drop-ctx{gap:6px;}
+}
+/* ── Shopping list + Shelf (Oct 2026) ─────────────────────────────── */
+.pl-top{margin-bottom:14px;}
+.pl-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px;font-size:13px;color:var(--text2);}
+.pl-sum b{font-size:18px;color:var(--text);font-weight:700;}
+.pl-prog{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--text3);}
+.pl-top .bb-bar{margin:8px 0 6px;}
+.pl-help{font-size:12px;color:var(--text3);line-height:1.45;max-width:760px;}
+.pl-group{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden;}
+.pl-gh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.pl-gname{font-weight:700;font-size:14px;}
+.pl-gmeta{font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap;}
+.pl-row,.sh-row{display:flex;align-items:flex-start;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border);}
+.pl-row:last-child,.sh-row:last-child{border-bottom:0;}
+.pl-tick{padding-top:1px;cursor:pointer;}
+.pl-tick input{width:22px;height:22px;accent-color:var(--gold);cursor:pointer;margin:0;}
+.pl-main{flex:1;min-width:0;}
+.pl-name{font-weight:600;font-size:14px;line-height:1.3;}
+.pl-sub{font-size:12px;color:var(--text3);margin-top:1px;}
+.pl-buy{text-align:right;display:flex;flex-direction:column;gap:1px;white-space:nowrap;}
+.pl-buy b{font-family:var(--mono);font-size:14px;color:var(--gold);font-weight:600;}
+.pl-buy b strong{font-weight:800;}
+.pl-buy b.ok{color:var(--green);font-family:var(--sans);font-size:12px;}
+.pl-buy span{font-family:var(--mono);font-size:11px;color:var(--text3);}
+.pl-row.done{opacity:.45;}
+.pl-row.done .pl-name{text-decoration:line-through;}
+.pl-row.covered{opacity:.6;}
+.sh-have,.sh-have *{text-transform:none !important;letter-spacing:normal !important;}
+.sh-have{display:inline-flex !important;margin-bottom:0;font-weight:400;align-items:center;gap:5px;margin-top:6px;font-size:12px;color:var(--text3);flex-wrap:wrap;}
+.sh-have > span{font-weight:600;color:var(--text2);}
+.sh-have input{width:74px;padding:5px 8px;border:1px solid var(--border2);border-radius:8px;background:var(--surface2);color:var(--text);font:600 13px var(--mono);text-align:right;}
+.sh-have input:focus{outline:none;border-color:var(--gold);}
+.sh-have em{font-style:normal;font-size:11px;}
+.sh-have small{font-size:11px;color:var(--text3);}
+.sh-have small.stale{color:var(--amber);}
+.sh-some{margin-top:5px;border:0;background:none;padding:0;color:var(--text3);font:500 12px var(--sans);text-decoration:underline;text-underline-offset:2px;cursor:pointer;}
+.sh-some:hover{color:var(--text);}
+.sh-row{align-items:center;}
+.sh-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--text3);}
+.sh-row.ok .sh-dot{background:var(--green);}
+.sh-row.low .sh-dot{background:var(--amber);}
+.sh-ctl{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end;}
+.sh-ctl .sh-have{margin-top:0;}
+.sh-par input{width:64px;}
+.sh-x{border:0;background:none;color:var(--text3);font-size:13px;cursor:pointer;padding:4px 6px;border-radius:6px;}
+.sh-x:hover{color:var(--red);background:var(--surface2);}
+.sh-lowtxt{color:var(--amber);font-weight:600;}
+.sh-stale{color:var(--amber);}
+@media (pointer:coarse){ .sh-have input{min-height:36px !important;} }
+.sh-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+/* Stock: the shelf is the page; the old ledger is one tap away */
+body:not(.inv-detail) #inv-kpi-strip,
+body:not(.inv-detail) #page-inventory .inv-filter-bar,
+body:not(.inv-detail) #inv-ledger-card,
+body:not(.inv-detail) #inv-history{display:none !important;}
+@media (max-width:768px){
+  .pl-row{gap:10px;padding:11px 12px;}
+  .sh-row{flex-wrap:wrap;padding:11px 12px;}
+  .sh-ctl{flex:1 1 100%;justify-content:flex-start;padding-left:20px;gap:12px;flex-wrap:nowrap;}
+  .sh-x{margin-left:auto;}
+  .pl-buy b{font-size:13px;}
+  .pl-prog{margin-left:0;flex-basis:100%;}
+  .topbar-right .tabs{flex-wrap:nowrap !important;}
+}
+@media print{ .pl-help,.sh-some,.sh-actions{display:none !important;} }
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -2920,6 +3016,7 @@ details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
       <div class="topbar-title" id="topbar-title">Dashboard</div>
       <div class="topbar-subtitle" id="topbar-sub">Operational overview</div>
     </div>
+    <div class="drop-ctx no-print" id="drop-ctx"></div>
     <div class="topbar-search no-print" onclick="gsOpenPalette()" title="Search everything (⌘K)">
       <svg class="ico"><use href="#i-search"/></svg><span class="ph">Search…</span><span class="kbd">⌘K</span>
     </div>
@@ -3225,14 +3322,6 @@ details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
               <label class="form-label" for="lbl-useby">Use-by date <span class="lbl2-req">Required</span></label>
               <input id="lbl-useby" class="form-input" type="text" placeholder="e.g. 05/03/2026" style="width:150px" oninput="renderLabels()">
             </div>
-            <div class="lbl2-field">
-              <label class="form-label">Drop</label>
-              <div class="ord-seg">
-                <button class="del-filter-btn active" onclick="setLabelSession(this,'all')">All</button>
-                <button class="del-filter-btn" onclick="setLabelSession(this,'Sunday')">Sunday</button>
-                <button class="del-filter-btn" onclick="setLabelSession(this,'Wednesday')">Wednesday</button>
-              </div>
-            </div>
             <div class="lbl2-actions">
               <button class="btn btn-gold btn-sm" onclick="downloadUniqueLabelJpegs()" title="One JPEG per unique label, count in the filename (e.g. Butter-Chicken_x7.jpg) — print that many on the thermal printer">Download unique labels</button>
             </div>
@@ -3329,16 +3418,19 @@ details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
         </div>
       </div>
 
+      <!-- Shelf (default view) -->
+      <div id="inv-shelf"></div>
+
       <!-- KPI Strip -->
       <div class="inv-kpi-strip" id="inv-kpi-strip"></div>
 
       <!-- Track Ingredient Panel -->
       <div class="card mb-14">
         <div class="card-header" onclick="toggleTrackPanel()" style="cursor:pointer">
-          <div class="card-title"><span id="track-panel-chevron">▸</span> Track Ingredients</div>
-          <div class="card-sub">Add items to inventory tracking</div>
+          <div class="card-title"><span id="track-panel-chevron">▸</span> Add a shelf item</div>
+          <div class="card-sub">Staples you keep in stock</div>
           <div class="card-actions" onclick="event.stopPropagation()">
-            <button class="btn btn-gold btn-sm" onclick="bulkTrackMenuIngredients()" title="Flag every ingredient used by this week's menu for inventory tracking">Track this week's menu</button>
+            <button class="btn btn-gold btn-sm" style="display:none" onclick="bulkTrackMenuIngredients()" title="Flag every ingredient used by this week's menu for inventory tracking">Track this week's menu</button>
           </div>
         </div>
         <div id="track-ing-body" style="display:none">
@@ -3367,7 +3459,7 @@ details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
       </div>
 
       <!-- Main ledger table -->
-      <div class="card mb-14">
+      <div class="card mb-14" id="inv-ledger-card">
         <div class="card-header">
           <div class="card-title">Stock Ledger</div>
           <div class="card-count" id="inv-count">0 items</div>
@@ -3400,7 +3492,7 @@ details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
       </div>
 
       <!-- Bottom two-col: Transaction Log + Demand Forecast -->
-      <div class="two-col">
+      <div class="two-col" id="inv-history">
         <!-- Transaction Log -->
         <div class="card">
           <div class="card-header">
@@ -3652,11 +3744,6 @@ details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
       <div class="ord-bar no-print">
         <div class="ord-summary" id="orders-summary"></div>
         <div class="ord-filters">
-          <div class="ord-seg">
-            <button class="ord-sess-btn active" onclick="setOrderSessionFilter(this,'all')">All drops</button>
-            <button class="ord-sess-btn" onclick="setOrderSessionFilter(this,'Sunday')">Sunday</button>
-            <button class="ord-sess-btn" onclick="setOrderSessionFilter(this,'Wednesday')">Wednesday</button>
-          </div>
           <div class="ord-seg" id="ord-status-tabs">
             <button class="ord-status-tab active" onclick="setOrderStatusFilter('all',this)">All</button>
             <button class="ord-status-tab" onclick="setOrderStatusFilter('pending',this)">Pending</button>
@@ -3722,10 +3809,6 @@ details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
       <!-- ROUTE SHEET TAB -->
       <div class="del-panel" id="del-panel-route">
         <div class="no-print" style="margin-bottom:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">SESSION:</span>
-          <button class="del-filter-btn active" onclick="setRouteSession(this,'all')">All</button>
-          <button class="del-filter-btn" onclick="setRouteSession(this,'Sunday')">Sunday Only</button>
-          <button class="del-filter-btn" onclick="setRouteSession(this,'Wednesday')">Wednesday Only</button>
           <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="window.print()">Print Route Sheet</button>
         </div>
         <div id="route-sheet-body"></div>
@@ -4813,10 +4896,10 @@ const PAGE_CFG = {
   components:{title:'Component Database',sub:'Assembled units · Filter by type · RDA highlights'},
   menu:{title:'Weekly Menu',sub:'Drop management · Pricing · Photos · Portal publish'},
   quickbuild:{title:'Quick Build',sub:'Flavour-first menu planning · Auto-suggest components · Push to menu'},
-  inventory:{title:'Inventory Management',sub:'Live stock · PAR control · Transactions · Source of truth for Purchasing'},
+  inventory:{title:'Inventory Management',sub:'Shelf staples · what you have · minimum to keep'},
   packsheet:{title:'Packing & Fulfilment',sub:'Pack sheet · Labels · Box Board'},
   production:{title:'Production',sub:'Prep the day before · cook on the day · one drop at a time'},
-  purchasing:{title:'Purchasing',sub:'Supplier-sorted · PAR from Inventory · Print-friendly'},
+  purchasing:{title:'Purchasing',sub:'Shopping list · tick as you buy · buys only what the shelf is missing'},
   labour:{title:'Labour Planner',sub:'Staff roster · Shift scheduling · Weekly labour costs'},
   discounts:{title:'Discount Codes',sub:'Promotional codes · Usage tracking · Portal integration'},
   coststack:{title:'Cost Stack',sub:'Full editable cost build-up · Custom cost lines · Live margin'},
@@ -4834,8 +4917,6 @@ let lastPage = 'dashboard';
 // ═══════════════════════════════════════════════════════════════
 var STATS_SECTIONS = {
   dashboard:  { els: ['dash-kpi-row','dash-row-1','dash-row-2','dash-row-3','dash-row-4'], def: false },
-  purchasing: { els: ['purch-kpi-grid'],                 def: false },
-  inventory:  { els: ['inv-kpi-strip'],                  def: false },
   labour:     { els: ['labour-kpi-grid'],                def: true  },
   history:    { els: ['hist-kpi-grid','arc-charts-panel'], def: true }
 };
@@ -4898,7 +4979,7 @@ function renderNextHint(id) {
     var unpaidN = st.orders.filter(function(o){ return (o.payStatus || 'unpaid') === 'unpaid'; }).length;
     if (unpaidN > 0) txt += ' <span style="color:#ffb340">· 💳 <strong>' + unpaidN + ' unpaid</strong></span>';
   } else if (id === 'purchasing') {
-    txt = 'Shop this list (per supplier). Receive tracked stock in <strong>Inventory</strong>. Next: <strong>Production</strong>.';
+    txt = 'Check the shelf, then tick items off as you buy them. Next: <strong>Production</strong>.';
   } else if (id === 'production') {
     txt = st.compNames.length
       ? '<strong>' + st.compDone + '/' + st.compNames.length + ' components done</strong> — tick each Complete as it leaves the pan (temp + weight logged). Next: <strong>Packing</strong>.'
@@ -4976,6 +5057,7 @@ function _syncNav() {
   if (g && g.tabs.length > 1) {
     var tt = document.getElementById('topbar-title'); if (tt) tt.textContent = g.label;
   }
+  try { renderDropCtx(); } catch(e) {}
   if (page === 'delivery') {
     var subTxt = { customers:'Customer database · CRM · marketing consent', athletes:'Athlete plans · macro targets · variants', route:'Route sheet · mark each drop delivered' }[_deliverySub];
     var ts = document.getElementById('topbar-sub'); if (ts && subTxt) ts.textContent = subTxt;
@@ -5021,10 +5103,10 @@ function showPage(id) {
     quickbuild: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm" onclick="qbResetTemplate()">↺ Reset</button><button class="btn btn-ghost btn-sm" onclick="qbAddSlot()">+ Slot</button><button class="btn btn-ghost btn-sm" onclick="qbSaveTemplate()">Save as Menu</button><button class="btn btn-gold btn-sm" onclick="qbPushAllToMenu()">→ Push All to Menu</button></div>`,
     orders: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-gold btn-sm" onclick="openOrderModal()">+ Add Order</button></div>`,
     delivery: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="openMergeDuplicates()" title="Find and merge duplicate customer records (matched by email)">Merge duplicates</button><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button><button class="btn btn-gold" onclick="openCustomerModal()">+ Add Customer</button></div>`,
-    inventory: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button><button class="btn btn-ghost btn-sm" onclick="openInvReceiveModal()">+ Receive Stock</button><button class="btn btn-ghost btn-sm" onclick="openInvCountModal()">Stock Count</button><button class="btn btn-gold" onclick="openInvAdjustModal()">Quick Adjust</button></div>`,
+    inventory: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()" title="Prints a stock-count sheet of shelf items">Print count sheet</button></div>`,
     production: ()=>`<div class="flex gap-8 items-center prod-no-print"><button class="btn btn-ghost btn-sm" onclick="window.print()" title="Prep view prints the prep list; Cook view prints cook sheets with a log line per batch">Print</button></div>`,
-    purchasing: ()=>`<div class="flex gap-8 items-center"><div class="tabs" style="margin-bottom:0" id="purch-session-tabs-top"><div class="tab ${purchSessionFilter==='all'?'active':''}" onclick="setPurchSession('all',this)">All</div><div class="tab ${purchSessionFilter==='sunday'?'active':''}" onclick="setPurchSession('sunday',this)">Sunday</div><div class="tab ${purchSessionFilter==='wednesday'?'active':''}" onclick="setPurchSession('wednesday',this)">Wednesday</div></div><div class="tabs" style="margin-bottom:0"><div class="tab purch-view-btn ${purchViewMode==='supplier'?'active':''}" data-view="supplier" onclick="setPurchView('supplier')">By Supplier</div><div class="tab purch-view-btn ${purchViewMode==='category'?'active':''}" data-view="category" onclick="setPurchView('category')">By Category</div></div><button class="btn btn-ghost btn-sm no-print" id="purch-detail-btn" onclick="togglePurchDetail()" title="Show yield, edible weight, cost per 100g and PAR columns">${document.body.classList.contains('purch-detail') ? 'Hide detail' : 'Show detail'}</button><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button></div>`,
-    packsheet: ()=>`<div class="flex gap-8 items-center no-print"><div class="tabs" style="margin-bottom:0" id="pack-session-tabs-top"><div class="tab ${packSessionFilter==='all'?'active':''}" onclick="setPackSession('all',this);document.querySelectorAll('[id^=pack-session]').forEach(t=>{t.querySelectorAll('.tab').forEach((tt,i)=>{tt.classList.toggle('active',i==0)})})">All</div><div class="tab ${packSessionFilter==='sunday'?'active':''}" onclick="setPackSession('sunday',this)">Sunday</div><div class="tab ${packSessionFilter==='wednesday'?'active':''}" onclick="setPackSession('wednesday',this)">Wednesday</div></div><button class="btn btn-ghost btn-sm" onclick="setPackView('sheet');setTimeout(function(){window.print()},60)" title="Switches to the Pack Sheet and prints it">Print pack sheet</button></div>`,
+    purchasing: ()=>`<div class="flex gap-8 items-center"><div class="tabs" style="margin-bottom:0"><div class="tab purch-view-btn ${purchViewMode==='supplier'?'active':''}" data-view="supplier" onclick="setPurchView('supplier')">By Supplier</div><div class="tab purch-view-btn ${purchViewMode==='category'?'active':''}" data-view="category" onclick="setPurchView('category')">By Category</div></div><button class="btn btn-ghost btn-sm no-print" id="purch-detail-btn" onclick="togglePurchDetail()" title="Show yield, edible weight, cost per 100g and PAR columns">${document.body.classList.contains('purch-detail') ? 'Hide detail' : 'Show detail'}</button><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button></div>`,
+    packsheet: ()=>`<div class="flex gap-8 items-center no-print"><button class="btn btn-ghost btn-sm" onclick="setPackView('sheet');setTimeout(function(){window.print()},60)" title="Switches to the Pack Sheet and prints it">Print pack sheet</button></div>`,
     coststack: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button><button class="btn btn-gold" onclick="addCostItem()">+ Add Cost Item</button></div>`,
     labour: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button><button class="btn btn-gold" onclick="openLabourModal()">+ Add Staff</button></div>`,
     discounts: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-gold" onclick="openDiscountModal()">+ New Code</button></div>`,
@@ -8185,16 +8267,12 @@ function renderProduction(){
   // First-principles for prep day: "how much am I making and will I get through it?"
   // Portions = the load, Est. time = will it fit the day, Dishes = distinct cooks to plan.
   // Cut Stations (layout, not a decision); Components folded into the time/dishes view.
-  // One summary line + the drop switch (replaces the KPI cards and the progress panel)
-  const _dd = (getProductionSlot()==='next' ? DB.nextDropDates : DB.dropDates) || {};
-  const _dropBtn = (sx)=>{ const d=_dd[sx]?new Date(_dd[sx]).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}):(sx==='sunday'?'Sunday':'Wednesday');
-    return '<button class="ord-sess-btn'+(sx===_pd?' active':'')+'" onclick="setGlobalSession(\''+sx+'\')">'+(sx==='sunday'?'Sunday drop':'Wednesday drop')+' <span class="pd-date">'+(_dd[sx]?d:'')+'</span></button>'; };
+  // One summary line (the Sun/Wed switch is the top-bar drop switcher)
   const _done = prodRows.filter(r=>getComponentStatus(r.name)==='complete').length;
   const _pct = prodRows.length ? Math.round(_done/prodRows.length*100) : 0;
   const _bp = prodBufferPct();
   document.getElementById('prod-kpi-grid').innerHTML =
     '<div class="prod-head">' +
-      '<div class="ord-seg">' + _dropBtn('sunday') + _dropBtn('wednesday') + '</div>' +
       '<div class="prod-sum"><strong>' + prodRows.length + ' components</strong><span>·</span>' + prodDishes.filter(function(d){ return dishPortions(d, _pd) > 0; }).length + ' dishes<span>·</span>' + getProductionOrders().filter(function(o){ return String(o.session || '').toLowerCase() === _pd; }).length + ' orders<span>·</span>~' + Math.floor(totalMins/60) + 'h ' + (totalMins%60) + 'm<span>·</span><strong>' + _done + '/' + prodRows.length + ' done</strong></div>' +
       '<button class="prod-buf" onclick="editCookBuffer()" title="Extra cooked on protein and carb batches — also added to prep and the shopping list">' + (_bp>0 ? 'Buffer +' + _bp + '% protein &amp; carb' : 'No cook buffer') + '</button>' +
     '</div>' +
@@ -9144,6 +9222,7 @@ function renderInventory(){
 
   renderInvTxnLog();
   renderInvDemand();
+  renderShelf();
 }
 
 /* ── Inline quick-edit helpers ── */
@@ -9215,15 +9294,22 @@ function bulkTrackMenuIngredients() {
     });
   });
   var newly = 0, already = 0;
+  var demand = calcIngDemand();
   Object.keys(ingIds).forEach(function(id) {
     var ing = (DB.ingredients || []).find(function(i){ return i.id === id; });
     if (!ing) return;
     if (ing.trackInventory) { already++; return; }
+    // Staple = pantry-type category, or a dry/long-life item bought in packs bigger than a week's use
+    var cat = String(ing.cat || '');
+    var pantry = /oil|fat|flavour|spice|season|sauce|condiment|general|herb|stock|grain/i.test(cat);
+    var fresh = /protein|veg|fruit|dairy/i.test(cat);
+    var bigPack = n(ing.packSize) > 0 && n(ing.packSize) > (demand[id] || 0) * 1.5;
+    if (!(pantry || (bigPack && !fresh))) return;
     ing.trackInventory = true; newly++;
   });
-  if (!newly && !already) { notify('No matching ingredients found on this menu'); return; }
+  if (!newly && !already) { notify('No staples found on this menu (fresh items are bought weekly)'); return; }
   save(); renderInventory();
-  notify('📥 ' + newly + ' ingredient' + (newly !== 1 ? 's' : '') + ' added to tracking' + (already ? ' (' + already + ' already tracked)' : '') + ' ✓');
+  notify(newly + ' staple' + (newly !== 1 ? 's' : '') + ' added to the shelf' + (already ? ' (' + already + ' already there)' : '') + ' ✓');
 }
 
 function addIngredientTracking(){
@@ -9243,8 +9329,8 @@ function stopTrackingIngredient(ingId){
   if(!ing) return;
   ing.trackInventory=false;
   save();
-  renderInventory();
-  notify('Removed from tracking');
+  rerenderActivePage();
+  notify('Removed from the shelf');
 }
 
 /* ── Transaction log renderer ── */
@@ -9487,6 +9573,7 @@ function togglePurchDetail() {
   document.body.classList.toggle('purch-detail', on);
   try { localStorage.setItem('29perf_purchDetail', on ? '1' : '0'); } catch(e) {}
   var b = document.getElementById('purch-detail-btn'); if (b) b.textContent = on ? 'Hide detail' : 'Show detail';
+  renderPurchasing();
 }
 try { if (localStorage.getItem('29perf_purchDetail') === '1') document.body.classList.add('purch-detail'); } catch(e) {}
 function setPurchView(v){
@@ -9689,6 +9776,10 @@ function renderPurchasing(){
     }).join('');
   }
 
+  // Default view: the mobile-first shopping list. "Show detail" keeps the full costing table.
+  const _detail=document.body.classList.contains('purch-detail');
+  document.getElementById('purch-kpi-grid').style.display=_detail?'':'none';
+  if(!_detail&&orderRows.length) blocksHtml=purchListHtml(orderRows,purchViewMode).html;
   document.getElementById('supplier-blocks').innerHTML=blocksHtml||'<div class="empty-state"><div class="big">🚚</div><div class="msg">Set up your weekly menu first</div></div>';
 }
 
@@ -13874,8 +13965,7 @@ function renderWeekTracker() {
   var activeIdx = stages.length;
   for (var i = 0; i < stages.length; i++) { if (!stages[i].done) { activeIdx = i; break; } }
 
-  var html = '<div class="wk-week-label"><span class="wk-wk">Week</span><span class="wk-lbl">' +
-             (s.week || '—') + '</span></div>';
+  var html = '';   // week label lives in the top-bar drop switcher
 
   stages.forEach(function(st, i) {
     var cls = st.done ? 'done' : (i === activeIdx ? 'active' : '');
@@ -13888,14 +13978,7 @@ function renderWeekTracker() {
     if (i < stages.length - 1) html += '<span class="wk-arrow">›</span>';
   });
 
-  // Session context — global Sunday/Wednesday filter, always visible
-  var gs = (typeof getGlobalSession === 'function') ? getGlobalSession() : 'all';
-  html += '<div style="display:flex;align-items:center;gap:4px;padding:0 10px;border-left:1px solid var(--border);margin-left:6px" title="Session filter — applies to Orders, Purchasing, Production, Packing, Labels and Route everywhere">' +
-    [['all','All'],['sunday','☀ Sun'],['wednesday','🌙 Wed']].map(function(pair) {
-      var on = gs === pair[0];
-      return '<span onclick="setGlobalSession(\'' + pair[0] + '\')" style="cursor:pointer;font-size:10px;font-weight:700;padding:3px 9px;border-radius:5px;border:1px solid ' +
-        (on ? 'var(--gold)' : 'var(--border2)') + ';background:' + (on ? 'var(--gold)' : 'transparent') + ';color:' + (on ? '#000' : 'var(--text3)') + '">' + pair[1] + '</span>';
-    }).join('') + '</div>';
+  // (Sun/Wed switch lives in the top bar — renderDropCtx)
 
   // Next-week readiness chip
   var nxCol = s.nx.ready ? 'var(--green)' : (s.nx.dishes > 0 ? '#ff9f0a' : 'var(--text3)');
@@ -13910,6 +13993,7 @@ function renderWeekTracker() {
     '<span class="wk-sub">' + nxTxt + '</span></div>';
 
   el.innerHTML = html;
+  try { renderDropCtx(); } catch(e) { console.warn('drop switcher', e); }
 }
 
 function wkStageGo(page) {
@@ -14345,6 +14429,205 @@ function clearPrintSheet() {
   window.addEventListener('beforeprint', function() { if (!document.body.classList.contains('ps-on')) preparePrintSheet(); });
   window.addEventListener('afterprint', clearPrintSheet);
 })();
+
+
+// ═══════════════════════════════════════════════════════════════
+// DROP SWITCHER (Oct 2026) — the ONE Sun/Wed control, in the top bar so it is
+// always on screen. Shows the production week, real drop dates and boxes per
+// drop; the bar takes the drop's colour so the context is visible at a glance.
+// Only pages whose numbers depend on the drop show the segments.
+// ═══════════════════════════════════════════════════════════════
+function renderDropCtx() {
+  var DROP_PAGES = { orders:1, purchasing:1, production:1, packsheet:1, delivery:1 };
+  var el = document.getElementById('drop-ctx');
+  if (!el) return;
+  var active = document.querySelector('.page.active');
+  var page = active ? active.id.replace('page-', '') : '';
+  var onDropPage = !!DROP_PAGES[page] && !(page === 'delivery' && _deliverySub !== 'route');
+  var gs = getGlobalSession();
+  // Production cooks one drop at a time — with "All" it follows the next drop automatically
+  var forced = (page === 'production' && gs === 'all') ? prodDrop() : null;
+  var shown = forced || gs;
+  document.body.setAttribute('data-drop', onDropPage ? shown : '');
+  var week = prodWeek();
+  var dd = (getProductionSlot() === 'next' ? DB.nextDropDates : DB.dropDates) || {};
+  var boxes = { sunday: 0, wednesday: 0 };
+  try {
+    getProductionOrders().forEach(function(o) {
+      var q = 0; Object.keys(o.allocation || {}).forEach(function(k){ q += n(o.allocation[k]); });
+      var ss = String(o.session || '').toLowerCase();
+      if (ss === 'sunday' || ss === 'wednesday') boxes[ss] += q;
+    });
+  } catch(e) {}
+  var fmt = function(sx) {
+    if (!dd[sx]) return sx === 'sunday' ? 'Sunday' : 'Wednesday';
+    var d = new Date(dd[sx]);
+    return d.toLocaleDateString('en-GB', { weekday:'short' }) + ' ' + d.getDate() +
+      '<span class="dc-mon"> ' + d.toLocaleDateString('en-GB', { month:'short' }) + '</span>';
+  };
+  var seg = function(v, label, count, extra) {
+    var on = shown === v;
+    var dis = v === 'all' && page === 'production';
+    return '<button class="dc-seg dc-' + v + (on ? ' on' : '') + (dis ? ' dis' : '') + '" onclick="setGlobalSession(\'' + v + '\')"' +
+      (dis ? ' title="Each drop is cooked separately — Production follows the next drop when All is selected"' : '') + '>' +
+      '<span class="dc-l">' + label + '</span><span class="dc-n">' + count + '</span>' + (extra || '') + '</button>';
+  };
+  el.innerHTML =
+    '<span class="dc-week" title="The week being made">' + escHtml(week || 'No week set') + '</span>' +
+    (onDropPage
+      ? '<div class="dc-segs" role="group" aria-label="Drop">' +
+          seg('all', 'All', boxes.sunday + boxes.wednesday) +
+          seg('sunday', fmt('sunday'), boxes.sunday, forced === 'sunday' ? '<span class="dc-auto">next</span>' : '') +
+          seg('wednesday', fmt('wednesday'), boxes.wednesday, forced === 'wednesday' ? '<span class="dc-auto">next</span>' : '') +
+        '</div>'
+      : '');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SHOPPING LIST + SHELF (Oct 2026)
+// Stock was never used because it needed double entry (receive, use, waste) and
+// nothing deducted it, so it drifted. The new model: stock is a SHELF CHECK taken
+// while shopping. Fresh items are bought every week; staples (oil, spices, sauces,
+// rice…) are "shelf items": glance at the shelf, type what's there, and the list
+// buys only the difference. A count is a dated snapshot, so nothing needs maintaining.
+// ═══════════════════════════════════════════════════════════════
+function parseQtyG(v) {
+  var s = String(v == null ? '' : v).trim().toLowerCase().replace(',', '.');
+  if (s === '') return null;
+  var num = parseFloat(s);
+  if (isNaN(num)) return null;
+  if (/kg|(\d|\s)l\b|litre/.test(s)) return Math.round(num * 1000);
+  return Math.round(num);
+}
+function fmtG(g) { g = Math.max(0, g || 0); return g >= 1000 ? (+(g / 1000).toFixed(2)) + ' kg' : Math.round(g) + ' g'; }
+function shelfAge(rec) {
+  if (!rec || !rec.lastUpdated) return { txt: 'never checked', stale: true };
+  var days = Math.floor((Date.now() - new Date(rec.lastUpdated).getTime()) / 86400000);
+  var txt = days <= 0 ? 'checked today' : days === 1 ? 'checked yesterday' : 'checked ' + days + ' days ago';
+  return { txt: txt, stale: days > 6 };
+}
+/* Record what's on the shelf; counting an item makes it a shelf item from then on. */
+function shelfSetHave(ingId, val) {
+  var g = parseQtyG(val);
+  if (g === null) g = 0;
+  invRecordTxn(ingId, 'count', g, 'Shelf check');
+  var ing = DB.ingredients.find(function(i){ return i.id === ingId; });
+  if (ing) ing.trackInventory = true;
+  save();
+  rerenderActivePage();
+}
+function shelfSetPar(ingId, val) {
+  var g = parseQtyG(val); if (g === null) g = 0;
+  getInvRec(ingId).parLevel = g;
+  var ing = DB.ingredients.find(function(i){ return i.id === ingId; }); if (ing) ing.par = g;
+  save(); rerenderActivePage();
+}
+function shelfReveal(btn) {
+  var box = btn.nextElementSibling; btn.style.display = 'none'; box.style.display = '';
+  var inp = box.querySelector('input'); if (inp) inp.focus();
+}
+function shelfHaveInput(ingId, rec, compact) {
+  var age = shelfAge(rec);
+  return '<label class="sh-have">' + (compact ? '' : '<span>Have</span>') +
+    '<input type="text" inputmode="decimal" value="' + (rec && rec.lastUpdated ? Math.round(rec.onHand || 0) : '') + '" placeholder="?" ' +
+    'onchange="shelfSetHave(\'' + ingId + '\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" aria-label="Amount on the shelf in grams">' +
+    '<em>g</em>' + (compact ? '' : '<small class="' + (age.stale ? 'stale' : '') + '">' + age.txt + '</small>') + '</label>';
+}
+
+/* Purchasing — the default mobile-first shopping list (Show detail = full costing table) */
+function purchListHtml(orderRows, groupBy) {
+  var checks = purchChecks();
+  var groups = {};
+  orderRows.forEach(function(r) {
+    var k = groupBy === 'category' ? (r.ing.cat || 'General') : (r.ing.supplier || 'Misc');
+    (groups[k] = groups[k] || []).push(r);
+  });
+  var keys = Object.keys(groups).sort(function(a, b){ return (a === 'Misc') - (b === 'Misc') || a.localeCompare(b); });
+  var tot = 0, toBuy = 0, bought = 0, covered = 0;
+  var html = keys.map(function(k) {
+    var rows = groups[k].map(function(r) {
+      var rec = (DB.inventory || {})[r.ing.id];
+      var shelf = r.ing.trackInventory === true;
+      var have = shelf && rec ? (rec.onHand || 0) : 0;
+      var net = Math.max(0, r.rawG - have);
+      var buy = purchBuyInfo(r.ing, net);
+      return { r: r, rec: rec, shelf: shelf, have: have, net: net, buy: buy, ticked: !!checks[r.ing.id] };
+    }).sort(function(a, b){ return (a.net <= 0) - (b.net <= 0) || a.ticked - b.ticked || a.r.ing.name.localeCompare(b.r.ing.name); });
+    var gCost = 0, gBuy = 0, gDone = 0;
+    var body = rows.map(function(x) {
+      var id = x.r.ing.id, isCovered = x.net <= 0;
+      if (isCovered) covered++; else { gBuy++; gCost += x.buy.cost || 0; if (x.ticked) gDone++; }
+      var need = 'Need ' + fmtG(x.r.rawG) + (x.shelf && x.have > 0 ? ' · have ' + fmtG(x.have) : '');
+      var fresh = /protein|veg|fruit|dairy/i.test(String(x.r.ing.cat || ''));
+      var haveCtl = x.shelf
+        ? shelfHaveInput(id, x.rec, false)
+        : fresh ? ''
+        : '<button class="sh-some" onclick="shelfReveal(this)">Have some?</button><span style="display:none">' + shelfHaveInput(id, x.rec, false) + '</span>';
+      return '<div class="pl-row' + (x.ticked && !isCovered ? ' done' : '') + (isCovered ? ' covered' : '') + '">' +
+        '<label class="pl-tick"><input type="checkbox" ' + (x.ticked ? 'checked' : '') + (isCovered ? ' disabled' : '') +
+          ' onchange="tickPurchLine(\'' + id + '\',this.checked)" aria-label="Bought ' + escHtml(x.r.ing.name) + '"></label>' +
+        '<div class="pl-main"><div class="pl-name">' + escHtml(x.r.ing.name) + '</div>' +
+          '<div class="pl-sub">' + need + '</div>' + haveCtl + '</div>' +
+        '<div class="pl-buy">' + (isCovered ? '<b class="ok">Have enough</b>' : '<b>' + x.buy.text + '</b>' +
+          (x.buy.sub ? '<span>' + x.buy.sub + '</span>' : '') + '<span>£' + (x.buy.cost || 0).toFixed(2) + '</span>') + '</div>' +
+      '</div>';
+    }).join('');
+    tot += gCost; toBuy += gBuy; bought += gDone;
+    return '<div class="pl-group"><div class="pl-gh"><span class="pl-gname">' + escHtml(String(k).replace(/_/g, ' ')) + '</span>' +
+      '<span class="pl-gmeta">' + gDone + '/' + gBuy + ' bought · £' + gCost.toFixed(2) + '</span></div>' + body + '</div>';
+  }).join('');
+  var pct = toBuy ? Math.round(bought / toBuy * 100) : 0;
+  var top = '<div class="pl-top"><div class="pl-sum"><b>£' + tot.toFixed(2) + '</b> est. · ' + toBuy + ' to buy · ' + keys.length + ' ' + (groupBy === 'category' ? 'categor' + (keys.length !== 1 ? 'ies' : 'y') : 'supplier' + (keys.length !== 1 ? 's' : '')) +
+      (covered ? ' · ' + covered + ' covered by shelf' : '') + '<span class="pl-prog">' + bought + '/' + toBuy + ' bought</span></div>' +
+    '<div class="bb-bar"><i style="width:' + pct + '%"></i></div>' +
+    '<div class="pl-help">Tick items as you buy them. For staples, type what\'s already on the shelf. The list then only buys the difference.</div></div>';
+  return { html: top + html, empty: !orderRows.length };
+}
+
+/* Stock — the shelf: staples worth checking before shopping */
+function renderShelf() {
+  var el = document.getElementById('inv-shelf');
+  if (!el) return;
+  var demand = calcIngDemand();
+  var q = (invSearchFilter || '').toLowerCase();
+  var items = DB.ingredients.filter(function(i){ return i.trackInventory === true; })
+    .filter(function(i){ return !q || i.name.toLowerCase().indexOf(q) !== -1; })
+    .map(function(i) {
+      var rec = (DB.inventory || {})[i.id] || {};
+      var par = rec.parLevel || i.par || 0, have = rec.onHand || 0, need = demand[i.id] || 0;
+      var low = rec.lastUpdated && (have < need || (par > 0 && have < par));
+      return { ing: i, rec: rec, par: par, have: have, need: need, low: low, age: shelfAge(rec) };
+    })
+    .sort(function(a, b){ return b.low - a.low || a.ing.name.localeCompare(b.ing.name); });
+  var nLow = items.filter(function(x){ return x.low; }).length;
+  var nStale = items.filter(function(x){ return x.age.stale; }).length;
+  var row = function(x) {
+    var status = !x.rec.lastUpdated ? 'unk' : x.low ? 'low' : 'ok';
+    return '<div class="sh-row ' + status + '">' +
+      '<span class="sh-dot"></span>' +
+      '<div class="pl-main"><div class="pl-name">' + escHtml(x.ing.name) + '</div>' +
+        '<div class="pl-sub">' + (x.need ? 'Needs ' + fmtG(x.need) + ' this week' : 'Not on this week\'s menu') +
+          ' · <span class="' + (x.age.stale ? 'sh-stale' : '') + '">' + x.age.txt + '</span></div></div>' +
+      '<div class="sh-ctl">' + shelfHaveInput(x.ing.id, x.rec, true).replace('<label class="sh-have">', '<label class="sh-have"><span>Have</span>') +
+        '<label class="sh-have sh-par"><span>Keep</span><input type="text" inputmode="decimal" value="' + (x.par || '') + '" placeholder="—" onchange="shelfSetPar(\'' + x.ing.id + '\',this.value)" aria-label="Minimum to keep in grams"><em>g</em></label>' +
+        '<button class="sh-x" title="Not a shelf item (buy fresh each week)" onclick="stopTrackingIngredient(\'' + x.ing.id + '\')">✕</button></div>' +
+    '</div>';
+  };
+  el.innerHTML =
+    '<div class="pl-top"><div class="pl-sum"><b>' + items.length + '</b> shelf item' + (items.length !== 1 ? 's' : '') +
+      (nLow ? ' · <span class="sh-lowtxt">' + nLow + ' running low</span>' : '') + (nStale ? ' · ' + nStale + ' not checked this week' : '') + '</div>' +
+    '<div class="pl-help">Shelf items are staples that last longer than a week, like oils, spices, sauces and dry carbs. Update <b>Have</b> when you check the shelf (Purchasing has the same box). <b>Keep</b> is the minimum you never want to drop below. Fresh items don\'t belong here.</div>' +
+    '<div class="sh-actions"><button class="btn btn-gold btn-sm" onclick="bulkTrackMenuIngredients()">Suggest staples from this week</button>' +
+      '<button class="btn btn-ghost btn-sm" onclick="toggleTrackPanel();var b=document.getElementById(\'track-ing-body\');if(b&&b.style.display!==\'none\')b.scrollIntoView({behavior:\'smooth\',block:\'center\'})">+ Add item</button>' +
+      '<button class="btn btn-ghost btn-sm" onclick="toggleInvDetail()">' + (document.body.classList.contains('inv-detail') ? 'Hide full ledger' : 'Full ledger') + '</button></div></div>' +
+    (items.length ? '<div class="pl-group">' + items.map(row).join('') + '</div>'
+      : '<div class="empty-state"><div class="big">🫙</div><div class="msg">No shelf items yet. Tap <b>Suggest staples from this week</b>, or type an amount next to any item on the Purchasing list.</div></div>');
+}
+function toggleInvDetail() {
+  var on = !document.body.classList.contains('inv-detail');
+  document.body.classList.toggle('inv-detail', on);
+  renderShelf();
+}
 
 // Every legacy per-page setter now delegates to the global context.
 setMenuSession        = function(v, el) { setGlobalSession(v); };
