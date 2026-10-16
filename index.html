@@ -183,7 +183,7 @@ body.kitchen-mode .action-btn{font-size:16px;padding:8px;}
 .btn-xs{padding:3px 7px;font-size:10px;}
 
 /* PAGES */
-.page{display:none;animation:fadeIn .2s ease;}
+.page{display:none;}  /* no entry fade: iOS can stall it at opacity 0, leaving a rendered page invisible */
 .page.active{display:block;}
 #page-guide.active{display:flex;flex-direction:column;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
@@ -1838,7 +1838,7 @@ table td{padding-top:9px;padding-bottom:9px;}
 .card-header{padding-top:12px;padding-bottom:12px;}
 .notif{border-radius:10px;box-shadow:0 10px 34px rgba(0,0,0,.45);}
 .empty-state{padding:54px 20px;}
-.page{animation:pageIn .16s ease;}
+.page{animation:none;}
 @keyframes pageIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
 ::-webkit-scrollbar{width:9px;height:9px;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:5px;}
@@ -2743,6 +2743,21 @@ details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
   .menu-row-head > div:nth-child(14),.menu-row > div:nth-child(14){display:none !important;}
   .mr-price .fp{display:none;}
   .modal{max-height:92vh;}
+  /* Lock the page to the screen width — wide content scrolls inside its own box,
+     never the whole page (stops the sideways wobble on iPhone) */
+  html,body{overflow-x:hidden;}
+  .main,.content{overflow-x:hidden !important;max-width:100vw;}
+  .content > *,.page > *{min-width:0;max-width:100%;}
+  .table-wrap{max-width:100%;-webkit-overflow-scrolling:touch;}
+  .pack-box,.pack-summary-strip,.card{min-width:0;max-width:100%;}
+  .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+  /* Side-by-side layouts stack; fixed-minimum card grids collapse to one column */
+  .two-col,.three-col,.dash-ops,.prod-batch-grid,.menu-session-block{grid-template-columns:minmax(0,1fr) !important;}
+  .pack-grid,.menu-card-grid,.prep-grid,.qb-tpl-grid,.orders-grid{grid-template-columns:minmax(0,1fr) !important;}
+  .pack-summary-strip{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+  .two-col > *,.three-col > *{min-width:0;}
+  canvas{max-width:100% !important;}
+  #page-delivery div[style*="display:flex"]{flex-wrap:wrap;}
 }
 /* Touch screens: comfortable targets, and 16px inputs so iOS doesn't zoom in when you tap a field */
 @media (pointer:coarse){
@@ -2753,6 +2768,77 @@ details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
   input[type="checkbox"],input[type="radio"]{min-height:0;}
   .ord-seg button,.group-tab{min-height:36px;}
 }
+/* ════════════════════════════════════════════════════════════════
+   PRINT SHEETS (Oct 2026) — dedicated paper layouts built by preparePrintSheet()
+   ════════════════════════════════════════════════════════════════ */
+#print-sheet{display:none;}
+@media print{
+  body.ps-on > *:not(#print-sheet){display:none !important;}
+  body.ps-on{background:#fff !important;}
+  body.ps-on #print-sheet{display:block !important;}
+}
+#print-sheet{color:#111;background:#fff;font:9.5pt/1.35 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+#print-sheet *{box-sizing:border-box;}
+#print-sheet .mono{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:9pt;}
+#print-sheet .ps-head{border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:10px;}
+#print-sheet .ps-brand{font-size:7.5pt;letter-spacing:.18em;text-transform:uppercase;color:#8a6d1f;font-weight:700;}
+#print-sheet .ps-title{font-size:17pt;font-weight:800;letter-spacing:-.01em;margin-top:1px;}
+#print-sheet .ps-meta{font-size:8.5pt;color:#555;margin-top:1px;}
+#print-sheet .ps-stats{display:flex;gap:22px;margin-top:7px;}
+#print-sheet .ps-stats div{display:flex;flex-direction:column;}
+#print-sheet .ps-stats b{font-size:13pt;line-height:1.1;}
+#print-sheet .ps-stats span{font-size:7.5pt;color:#666;text-transform:uppercase;letter-spacing:.06em;}
+#print-sheet .ps-sec{margin-bottom:10px;}
+#print-sheet .ps-h2{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #111;margin:12px 0 0;padding-bottom:2px;break-after:avoid;page-break-after:avoid;}
+#print-sheet .ps-h2 span{font-size:11pt;font-weight:800;}
+#print-sheet .ps-h2 em{font-style:normal;font-size:8.5pt;color:#555;}
+#print-sheet .ps-station{margin-top:14px;border-bottom-width:2px;}
+#print-sheet .ps-t{width:100%;border-collapse:collapse;}
+#print-sheet .ps-t th{font-size:7pt;text-transform:uppercase;letter-spacing:.07em;color:#666;font-weight:700;text-align:left;padding:4px 5px;border-bottom:1px solid #999;}
+#print-sheet .ps-t td{padding:4px 5px;border-bottom:1px solid #ddd;vertical-align:top;}
+#print-sheet .ps-t tr{break-inside:avoid;page-break-inside:avoid;}
+#print-sheet .ps-t thead{display:table-header-group;}
+#print-sheet .ps-t .r{text-align:right;white-space:nowrap;}
+#print-sheet .ps-t .c-box{width:20px;padding-right:0;}
+#print-sheet .ps-t .c-note{width:22%;}
+#print-sheet .ps-t .c-sig{width:24%;border-bottom:1px solid #bbb;}
+#print-sheet .ps-t tr.ps-grp td{border-top:1px solid #999;}
+#print-sheet .ps-ing{background:#f6f4ef;}
+#print-sheet .ps-how{font-size:8.5pt;color:#333;}
+#print-sheet .ps-mini td,#print-sheet .ps-mini th{padding:2px 4px;}
+#print-sheet .ps-box{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border:1.3px solid #111;border-radius:2px;font-size:9px;line-height:1;vertical-align:-2px;}
+#print-sheet .ps-sub{font-size:8pt;color:#666;}
+#print-sheet .ps-tag{font-size:7pt;text-transform:uppercase;letter-spacing:.06em;border:1px solid #999;border-radius:3px;padding:0 4px;color:#444;margin-left:4px;}
+#print-sheet .ps-warn{font-size:8pt;margin-top:2px;padding:2px 4px;border-left:2px solid #111;background:#f3f3f3;}
+#print-sheet .ps-note{font-size:8.5pt;padding:5px 7px;background:#f6f4ef;border:1px solid #e3ddcf;margin:8px 0;}
+#print-sheet .ps-sign{display:flex;gap:16px;margin-top:18px;}
+#print-sheet .ps-sign span{flex:1;border-top:1px solid #111;padding-top:3px;font-size:7.5pt;color:#555;text-transform:uppercase;letter-spacing:.06em;}
+#print-sheet .ps-cook{border:1px solid #bbb;border-radius:4px;padding:6px 8px;margin-top:7px;break-inside:avoid;page-break-inside:avoid;}
+#print-sheet .ps-cook-h{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
+#print-sheet .ps-cook-h b{font-size:11pt;}
+#print-sheet .ps-cook-h em{font-style:normal;font-size:8.5pt;color:#444;margin-left:auto;}
+#print-sheet .ps-cook-b{display:grid;grid-template-columns:38% 1fr;gap:12px;margin-top:4px;align-items:start;}
+#print-sheet .ps-steps{font-size:8.5pt;}
+#print-sheet .ps-steps ol{margin:0 0 3px;padding-left:16px;}
+#print-sheet .ps-steps li{margin-bottom:1px;}
+#print-sheet .ps-phase{font-size:7pt;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#666;margin-top:2px;}
+#print-sheet .ps-log{display:flex;gap:14px;margin-top:6px;padding-top:4px;border-top:1px dashed #bbb;font-size:8pt;color:#333;}
+#print-sheet .ps-pack-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;}
+#print-sheet .ps-pack{border:1px solid #bbb;border-radius:4px;padding:6px 8px;break-inside:avoid;page-break-inside:avoid;}
+#print-sheet .ps-pack-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;}
+#print-sheet .ps-pack-h b{font-size:10.5pt;}
+#print-sheet .ps-pack-h em{font-style:normal;font-weight:700;font-size:9.5pt;}
+#print-sheet .ps-route td{padding-top:6px;padding-bottom:6px;}
+/* Neutralise the app-wide print table styles inside the sheet */
+#print-sheet table,#print-sheet th,#print-sheet td,#print-sheet tr{background:transparent !important;border-left:0 !important;border-right:0 !important;height:auto !important;min-height:0 !important;box-shadow:none !important;color:#111 !important;}
+#print-sheet .ps-t th{color:#666 !important;font-size:7pt !important;}
+#print-sheet .ps-t td{font-size:9pt !important;}
+#print-sheet .ps-t td .ps-sub,#print-sheet .ps-sub{font-size:7.5pt !important;color:#666 !important;}
+#print-sheet .mono,#print-sheet .ps-t td.mono{font-size:8.5pt !important;}
+#print-sheet td.ps-ing{background:#f6f4ef !important;}
+#print-sheet .ps-t{table-layout:auto;}
+#print-sheet .ps-t td.c-sig{border-bottom:1px solid #bbb !important;}
+#print-sheet .ps-pack .ps-sub{font-size:7pt !important;line-height:1.3;}
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -4936,7 +5022,7 @@ function showPage(id) {
     orders: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-gold btn-sm" onclick="openOrderModal()">+ Add Order</button></div>`,
     delivery: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="openMergeDuplicates()" title="Find and merge duplicate customer records (matched by email)">Merge duplicates</button><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button><button class="btn btn-gold" onclick="openCustomerModal()">+ Add Customer</button></div>`,
     inventory: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button><button class="btn btn-ghost btn-sm" onclick="openInvReceiveModal()">+ Receive Stock</button><button class="btn btn-ghost btn-sm" onclick="openInvCountModal()">Stock Count</button><button class="btn btn-gold" onclick="openInvAdjustModal()">Quick Adjust</button></div>`,
-    production: ()=>`<div class="flex gap-8 items-center prod-no-print"><button class="btn btn-ghost btn-sm" onclick="window.print()" title="Prints one sheet per station for the selected drop">Print station sheets</button></div>`,
+    production: ()=>`<div class="flex gap-8 items-center prod-no-print"><button class="btn btn-ghost btn-sm" onclick="window.print()" title="Prep view prints the prep list; Cook view prints cook sheets with a log line per batch">Print</button></div>`,
     purchasing: ()=>`<div class="flex gap-8 items-center"><div class="tabs" style="margin-bottom:0" id="purch-session-tabs-top"><div class="tab ${purchSessionFilter==='all'?'active':''}" onclick="setPurchSession('all',this)">All</div><div class="tab ${purchSessionFilter==='sunday'?'active':''}" onclick="setPurchSession('sunday',this)">Sunday</div><div class="tab ${purchSessionFilter==='wednesday'?'active':''}" onclick="setPurchSession('wednesday',this)">Wednesday</div></div><div class="tabs" style="margin-bottom:0"><div class="tab purch-view-btn ${purchViewMode==='supplier'?'active':''}" data-view="supplier" onclick="setPurchView('supplier')">By Supplier</div><div class="tab purch-view-btn ${purchViewMode==='category'?'active':''}" data-view="category" onclick="setPurchView('category')">By Category</div></div><button class="btn btn-ghost btn-sm no-print" id="purch-detail-btn" onclick="togglePurchDetail()" title="Show yield, edible weight, cost per 100g and PAR columns">${document.body.classList.contains('purch-detail') ? 'Hide detail' : 'Show detail'}</button><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button></div>`,
     packsheet: ()=>`<div class="flex gap-8 items-center no-print"><div class="tabs" style="margin-bottom:0" id="pack-session-tabs-top"><div class="tab ${packSessionFilter==='all'?'active':''}" onclick="setPackSession('all',this);document.querySelectorAll('[id^=pack-session]').forEach(t=>{t.querySelectorAll('.tab').forEach((tt,i)=>{tt.classList.toggle('active',i==0)})})">All</div><div class="tab ${packSessionFilter==='sunday'?'active':''}" onclick="setPackSession('sunday',this)">Sunday</div><div class="tab ${packSessionFilter==='wednesday'?'active':''}" onclick="setPackSession('wednesday',this)">Wednesday</div></div><button class="btn btn-ghost btn-sm" onclick="setPackView('sheet');setTimeout(function(){window.print()},60)" title="Switches to the Pack Sheet and prints it">Print pack sheet</button></div>`,
     coststack: ()=>`<div class="flex gap-8 items-center"><button class="btn btn-ghost btn-sm no-print" onclick="window.print()">Print</button><button class="btn btn-gold" onclick="addCostItem()">+ Add Cost Item</button></div>`,
@@ -4957,7 +5043,9 @@ function showPage(id) {
     delivery: renderDelivery,
     mobilehome: renderMobileHome,
   };
-  if (renders[id]) renders[id]();
+  if (renders[id]) {
+    try { renders[id](); } catch(e) { console.error('Render failed for ' + id, e); }
+  }
   _syncNav();
   renderWeekTracker();
   applyStatsCollapse(id);
@@ -7774,6 +7862,7 @@ function renderPackSheet(){
   const tTubs = (s==='s1'||s==='sunday')?tubs1   : (s==='s2'||s==='wednesday')?tubs2   : tubs1+tubs2;
   const tTotal= t3+tSing;
   const sessionWord = (s==='s1'||s==='sunday')?'Sunday' : (s==='s2'||s==='wednesday')?'Wednesday' : 'All Sessions';
+  const _packPrint = window._packPrint = {sessionWord, t3, tSing, tTubs, tTotal, dishes:[]};   // for the print sheet
 
   const summaryStrip = `<div class="pack-summary-strip no-print" style="grid-column:1/-1;margin-bottom:16px">
     <div class="pack-summary-card" style="border-top:2px solid var(--gold)">
@@ -7817,6 +7906,8 @@ function renderPackSheet(){
       {slot:'complete', scale:1,                        label:'Complete'},
     ].filter(s=>dish[s.slot]);
     const overallScale=n(dish.scaleOverall)||1;
+    _packPrint.dishes.push({dish, portions, sun:livePortions(dish,'sunday'), wed:livePortions(dish,'wednesday'), totals:t, allergens,
+      slots:slots.map(s=>{const c=getComp(dish[s.slot]); return c?{label:s.label,name:c.name,wt:Math.round(calcRecipeTotals(c).cookedWeight*s.scale*overallScale),fin:c.finishSteps||[]}:null;}).filter(Boolean)});
 
     const compRows=slots.map(s=>{
       const comp=getComp(dish[s.slot]);
@@ -7900,6 +7991,8 @@ function renderPackSheet(){
       {slot:'complete', scale:1,                        label:'Complete'},
     ].filter(s=>dish[s.slot]);
     const overallScale=n(dish.scaleOverall)||1;
+    _packPrint.dishes.push({dish, portions, sun:livePortions(dish,'sunday'), wed:livePortions(dish,'wednesday'), totals:t, allergens,
+      slots:slots.map(s=>{const c=getComp(dish[s.slot]); return c?{label:s.label,name:c.name,wt:Math.round(calcRecipeTotals(c).cookedWeight*s.scale*overallScale),fin:c.finishSteps||[]}:null;}).filter(Boolean)});
 
     const compRows=slots.map(s=>{
       const comp=getComp(dish[s.slot]);
@@ -9484,6 +9577,7 @@ function renderPurchasing(){
     return s+(netEdible/100)*calcEP(r.ing);
   },0);
   const coveredCount=netRows.filter(r=>r.onHand>=r.rawG).length;
+  window._purchPrint={rows:netRows};   // print sheet reuses these exact figures
   // First-principles: the purchasing decision is "what do I actually need to buy and
   // for how much?" Net to Order (after stock on hand) is the real spend — lead with it.
   // Cut Total Required Cost (gross, ignores stock — misleading as the headline).
@@ -11834,7 +11928,7 @@ function erpSignIn() {
       if (!_fbListening) _startFbListener();
       loadFromFirebase(function(ok) {
         if (ok) { migrateData(); notify('🔐 Signed in ✓'); }
-        renderDashboard();
+        rerenderActivePage();
       });
     })
     .catch(function(e) {
@@ -11901,16 +11995,14 @@ function _startFbListener() {
       var incomingOrders = Array.isArray(remote.weeklyOrders)
         ? remote.weeklyOrders
         : Object.values(remote.weeklyOrders).filter(Boolean);
-      var localIds = new Set((DB.weeklyOrders || []).map(function(o) { return o.id; }));
+      var localIds = new Set((Array.isArray(DB.weeklyOrders) ? DB.weeklyOrders : Object.values(DB.weeklyOrders || {})).map(function(o) { return o && o.id; }));
       var newOrders = incomingOrders.filter(function(o) { return o && o.id && !localIds.has(o.id) && !_isTombstoned(o.id); });
       if (newOrders.length) {
-        if (!Array.isArray(DB.weeklyOrders)) DB.weeklyOrders = [];
+        if (!Array.isArray(DB.weeklyOrders)) DB.weeklyOrders = DB.weeklyOrders ? Object.values(DB.weeklyOrders).filter(Boolean) : [];
         DB.weeklyOrders = DB.weeklyOrders.concat(newOrders);
         try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
-        // Live-refresh the orders panel if it's open
-        var _ap = document.querySelector('.page.active');
-        if (_ap && _ap.id === 'page-orders') try { renderOrdersPanel(); } catch(e) {}
-        try { renderWeekTracker(); } catch(e) {}
+        // Orders drive almost every page (menu counts, production, packing, purchasing)
+        rerenderActivePage();
         notify('🛒 ' + newOrders.length + ' new order' + (newOrders.length > 1 ? 's' : '') + ' received ✓');
       }
     }
@@ -11919,10 +12011,10 @@ function _startFbListener() {
       var incomingCusts = Array.isArray(remote.customers)
         ? remote.customers
         : Object.values(remote.customers).filter(Boolean);
-      var localCustIds = new Set((DB.customers || []).map(function(c) { return c.id; }));
+      var localCustIds = new Set((Array.isArray(DB.customers) ? DB.customers : Object.values(DB.customers || {})).map(function(c) { return c && c.id; }));
       var newCusts = incomingCusts.filter(function(c) { return c && c.id && !localCustIds.has(c.id) && !_isTombstoned(c.id); });
       if (newCusts.length) {
-        if (!Array.isArray(DB.customers)) DB.customers = [];
+        if (!Array.isArray(DB.customers)) DB.customers = DB.customers ? Object.values(DB.customers).filter(Boolean) : [];
         DB.customers = DB.customers.concat(newCusts);
         try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
       }
@@ -11972,6 +12064,10 @@ function _startFbListener() {
       var localMenuDishes     = likelyFailedWrite && (DB.menuDishes     && DB.menuDishes.length)     ? DB.menuDishes     : null;
       var localNextMenuDishes = likelyFailedWrite && (DB.nextMenuDishes && DB.nextMenuDishes.length) ? DB.nextMenuDishes : null;
       Object.assign(DB, remote);
+      // Firebase hands back keyed objects for orders/customers (portal writes them by
+      // key). Normalise to arrays BEFORE anything renders — skipping this left pages
+      // blank on a fresh open until something else happened to run migrateData().
+      try { migrateData(); } catch(e) { console.warn('migrateData failed', e); }
       // We have adopted this cloud snapshot — it is now our base version.
       _fbBaseTs = remoteTs; _staleAlerted = false;
       if (remoteVer !== null) _fbBaseVer = remoteVer;
@@ -11999,23 +12095,8 @@ function _startFbListener() {
       }
       // Check auto-publish on every incoming sync (another device may have built the next menu)
       checkAndAutoPublish();
-      // Refresh the currently visible page
-      var activePage = document.querySelector('.page.active');
-      if (activePage) {
-        var pageId = activePage.id.replace('page-','');
-        var refreshFns = {
-          dashboard: renderDashboard, ingredients: renderIngredients,
-          recipes: renderRecipes, components: renderComponents,
-          menu: renderMenu, inventory: renderInventory,
-          purchasing: renderPurchasing, production: renderProduction,
-          packsheet: renderPackSheet, delivery: renderDelivery,
-          labour: renderLabour, coststack: renderCostStack,
-          history: renderHistory,
-          orders: renderOrdersPanel          // portal orders arrive here live
-        };
-        if (refreshFns[pageId]) try { refreshFns[pageId](); } catch(e) {}
-      }
-      try { renderWeekTracker(); } catch(e) {}
+      // Refresh whatever is on screen — page AND its active sub-view
+      rerenderActivePage();
       notify('☁️ Synced from another device');
     }
   }, function(err) {
@@ -12724,21 +12805,8 @@ function initTheme() {
       if (gotRemote) {
         // Run auto-publish check on fresh data before rendering
         checkAndAutoPublish();
-        // Re-render current page with fresh data
-        var activePage = document.querySelector('.page.active');
-        if (activePage) {
-          var pageId = activePage.id.replace('page-','');
-          var refreshFns = {
-            dashboard: renderDashboard, ingredients: renderIngredients,
-            recipes: renderRecipes, components: renderComponents,
-            menu: renderMenu, inventory: renderInventory,
-            purchasing: renderPurchasing, production: renderProduction,
-            packsheet: renderPackSheet, delivery: renderDelivery,
-            labour: renderLabour, coststack: renderCostStack,
-            history: renderHistory
-          };
-          if (refreshFns[pageId]) try { refreshFns[pageId](); } catch(e) {}
-        }
+        // Re-render current page (and its sub-view) with fresh data
+        rerenderActivePage();
       }
     });
   } else {
@@ -14024,22 +14092,259 @@ function rerenderActivePage() {
   var active = document.querySelector('.page.active');
   if (!active) return;
   var id = active.id.replace('page-', '');
+  var vis = function(elId) { var el = document.getElementById(elId); return el && el.style.display !== 'none'; };
   var fns = {
-    dashboard: renderDashboard, menu: renderMenu, orders: renderOrdersPanel,
-    purchasing: renderPurchasing, production: renderProduction,
-    delivery: renderDelivery, inventory: renderInventory
+    dashboard: renderDashboard, ingredients: renderIngredients, recipes: renderRecipes,
+    components: renderComponents, menu: renderMenu, quickbuild: renderQuickBuild,
+    orders: renderOrdersPanel, purchasing: renderPurchasing,
+    production: renderProduction,                 // also re-renders Prep / Cook via applyProdView
+    inventory: renderInventory, coststack: renderCostStack, labour: renderLabour,
+    history: renderHistory, discounts: renderDiscounts,
+    packsheet: function() {
+      renderPackSheet();
+      if (vis('pack-labels-view')) renderLabels();
+      if (vis('pack-boxes-view'))  renderBoxBoard();
+      renderNextHint('packsheet');
+    },
+    delivery: function() {
+      renderDelivery();
+      if (_deliverySub === 'athletes') renderAthletes();
+    }
   };
-  if (id === 'packsheet') {
-    renderPackSheet();
-    var lblView = document.getElementById('pack-labels-view');
-    var staView = document.getElementById('pack-station-view');
-    if (lblView && lblView.style.display !== 'none') renderLabels();
-    if (staView && staView.style.display !== 'none') renderFulfillmentStation();
-    renderNextHint('packsheet');
-    return;
+  if (fns[id]) {
+    try { fns[id](); } catch(e) { console.error('Re-render failed for ' + id, e); }
   }
-  if (fns[id]) try { fns[id](); } catch(e) {}
+  try { renderWeekTracker(); } catch(e) {}
 }
+
+// iOS Safari restores tabs from its back/forward cache and freezes background tabs —
+// re-render on return so the screen never shows a stale or half-built page.
+window.addEventListener('pageshow', function(e) { if (e.persisted) rerenderActivePage(); });
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') rerenderActivePage();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PRINT SHEETS (Oct 2026) — paper is designed for the job, not a copy of the
+// screen. On Print (button or Cmd/Ctrl-P) the active page builds a dedicated
+// black-on-white sheet into #print-sheet and everything else is hidden. Pages
+// without a dedicated sheet (Cost Stack, Labour, History, labels) print as before.
+// ═══════════════════════════════════════════════════════════════════════════
+var PS = {
+  kg: function(g) { g = Math.max(0, g || 0); return g >= 1000 ? (g / 1000).toFixed(2) + ' kg' : Math.round(g) + ' g'; },
+  esc: function(s) { return escHtml(String(s == null ? '' : s)); },
+  date: function() { return new Date().toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' }); },
+  box: function(on) { return '<span class="ps-box' + (on ? ' on' : '') + '">' + (on ? '✓' : '') + '</span>'; },
+  sessName: function(v) { return (v === 's1' || v === 'sunday') ? 'Sunday drop' : (v === 's2' || v === 'wednesday') ? 'Wednesday drop' : 'Both drops'; },
+  head: function(title, meta, stats) {
+    return '<div class="ps-head"><div class="ps-brand">29 Performance</div>' +
+      '<div class="ps-title">' + title + '</div>' +
+      '<div class="ps-meta">' + meta + ' · Printed ' + PS.date() + '</div>' +
+      (stats && stats.length ? '<div class="ps-stats">' + stats.map(function(s){ return '<div><b>' + s[0] + '</b><span>' + s[1] + '</span></div>'; }).join('') + '</div>' : '') +
+    '</div>';
+  }
+};
+
+/* Purchasing → supplier order list with tick boxes. Covered-by-stock lines are listed, not tabled. */
+function psPurchasing() {
+  var keep = purchSearch; purchSearch = '';
+  try { renderPurchasing(); } finally { purchSearch = keep; }
+  var d = window._purchPrint; if (keep) try { renderPurchasing(); } catch(e) {}
+  if (!d || !d.rows.length) return null;
+  var checks = purchChecks();
+  var bySup = {}, covered = [];
+  d.rows.forEach(function(r) {
+    var net = Math.max(0, r.rawG - r.onHand);
+    if (net <= 0) { covered.push(r.ing.name); return; }
+    var s = r.ing.supplier || 'Misc';
+    (bySup[s] = bySup[s] || []).push({ r: r, net: net, buy: purchBuyInfo(r.ing, net) });
+  });
+  var sups = Object.keys(bySup).sort(function(a, b){ return (a === 'Misc') - (b === 'Misc') || a.localeCompare(b); });
+  var total = 0, lines = 0;
+  var body = sups.map(function(s) {
+    var rows = bySup[s].sort(function(a, b){ return a.r.ing.name.localeCompare(b.r.ing.name); });
+    var sub = rows.reduce(function(t, x){ return t + (x.buy.cost || 0); }, 0);
+    total += sub; lines += rows.length;
+    return '<div class="ps-sec"><div class="ps-h2"><span>' + PS.esc(s) + '</span><em>' + rows.length + ' line' + (rows.length !== 1 ? 's' : '') + ' · est. £' + sub.toFixed(2) + '</em></div>' +
+      '<table class="ps-t"><thead><tr><th class="c-box"></th><th>Ingredient</th><th>Buy</th><th class="r">Need</th><th class="r">Est. £</th><th class="c-note">Notes / price paid</th></tr></thead><tbody>' +
+      rows.map(function(x) {
+        return '<tr><td class="c-box">' + PS.box(checks[x.r.ing.id]) + '</td><td><b>' + PS.esc(x.r.ing.name) + '</b>' + (x.r.ing.cat ? '<div class="ps-sub">' + PS.esc(String(x.r.ing.cat).replace(/_/g, ' ')) + '</div>' : '') + '</td>' +
+          '<td>' + x.buy.text + (x.buy.sub ? '<div class="ps-sub">' + x.buy.sub + '</div>' : '') + '</td>' +
+          '<td class="r mono">' + PS.kg(x.net) + '</td><td class="r mono">' + (x.buy.cost ? x.buy.cost.toFixed(2) : '—') + '</td><td class="c-note"></td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }).join('');
+  return PS.head('Order list', PS.esc(prodWeek() || 'This week') + ' · ' + PS.sessName(purchSessionFilter),
+      [['£' + total.toFixed(2), 'est. spend'], [lines, 'lines to buy'], [sups.length, 'supplier' + (sups.length !== 1 ? 's' : '')], [covered.length, 'covered by stock']]) +
+    body +
+    (covered.length ? '<div class="ps-note"><b>Already covered by stock:</b> ' + covered.map(PS.esc).join(', ') + '</div>' : '') +
+    '<div class="ps-sign"><span>Ordered by</span><span>Date</span><span>Delivery due</span></div>';
+}
+
+/* Production · Prep → one row per labelled container, grouped by category, ingredient totals up front. */
+function psPrep() {
+  var built = buildPrepData();
+  if (!built.items.length) return null;
+  var checks = prepProgress();
+  var groups = {}, order = [];
+  (DB.ingCategories || []).forEach(function(c){ order.push(c.name); });
+  built.items.forEach(function(d){ var c = d.ing.cat || 'Other'; (groups[c] = groups[c] || []).push(d); });
+  var cats = order.filter(function(c){ return groups[c]; }).concat(Object.keys(groups).filter(function(c){ return order.indexOf(c) === -1; }).sort());
+  var containers = 0;
+  var body = cats.map(function(cat) {
+    var rows = groups[cat].map(function(d) {
+      var ing = d.ing, splits = Object.values(d.splits);
+      containers += splits.length;
+      var take = PS.kg(d.rawG);
+      if (n(ing.unitWeight) > 0) { var u = Math.ceil(d.rawG / n(ing.unitWeight)); take = '≈' + u + ' ' + PS.esc(ing.unitName || 'unit') + (u !== 1 ? 's' : '') + ' (' + PS.kg(d.rawG) + ')'; }
+      return splits.map(function(sp, i) {
+        var first = i === 0;
+        return '<tr' + (first ? ' class="ps-grp"' : '') + '>' +
+          (first ? '<td rowspan="' + splits.length + '" class="ps-ing"><b>' + PS.esc(ing.name) + '</b><div class="ps-sub">Take out ' + take + ((n(ing.proc) || 100) < 100 ? ' raw' : '') + '</div></td>' : '') +
+          '<td class="c-box">' + PS.box(checks[ing.id + '|' + sp.comp]) + '</td>' +
+          '<td class="r mono"><b>' + PS.kg(sp.edibleG) + '</b></td>' +
+          '<td>' + PS.esc(sp.comp) + ' <span class="ps-sub">· ' + (built.compPorts[sp.comp] || 0) + ' portions</span></td>' +
+          '<td class="ps-how">' + PS.esc((sp.prep || '').trim()) + '</td></tr>';
+      }).join('');
+    }).join('');
+    return '<div class="ps-sec"><div class="ps-h2"><span>' + PS.esc(String(cat).replace(/_/g, ' + ')) + '</span></div>' +
+      '<table class="ps-t"><thead><tr><th style="width:24%">Ingredient</th><th class="c-box"></th><th class="r" style="width:11%">Weigh</th><th style="width:30%">Into container for</th><th>How to prep</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }).join('');
+  var cp = Object.keys(built.compPorts).sort(function(a, b){ return built.compPorts[b] - built.compPorts[a]; });
+  return PS.head('Prep list', PS.esc(prodWeek() || 'This week') + ' · ' + PS.sessName(prodDrop()),
+      [[containers, 'containers'], [built.items.length, 'ingredients'], [cp.length, 'components'], [prodBufferPct() > 0 ? '+' + prodBufferPct() + '%' : '—', 'buffer incl.']]) +
+    (cp.length ? '<div class="ps-note"><b>Label containers:</b> ' + cp.map(function(c){ return PS.esc(c) + ' (' + built.compPorts[c] + ')'; }).join(' · ') + '</div>' : '') +
+    body;
+}
+
+/* Production · Cook → per station, one block per component: batch, method, and a log line to fill in. */
+function psCook() {
+  if (!prodRows.length) return null;
+  var byStation = {};
+  prodRows.forEach(function(r){ var k = r.station || 'Unassigned'; (byStation[k] = byStation[k] || []).push(r); });
+  var totalMins = prodRows.reduce(function(s, r){ return s + n(r.prepTime) + n(r.cookTime); }, 0);
+  var body = Object.keys(byStation).map(function(st) {
+    return '<div class="ps-h2 ps-station"><span>' + PS.esc(st) + '</span><em>' + byStation[st].length + ' component' + (byStation[st].length !== 1 ? 's' : '') + '</em></div>' +
+      byStation[st].map(function(r) {
+        var rec = DB.recipes.find(function(x){ return x.name === r.name && x.status === 'Active'; }) || {};
+        var mult = (r.scaledPorts != null ? r.scaledPorts : r.portions * r.scale) * (r.buf || 1);
+        var lines = (rec.lines || []).map(function(l) {
+          var ing = DB.ingredients.find(function(x){ return x.id === l.ingId; });
+          return '<tr><td>' + PS.esc(ing ? ing.name : l.ingId) + (l.prepNeeded === false ? ' <span class="ps-sub">· add while cooking</span>' : '') + '</td><td class="r mono">' + PS.kg(n(l.qty) * mult) + '</td></tr>';
+        }).join('');
+        var steps = function(arr, label) {
+          return (arr && arr.length) ? '<div class="ps-phase">' + label + '</div><ol>' + arr.map(function(s){ return '<li>' + PS.esc(s) + '</li>'; }).join('') + '</ol>' : '';
+        };
+        var cookSteps = (rec.cookSteps && rec.cookSteps.length) ? rec.cookSteps : (rec.steps || r.steps || []);
+        var facts = [r.portions + ' portions', PS.kg(r.batchRaw) + ' raw → ~' + PS.kg(r.batchCooked) + ' cooked'];
+        if (r.cookMethod && r.cookMethod !== '—') facts.push(PS.esc(r.cookMethod));
+        if (r.targetTemp) facts.push('core ' + PS.esc(r.targetTemp) + '°C');
+        if (r.prepTime || r.cookTime) facts.push((n(r.prepTime) + n(r.cookTime)) + ' min');
+        return '<div class="ps-cook">' +
+          '<div class="ps-cook-h">' + PS.box(getComponentStatus(r.name) === 'complete') + '<b>' + PS.esc(r.name) + '</b><span class="ps-tag">' + PS.esc(r.type) + '</span><em>' + facts.join(' · ') + '</em></div>' +
+          '<div class="ps-cook-b"><table class="ps-t ps-mini"><thead><tr><th>Ingredient</th><th class="r">Batch</th></tr></thead><tbody>' + (lines || '<tr><td colspan="2" class="ps-sub">No recipe lines</td></tr>') + '</tbody></table>' +
+            '<div class="ps-steps">' + steps(cookSteps, 'Cook') + steps(rec.finishSteps, 'Finish') + (r.servingNote ? '<div class="ps-sub">' + PS.esc(r.servingNote) + '</div>' : '') + '</div></div>' +
+          '<div class="ps-log"><span>Cooked wt ______ g</span><span>Core temp ______ °C</span><span>Time ______</span><span>Initials ______</span></div>' +
+        '</div>';
+      }).join('');
+  }).join('');
+  return PS.head('Cook sheet', PS.esc(prodWeek() || 'This week') + ' · ' + PS.sessName(prodDrop()),
+      [[prodRows.length, 'components'], [prodRows.reduce(function(s, r){ return s + r.portions; }, 0), 'portions'], [Math.round(totalMins / 6) / 10 + ' h', 'est. hands-on'], [Object.keys(byStation).length, 'stations']]) + body;
+}
+
+/* Packing → box-count summary table, then compact per-dish assembly cards (two across). */
+function psPack() {
+  try { renderPackSheet(); } catch(e) {}
+  var d = window._packPrint;
+  if (!d || !d.dishes.length) return null;
+  var summary = '<table class="ps-t"><thead><tr><th class="c-box"></th><th>Dish</th><th class="r">Sun</th><th class="r">Wed</th><th class="r">Total</th><th>Box</th><th class="r">Tubs</th></tr></thead><tbody>' +
+    d.dishes.map(function(x, i) {
+      return '<tr><td class="c-box">' + PS.box(false) + '</td><td><b>' + (i + 1) + '. ' + PS.esc(x.dish.name) + '</b>' + (x.dish.athleteVariant ? ' <span class="ps-tag">athlete</span>' : '') + '</td>' +
+        '<td class="r mono">' + (x.sun || '—') + '</td><td class="r mono">' + (x.wed || '—') + '</td><td class="r mono"><b>' + x.portions + '</b></td>' +
+        '<td>' + ((x.dish.boxType || '3-compartment') === '3-compartment' ? '3-comp' : 'Single') + '</td><td class="r mono">' + ((n(x.dish.condimentTubs) || 0) * x.portions || '—') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  var cards = d.dishes.map(function(x, i) {
+    return '<div class="ps-pack"><div class="ps-pack-h"><b>' + (i + 1) + '. ' + PS.esc(x.dish.name) + '</b><em>' + x.portions + ' boxes</em></div>' +
+      '<table class="ps-t ps-mini"><tbody>' + x.slots.map(function(s) {
+        return '<tr><td class="ps-sub" style="width:22%">' + s.label + '</td><td>' + PS.esc(s.name) + (s.fin.length ? '<div class="ps-sub">' + s.fin.map(PS.esc).join(' · ') + '</div>' : '') + '</td><td class="r mono"><b>' + s.wt + ' g</b></td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<div class="ps-sub" style="margin-top:4px">' + Math.round(x.totals.kcal) + ' kcal · P ' + x.totals.prot.toFixed(0) + 'g · C ' + x.totals.carb.toFixed(0) + 'g · F ' + x.totals.fat.toFixed(0) + 'g' +
+        (x.allergens.length ? ' · <b>Allergens:</b> ' + x.allergens.map(PS.esc).join(', ') : '') + '</div></div>';
+  }).join('');
+  return PS.head('Pack sheet', PS.esc(prodWeek() || 'This week') + ' · ' + PS.esc(d.sessionWord),
+      [[d.tTotal, 'boxes'], [d.t3, '3-compartment'], [d.tSing, 'single'], [d.tTubs, 'condiment tubs']]) +
+    summary + '<div class="ps-h2"><span>Assembly — grams per box</span></div><div class="ps-pack-grid">' + cards + '</div>';
+}
+
+/* Route sheet → one dense row per stop with delivery sign-off. */
+function psRoute() {
+  try { renderRouteSheet(); } catch(e) {}
+  var d = window._routePrint;
+  if (!d || !d.stops.length) return null;
+  var boxes = 0;
+  var rows = d.stops.map(function(s, i) {
+    var c = s.cust, qty = s.dishLines.reduce(function(t, l){ return t + l.qty; }, 0);
+    boxes += qty;
+    var addr = [c.addr1, c.addr2, c.city].filter(Boolean).map(PS.esc).join(', ');
+    return '<tr><td class="mono r"><b>' + (i + 1) + '</b></td>' +
+      '<td><b>' + PS.esc(c.name) + '</b><div>' + addr + ' <b>' + PS.esc(c.postcode || '') + '</b></div>' + (c.phone ? '<div class="ps-sub mono">' + PS.esc(c.phone) + '</div>' : '') +
+        (s.notes ? '<div class="ps-warn">' + s.notes + '</div>' : '') + '</td>' +
+      '<td>' + s.dishLines.map(function(l){ return '<div>' + l.qty + '× ' + PS.esc(l.name) + '</div>'; }).join('') + '</td>' +
+      '<td class="mono">' + PS.esc(s.ord.session || '') + '</td>' +
+      '<td class="c-box">' + PS.box(s.ord.status === 'delivered') + '</td><td class="c-sig"></td></tr>';
+  }).join('');
+  return PS.head('Route sheet', PS.esc(d.week || 'This week') + ' · ' + PS.esc(d.sessionLabel), [[d.stops.length, 'stops'], [boxes, 'boxes']]) +
+    '<table class="ps-t ps-route"><thead><tr><th class="r" style="width:4%">#</th><th style="width:38%">Customer</th><th>Boxes</th><th style="width:10%">Drop</th><th class="c-box">✓</th><th class="c-sig">Time · received by</th></tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+/* Stock → count sheet: system figure beside a blank to write the physical count. */
+function psStock() {
+  var tracked = (DB.ingredients || []).filter(function(i){ return i.trackInventory === true; });
+  if (!tracked.length) return null;
+  var groups = {};
+  tracked.forEach(function(i){ var c = i.cat || 'Other'; (groups[c] = groups[c] || []).push(i); });
+  var body = Object.keys(groups).sort().map(function(cat) {
+    return '<div class="ps-sec"><div class="ps-h2"><span>' + PS.esc(String(cat).replace(/_/g, ' + ')) + '</span></div><table class="ps-t" style="table-layout:fixed"><thead><tr><th style="width:34%">Ingredient</th><th style="width:20%">Location</th><th class="r" style="width:12%">PAR</th><th class="r" style="width:12%">System</th><th class="c-sig">Counted</th></tr></thead><tbody>' +
+      groups[cat].sort(function(a, b){ return a.name.localeCompare(b.name); }).map(function(i) {
+        var r = (DB.inventory || {})[i.id] || {};
+        var par = r.parLevel || i.par || 0;
+        return '<tr><td><b>' + PS.esc(i.name) + '</b></td><td>' + PS.esc(r.location || '') + '</td><td class="r mono">' + (par ? PS.kg(par) : '—') + '</td><td class="r mono">' + PS.kg(r.onHand || 0) + '</td><td class="c-sig"></td></tr>';
+      }).join('') + '</tbody></table></div>';
+  }).join('');
+  return PS.head('Stock count', 'Count everything, write the physical figure, then enter it in Stock', [[tracked.length, 'tracked items']]) + body +
+    '<div class="ps-sign"><span>Counted by</span><span>Date</span><span>Entered</span></div>';
+}
+
+/* Which sheet the current screen prints, or null to fall back to the page's own print styles. */
+function buildPrintSheet() {
+  var active = document.querySelector('.page.active');
+  if (!active) return null;
+  var id = active.id.replace('page-', '');
+  var vis = function(elId){ var el = document.getElementById(elId); return el && el.style.display !== 'none'; };
+  if (id === 'purchasing') return psPurchasing();
+  if (id === 'production') return getProdView() === 'prep' ? psPrep() : psCook();
+  if (id === 'packsheet')  return vis('pack-labels-view') ? null : psPack();
+  if (id === 'delivery' && _deliverySub === 'route') return psRoute();
+  if (id === 'inventory')  return psStock();
+  return null;
+}
+function preparePrintSheet() {
+  var host = document.getElementById('print-sheet');
+  if (!host) { host = document.createElement('div'); host.id = 'print-sheet'; document.body.appendChild(host); }
+  var html = null;
+  try { html = buildPrintSheet(); } catch(e) { console.error('Print sheet failed — using page print', e); }
+  host.innerHTML = html || '';
+  document.body.classList.toggle('ps-on', !!html);
+}
+function clearPrintSheet() {
+  document.body.classList.remove('ps-on');
+  var host = document.getElementById('print-sheet'); if (host) host.innerHTML = '';
+}
+(function() {
+  var nativePrint = window.print.bind(window);
+  window.print = function() { preparePrintSheet(); nativePrint(); };
+  window.addEventListener('beforeprint', function() { if (!document.body.classList.contains('ps-on')) preparePrintSheet(); });
+  window.addEventListener('afterprint', clearPrintSheet);
+})();
 
 // Every legacy per-page setter now delegates to the global context.
 setMenuSession        = function(v, el) { setGlobalSession(v); };
@@ -14894,6 +15199,7 @@ function renderRouteSheet() {
   }
 
   var bodyEl = document.getElementById('route-sheet-body');
+  window._routePrint = null;
   if (!bodyEl) return;
 
   if (!orders.length) {
@@ -14908,6 +15214,7 @@ function renderRouteSheet() {
 
   var sessionLabel = _routeSession === 'all' ? 'All Sessions' : _routeSession;
   var today = new Date().toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  var _routePrint = window._routePrint = { week: week, sessionLabel: sessionLabel, stops: [] };   // for the print sheet
 
   var html = '<div class="route-sheet-header">' +
     '<div style="font-family:var(--mono);font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:4px">29 Performance &middot; Delivery Route Sheet</div>' +
@@ -14927,6 +15234,7 @@ function renderRouteSheet() {
       cust && cust.notes ? 'Customer note: ' + n2h(cust.notes) : '',
       ord.notes          ? 'Order note: ' + n2h(ord.notes)  : ''
     ].filter(Boolean).join('<br>');
+    _routePrint.stops.push({ cust: cust, ord: ord, dishLines: dishLines, notes: delivNotes });
 
     html += '<div class="route-stop">' +
       '<div class="route-stop-hdr">' +
