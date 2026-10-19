@@ -12521,6 +12521,8 @@ function migrateData() {
     if (o.session === 'S1') o.session = 'Sunday';
     else if (o.session === 'S2') o.session = 'Wednesday';
   });
+  // Deadlines: normalise any older zone-less value ("2026-10-15T21:00", typed in UK time) to UTC ISO
+  ['s1Deadline','s2Deadline','nextS1Deadline','nextS2Deadline'].forEach(function(k) { if (DB[k]) DB[k] = _dlToIso(DB[k]); });
   // Ensure critical arrays always exist and are proper arrays
   // (Firebase can return null or objects for arrays — guard against both)
   if (!Array.isArray(DB.discountCodes)) DB.discountCodes = [];
@@ -13816,6 +13818,21 @@ function togglePortal() {
   notify(open ? '🟢 Portal opened — customers can now order' : '⚫ Portal closed');
 }
 
+/* Deadlines are stored as full UTC ISO strings ("…Z") so every reader — the portal, 29 Connect,
+   a UTC server — gets the same instant. The datetime-local input works in UK local time. */
+function _dlToIso(v) {
+  if (!v) return null;
+  if (/(Z|[+-]\d\d:?\d\d)$/.test(v)) return v;          // already has a zone
+  var d = new Date(v);                                      // naive → this device's local (UK) time
+  return isNaN(d) ? null : d.toISOString();
+}
+function _dlToLocalInput(v) {
+  var d = v ? new Date(v) : null;
+  if (!d || isNaN(d)) return '';
+  var p = function(x){ return String(x).padStart(2, '0'); };
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
 function showPortalSettings() {
   var hasNext = _toggleTargetIsNext();
   var s1key   = hasNext ? 'nextS1Deadline' : 's1Deadline';
@@ -13830,8 +13847,8 @@ function showPortalSettings() {
   var s1L  = document.getElementById('pdl-s1-label');
   var s2L  = document.getElementById('pdl-s2-label');
 
-  if (s1El) s1El.value = DB[s1key] ? DB[s1key].substring(0,16) : '';
-  if (s2El) s2El.value = DB[s2key] ? DB[s2key].substring(0,16) : '';
+  if (s1El) s1El.value = _dlToLocalInput(DB[s1key]);
+  if (s2El) s2El.value = _dlToLocalInput(DB[s2key]);
   if (s1L)  s1L.textContent = '☀ SUNDAY DEADLINE — ' + slotLabel.toUpperCase();
   if (s2L)  s2L.textContent = '🌙 WEDNESDAY DEADLINE — ' + slotLabel.toUpperCase();
   if (s1H)  s1H.textContent = dd.sunday    ? 'Auto-calc: Thu 18:00 before ' + dd.sunday    : 'Tip: set drop dates in Weekly Menu to auto-calc';
@@ -13850,8 +13867,8 @@ function savePortalDeadlines() {
   var s2key = modal.dataset.s2key || 's2Deadline';
   var v1 = (document.getElementById('pdl-s1').value || '').trim();
   var v2 = (document.getElementById('pdl-s2').value || '').trim();
-  DB[s1key] = v1 || null;
-  DB[s2key] = v2 || null;
+  DB[s1key] = _dlToIso(v1);
+  DB[s2key] = _dlToIso(v2);
   // If a new s2 deadline is set in the future, clear the auto-publish suppression flag
   // so the auto-switch can fire at the correct time for this updated deadline.
   if (v2 && new Date(v2) > new Date()) DB.autoPublishFired = false;
@@ -14320,39 +14337,62 @@ function psPrep() {
     body;
 }
 
-/* Production · Cook → per station, one block per component: batch, method, and a log line to fill in. */
+/* Production · Cook → what the chef needs: the dishes and box counts for this drop, then every
+   component to cook grouped by category (Protein / Carb / Veg / Sauce), with portions and the
+   weight of its main ingredient. Full ingredient breakdowns stay on the Prep list and cook cards. */
 function psCook() {
   if (!prodRows.length) return null;
-  var byStation = {};
-  prodRows.forEach(function(r){ var k = r.station || 'Unassigned'; (byStation[k] = byStation[k] || []).push(r); });
-  var totalMins = prodRows.reduce(function(s, r){ return s + n(r.prepTime) + n(r.cookTime); }, 0);
-  var body = Object.keys(byStation).map(function(st) {
-    return '<div class="ps-h2 ps-station"><span>' + PS.esc(st) + '</span><em>' + byStation[st].length + ' component' + (byStation[st].length !== 1 ? 's' : '') + '</em></div>' +
-      byStation[st].map(function(r) {
-        var rec = DB.recipes.find(function(x){ return x.name === r.name && x.status === 'Active'; }) || {};
-        var mult = (r.scaledPorts != null ? r.scaledPorts : r.portions * r.scale) * (r.buf || 1);
-        var lines = (rec.lines || []).map(function(l) {
-          var ing = DB.ingredients.find(function(x){ return x.id === l.ingId; });
-          return '<tr><td>' + PS.esc(ing ? ing.name : l.ingId) + (l.prepNeeded === false ? ' <span class="ps-sub">· add while cooking</span>' : '') + '</td><td class="r mono">' + PS.kg(n(l.qty) * mult) + '</td></tr>';
-        }).join('');
-        var steps = function(arr, label) {
-          return (arr && arr.length) ? '<div class="ps-phase">' + label + '</div><ol>' + arr.map(function(s){ return '<li>' + PS.esc(s) + '</li>'; }).join('') + '</ol>' : '';
-        };
-        var cookSteps = (rec.cookSteps && rec.cookSteps.length) ? rec.cookSteps : (rec.steps || r.steps || []);
-        var facts = [r.portions + ' portions', PS.kg(r.batchRaw) + ' raw → ~' + PS.kg(r.batchCooked) + ' cooked'];
-        if (r.cookMethod && r.cookMethod !== '—') facts.push(PS.esc(r.cookMethod));
-        if (r.targetTemp) facts.push('core ' + PS.esc(r.targetTemp) + '°C');
-        if (r.prepTime || r.cookTime) facts.push((n(r.prepTime) + n(r.cookTime)) + ' min');
-        return '<div class="ps-cook">' +
-          '<div class="ps-cook-h">' + PS.box(getComponentStatus(r.name) === 'complete') + '<b>' + PS.esc(r.name) + '</b><span class="ps-tag">' + PS.esc(r.type) + '</span><em>' + facts.join(' · ') + '</em></div>' +
-          '<div class="ps-cook-b"><table class="ps-t ps-mini"><thead><tr><th>Ingredient</th><th class="r">Batch</th></tr></thead><tbody>' + (lines || '<tr><td colspan="2" class="ps-sub">No recipe lines</td></tr>') + '</tbody></table>' +
-            '<div class="ps-steps">' + steps(cookSteps, 'Cook') + steps(rec.finishSteps, 'Finish') + (r.servingNote ? '<div class="ps-sub">' + PS.esc(r.servingNote) + '</div>' : '') + '</div></div>' +
-          '<div class="ps-log"><span>Cooked wt ______ g</span><span>Core temp ______ °C</span><span>Time ______</span><span>Initials ______</span></div>' +
-        '</div>';
-      }).join('');
+  var drop = prodDrop();
+  var dishes = getProductionDishes().filter(function(d){ return d.category !== 'side' && dishPortions(d, drop) > 0; });
+  var boxes = dishes.reduce(function(s, d){ return s + dishPortions(d, drop); }, 0);
+  var compName = function(nm){ var c = getComp(nm); return c ? c.name : nm; };
+  var dishRows = dishes.map(function(d) {
+    var comps = ['protein', 'carb', 'veg', 'condiment', 'complete'].filter(function(k){ return d[k]; }).map(function(k){ return PS.esc(compName(d[k])); });
+    return '<tr><td class="c-box">' + PS.box(false) + '</td><td><b>' + PS.esc(d.name) + '</b>' + (d.athleteVariant ? ' <span class="ps-tag">athlete</span>' : '') + '</td>' +
+      '<td class="r mono"><b>' + dishPortions(d, drop) + '</b></td><td class="ps-how">' + comps.join(' · ') + '</td></tr>';
   }).join('');
-  return PS.head('Cook sheet', PS.esc(prodWeek() || 'This week') + ' · ' + PS.sessName(prodDrop()),
-      [[prodRows.length, 'components'], [prodRows.reduce(function(s, r){ return s + r.portions; }, 0), 'portions'], [Math.round(totalMins / 6) / 10 + ' h', 'est. hands-on'], [Object.keys(byStation).length, 'stations']]) + body;
+
+  // Main ingredient(s) = the heaviest recipe line at batch quantity (incl. buffer), plus a second
+  // one when it's nearly as heavy (e.g. pepper + courgette), so a mixed component isn't misread.
+  var mainIngs = function(r) {
+    var rec = DB.recipes.find(function(x){ return x.name === r.name && x.status === 'Active'; }) || {};
+    var mult = (r.scaledPorts != null ? r.scaledPorts : r.portions * r.scale) * (r.buf || 1);
+    var lines = (rec.lines || []).slice().sort(function(a, b){ return n(b.qty) - n(a.qty); });
+    if (!lines.length) return [{ name: '—', g: 0 }];
+    return lines.filter(function(l, i){ return i === 0 || (i === 1 && n(l.qty) >= n(lines[0].qty) * 0.6); }).map(function(l) {
+      var ing = DB.ingredients.find(function(x){ return x.id === l.ingId; });
+      return { name: ing ? ing.name : l.ingId, g: n(l.qty) * mult, unit: ing && n(ing.unitWeight) > 0 ? { w: n(ing.unitWeight), name: ing.unitName || 'unit' } : null };
+    });
+  };
+  var order = ['Protein', 'Carb', 'Veg', 'Condiment', 'Complete'];
+  var label = { Condiment: 'Sauces & condiments', Complete: 'Complete dishes' };
+  var groups = {};
+  prodRows.forEach(function(r){ (groups[r.type] = groups[r.type] || []).push(r); });
+  var cats = order.filter(function(c){ return groups[c]; }).concat(Object.keys(groups).filter(function(c){ return order.indexOf(c) === -1; }));
+  var body = cats.map(function(cat) {
+    var rows = groups[cat].slice().sort(function(a, b){ return b.portions - a.portions || a.name.localeCompare(b.name); }).map(function(r) {
+      var ms = mainIngs(r);
+      var units = function(m){ return m.unit ? ' <span class="ps-sub">≈' + Math.ceil(m.g / m.unit.w) + ' ' + PS.esc(m.unit.name) + '</span>' : ''; };
+      var how = [r.cookMethod && r.cookMethod !== '—' ? PS.esc(r.cookMethod) : '', r.targetTemp ? 'core ' + PS.esc(r.targetTemp) + '°C' : '', n(r.cookTime) ? n(r.cookTime) + ' min' : ''].filter(Boolean).join(' · ');
+      return '<tr><td class="c-box">' + PS.box(getComponentStatus(r.name) === 'complete') + '</td>' +
+        '<td><b>' + PS.esc(r.name) + '</b>' + (how ? '<div class="ps-sub">' + how + '</div>' : '') + '</td>' +
+        '<td class="r mono"><b>' + r.portions + '</b></td>' +
+        '<td>' + ms.map(function(m){ return '<div>' + PS.esc(m.name) + '</div>'; }).join('') + '</td>' +
+        '<td class="r mono">' + ms.map(function(m){ return '<div><b>' + PS.kg(m.g) + '</b>' + units(m) + '</div>'; }).join('') + '</td>' +
+        '<td class="r mono ps-sub">~' + PS.kg(r.batchCooked) + '</td>' +
+        '<td class="c-sig"></td></tr>';
+    }).join('');
+    return '<div class="ps-sec"><div class="ps-h2"><span>' + (label[cat] || PS.esc(cat)) + '</span><em>' + groups[cat].length + ' to cook</em></div>' +
+      '<table class="ps-t" style="table-layout:fixed"><thead><tr><th class="c-box"></th><th style="width:27%">Component</th><th class="r" style="width:9%">Portions</th>' +
+      '<th style="width:20%">Main ingredient(s)</th><th class="r" style="width:13%">Weight</th><th class="r" style="width:10%">Cooked</th><th class="c-sig">Cooked wt · core °C</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }).join('');
+  var totalMins = prodRows.reduce(function(s, r){ return s + n(r.prepTime) + n(r.cookTime); }, 0);
+  return PS.head('Cook sheet', PS.esc(prodWeek() || 'This week') + ' · ' + PS.sessName(drop),
+      [[dishes.length, 'dishes'], [boxes, 'boxes'], [prodRows.length, 'components'], [Math.round(totalMins / 6) / 10 + ' h', 'est. time'], [prodBufferPct() > 0 ? '+' + prodBufferPct() + '%' : '—', 'buffer incl.']]) +
+    '<div class="ps-sec"><div class="ps-h2"><span>Dishes this drop</span><em>' + boxes + ' boxes</em></div>' +
+    '<table class="ps-t"><thead><tr><th class="c-box"></th><th style="width:34%">Dish</th><th class="r" style="width:8%">Boxes</th><th>Components</th></tr></thead><tbody>' + dishRows + '</tbody></table></div>' +
+    body +
+    '<div class="ps-note">Weights are the main ingredient for the whole batch, including the protein &amp; carb buffer. Full recipes and every ingredient are on the cook cards and the Prep list.</div>';
 }
 
 /* Packing → box-count summary table, then compact per-dish assembly cards (two across). */
