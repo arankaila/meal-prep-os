@@ -2935,6 +2935,15 @@ body:not(.inv-detail) #inv-history{display:none !important;}
   .topbar-right .tabs{flex-wrap:nowrap !important;}
 }
 @media print{ .pl-help,.sh-some,.sh-actions{display:none !important;} }
+
+/* ── 29 Connect import strip + badge ─────────────────────────────── */
+.cx-badge{display:inline-block;font:700 9px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold);border-radius:4px;padding:1px 5px;vertical-align:1px;}
+.cx-strip{border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--text2);}
+.cx-strip.warn{border-color:rgba(220,159,114,.5);}
+.cx-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.cx-x{margin-left:auto;border:0;background:none;color:var(--text3);cursor:pointer;font-size:12px;}
+.cx-p{margin-top:6px;padding-left:8px;border-left:2px solid var(--amber);}
+.cx-note{margin-top:6px;color:var(--text3);}
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -3741,6 +3750,7 @@ body:not(.inv-detail) #inv-history{display:none !important;}
       <div id="orders-orphan-warning" style="display:none"></div>
 
       <!-- Summary + filters -->
+      <div id="connect-strip" class="no-print"></div>
       <div class="ord-bar no-print">
         <div class="ord-summary" id="orders-summary"></div>
         <div class="ord-filters">
@@ -6992,7 +7002,8 @@ function recalcDishPortions(slotOrLabel) {
   dishes.forEach(function(dish){
     // Athlete variants AND sides are manually planned (add-ons / no portal orders yet) —
     // preserve their manual drop1/drop2 rather than zeroing them to order counts.
-    if(!dish.athleteVariant && dish.category!=='side'){ dish.drop1=s1[dish.id]||0; dish.drop2=s2[dish.id]||0; }
+    // 29 Connect variants (connectLineId) have real orders, so they are order-driven too.
+    if((!dish.athleteVariant || dish.connectLineId) && dish.category!=='side'){ dish.drop1=s1[dish.id]||0; dish.drop2=s2[dish.id]||0; }
   });
 }
 
@@ -12076,6 +12087,8 @@ function _startFbListener() {
   _fbRef.on('value', function(snap) {
     var remote = snap.val();
     if (!remote) return;
+    // 29 Connect inbox starts after this first snapshot is handled (never imports into stale data)
+    if (!_connectReady) setTimeout(function(){ try { connectInboxStart(); } catch(e) {} }, 0);
 
     // ── Always merge new orders ───────────────────────────────────────────────
     // Portal writes orders via targeted update() — these don't change _ts, so
@@ -12352,9 +12365,16 @@ function _publishPublicMenu() {
     return { id: r.id, name: r.name, status: r.status,
              lines: (r.lines || []).map(function(l) { return { ingId: l.ingId, qty: l.qty }; }) };
   });
+  // Athlete variant dishes ("<Dish> (Athlete: <Name>)", with athleteIds) are
+  // personal data tied to an athlete's plan. Never publish them: the portal and
+  // the main site's menu page only show standard dishes.
+  function _publicDishes(arr) {
+    var list = Array.isArray(arr) ? arr : Object.values(arr || {});   // tolerate a keyed object
+    return list.filter(function(d) { return d && !d.athleteVariant; });
+  }
   var pub = {
-    menuDishes:        DB.menuDishes        || [],
-    nextMenuDishes:    DB.nextMenuDishes    || [],
+    menuDishes:        _publicDishes(DB.menuDishes),
+    nextMenuDishes:    _publicDishes(DB.nextMenuDishes),
     ingredients:       slimIngredients,
     recipes:           slimRecipes,
     menuPublished:     !!DB.menuPublished,
@@ -14629,6 +14649,209 @@ function toggleInvDetail() {
   renderShelf();
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 29 CONNECT INBOX (Oct 2026) — agreed athlete meals arrive from 29 Connect as
+// batches at 29perfOS/connect/outbox/{batchId} (NOT in data/: a later whole-blob
+// save would wipe anything written there). The ERP imports each pending batch
+// through its normal save: one variant dish per meal line (scales exactly as
+// sent, never recalculated) and one order per athlete per drop, so purchasing,
+// production, labels, pack sheet, Box Board and delivery all work off real orders.
+// Results are written back to the batch's `result` field (the only part the ERP
+// may write). Idempotent: lineIds and order ids are stable, so a re-send updates.
+// ═══════════════════════════════════════════════════════════════════════════
+var CONNECT_TOL_G = 1;            // P/C/F must match 29 Connect's figures within 1 g
+var CONNECT_TOL_KCAL = 10;
+var _connectRef = null, _connectReady = false, _connectBatches = {}, _connectBusy = {};
+
+function _cArr(x) { return Array.isArray(x) ? x.filter(Boolean) : Object.values(x || {}).filter(Boolean); }
+function _cTime(s) { var t = Date.parse(s || ''); return isNaN(t) ? 0 : t; }
+
+/* Called once the first cloud snapshot has been handled — never import into an empty/stale DB. */
+function connectInboxStart() {
+  _connectReady = true;
+  if (_connectRef || !_fbDb) { _connectDrain(); return; }
+  _connectRef = _fbDb.ref('29perfOS/connect/outbox');
+  _connectRef.limitToLast(50).on('value', function(snap) {
+    _connectBatches = snap.val() || {};
+    _connectDrain();
+  }, function(err) { console.warn('29 Connect inbox unavailable', err && err.code); });
+}
+
+/* Does this batch still need importing? New, re-sent since our last result, a stale claim,
+   or an earlier "accepted" import whose dishes never reached the cloud (lost save). */
+function _connectNeedsWork(b) {
+  if (!b || !b.batchId) return false;
+  var r = b.result;
+  if (!r) return true;
+  if (r.status === 'processing') return Date.now() - (r.claimedAt || 0) > 120000;
+  if (_cTime(r.processedAt) < _cTime(b.createdAt)) return true;
+  var lbl = b.slot === 'next' ? DB.nextMenuWeekLabel : DB.menuWeekLabel;
+  if (!lbl || b.week !== lbl) return false;                       // week has moved on — leave it
+  var all = (DB.menuDishes || []).concat(DB.nextMenuDishes || []);
+  return Object.keys(r.lines || {}).some(function(k) {
+    var l = r.lines[k];
+    return l && l.ok && !all.some(function(d) { return d.connectLineId === k; });
+  });
+}
+
+function _connectDrain() {
+  if (!_connectReady || !_connectRef) return;
+  Object.keys(_connectBatches).forEach(function(id) {
+    var b = _connectBatches[id];
+    if (_connectBusy[id] || !_connectNeedsWork(b)) return;
+    _connectBusy[id] = true;
+    // Claim the batch so two open ERP devices don't both import it.
+    _connectRef.child(id).child('result').transaction(function(cur) {
+      if (cur && !_connectNeedsWork(Object.assign({}, b, { result: cur }))) return;   // done, or another device has it
+      return { status: 'processing', claimedAt: Date.now() };
+    }, function(err, committed) {
+      if (err || !committed) { _connectBusy[id] = false; return; }
+      var res;
+      try { res = connectImportBatch(b); }
+      catch (e) { console.error('29 Connect import failed', e); res = { status: 'rejected', processedAt: new Date().toISOString(), error: 'ERP error: ' + e.message, lines: {} }; }
+      _connectRef.child(id).child('result').set(res).then(function() { _connectBusy[id] = false; }, function() { _connectBusy[id] = false; });
+    });
+  });
+}
+
+/* Import one batch. Pure ERP-side work; returns the result object written back to 29 Connect. */
+function connectImportBatch(b) {
+  var res = { status: 'rejected', processedAt: new Date().toISOString(), lines: {}, error: null };
+  var slot = b.slot === 'next' ? 'next' : 'current';
+  var label = slot === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
+  if (!label || b.week !== label) {
+    res.error = 'Week "' + (b.week || '') + '" is not the ERP\'s ' + slot + ' week ("' + (label || 'not set') + '")';
+    _connectLog(b, res, []);
+    return res;
+  }
+  var key = slot === 'next' ? 'nextMenuDishes' : 'menuDishes';
+  if (!Array.isArray(DB[key])) DB[key] = _cArr(DB[key]);
+  var dishes = DB[key];
+  var weekKey = label.replace(/[^A-Za-z0-9]+/g, '');
+  var problems = [], okN = 0, badN = 0, athN = 0;
+
+  _cArr(b.athletes).forEach(function(a) {
+    if (!a.connectAthleteId) return;
+    athN++;
+    var athKey = 'C29_' + a.connectAthleteId;
+    var allergens = _cArr(a.allergens);
+    // Minimal ERP athlete record so labels, pack sheet and partnership costing can show the name
+    if (!Array.isArray(DB.athletes)) DB.athletes = _cArr(DB.athletes);
+    var ath = DB.athletes.find(function(x) { return x.id === athKey; });
+    if (!ath) { ath = { id: athKey, targets: [] }; DB.athletes.push(ath); }
+    ath.name = a.name || ath.name || 'Athlete'; ath.allergens = allergens; ath.source = '29connect'; ath.connectAthleteId = a.connectAthleteId;
+
+    var keep = {};                                   // lineId → dish that stays on the order
+    _cArr(a.meals).forEach(function(m) {
+      var line = { ok: false, dishId: null, orderId: null, actual: null, error: null };
+      var drop = m.drop === 'sunday' || m.drop === 'wednesday' ? m.drop : null;
+      var existing = dishes.find(function(d) { return d.connectLineId === m.lineId; });
+      var base = dishes.find(function(d) { return d.id === m.baseDishId && !d.athleteVariant; });
+      var sc = [m.scaleProtein, m.scaleCarb, m.scaleVeg == null ? 1 : m.scaleVeg].map(Number);
+      if (!m.lineId) line.error = 'Missing lineId';
+      else if (!drop) line.error = 'Drop must be "sunday" or "wednesday"';
+      else if (!base) line.error = 'Dish ' + m.baseDishId + ' is not on the ' + slot + ' menu';
+      else if (base.category === 'side') line.error = 'Sides can\'t be athlete meals';
+      else if (sc.some(function(x) { return !(x > 0 && x <= 5); })) line.error = 'Scales must be above 0 and at most 5';
+      else if (_athAllergenClash(base, { allergens: allergens })) line.error = 'Allergen clash (' + allergens.join(', ') + ')';
+      else {
+        var v = JSON.parse(JSON.stringify(base));
+        v.scaleProtein = sc[0]; v.scaleCarb = sc[1]; v.scaleVeg = sc[2]; v.scaleOverall = 1;
+        var t = calcDishTotals(v), e = m.expected || {};
+        line.actual = { p: Math.round(t.prot * 10) / 10, c: Math.round(t.carb * 10) / 10, f: Math.round(t.fat * 10) / 10, kcal: Math.round(t.kcal) };
+        var off = Math.abs(t.prot - n(e.p)) > CONNECT_TOL_G || Math.abs(t.carb - n(e.c)) > CONNECT_TOL_G ||
+                  Math.abs(t.fat - n(e.f)) > CONNECT_TOL_G || (e.kcal != null && Math.abs(t.kcal - n(e.kcal)) > CONNECT_TOL_KCAL);
+        if (off) line.error = 'mismatch: ERP gives P' + line.actual.p + ' C' + line.actual.c + ' F' + line.actual.f + ' — a recipe probably changed after 29 Connect read it';
+        else {
+          // Create or update the variant (same component recipes as the base, exact scales as sent)
+          var keepId = existing ? existing.id : 'DISH' + String(DB.nextDishId++).padStart(3, '0');
+          var carry = existing ? { fillProgress: existing.fillProgress, packProgress: existing.packProgress } : {};
+          Object.assign(v, carry, {
+            id: keepId, name: base.name + ' (Athlete: ' + ath.name + (m.mealLabel ? ' · ' + m.mealLabel : '') + ')',
+            athleteVariant: true, athleteIds: [athKey], source: '29connect',
+            connectLineId: m.lineId, connectAthleteId: a.connectAthleteId, connectBaseId: base.id,
+            mealLabel: m.mealLabel || '', connectDrop: drop, drop1: 0, drop2: 0, availSunday: true, availWednesday: true
+          });
+          if (existing) dishes[dishes.indexOf(existing)] = v; else dishes.push(v);
+          existing = v; line.ok = true; line.dishId = v.id;
+        }
+      }
+      if (existing && m.lineId) keep[m.lineId] = existing;     // a failed update leaves the previous version in place
+      if (line.ok) okN++; else { badN++; problems.push({ athlete: ath.name, meal: (m.mealLabel || m.lineId || '?') + (drop ? ' · ' + drop : ''), error: line.error }); }
+      res.lines[m.lineId || ('missing_' + badN)] = line;
+    });
+
+    // Meals dropped from this re-send: delete their variant dishes
+    for (var i = dishes.length - 1; i >= 0; i--) {
+      var d = dishes[i];
+      if (d.connectLineId && d.connectAthleteId === a.connectAthleteId && !keep[d.connectLineId]) dishes.splice(i, 1);
+    }
+    // One order per athlete per drop (every ERP screen treats an order as one delivery)
+    ['sunday', 'wednesday'].forEach(function(drop) {
+      var oid = 'C29_' + a.connectAthleteId + '_' + weekKey + '_' + (drop === 'sunday' ? 'SUN' : 'WED');
+      var alloc = {};
+      Object.keys(keep).forEach(function(lid) { if (keep[lid].connectDrop === drop) alloc[keep[lid].id] = 1; });
+      if (!Array.isArray(DB.weeklyOrders)) DB.weeklyOrders = _cArr(DB.weeklyOrders);
+      var idx = DB.weeklyOrders.findIndex(function(o) { return o.id === oid; });
+      if (!Object.keys(alloc).length) {
+        if (idx >= 0) { DB.weeklyOrders.splice(idx, 1); _tombstone(oid); }
+        return;
+      }
+      var email = String(a.customerEmail || '').toLowerCase().trim();
+      var cust = email ? (DB.customers || []).find(function(c) { return String(c.email || '').toLowerCase().trim() === email; }) : null;
+      var prev = idx >= 0 ? DB.weeklyOrders[idx] : {};
+      var o = Object.assign({}, prev, {
+        id: oid, customerId: cust ? cust.id : (prev.customerId || null), recipientName: ath.name,
+        week: label, slot: slot, session: drop === 'sunday' ? 'Sunday' : 'Wednesday',
+        allocation: alloc, status: prev.status || 'confirmed', source: '29connect',
+        payStatus: a.payStatus || prev.payStatus || 'comped', connectBatchId: b.batchId,
+        connectAthleteId: a.connectAthleteId,
+        createdAt: prev.createdAt || new Date().toISOString(), confirmedAt: prev.confirmedAt || new Date().toISOString(),
+        packProgress: prev.packProgress || {}
+      });
+      if (idx >= 0) DB.weeklyOrders[idx] = o; else { _untombstone(oid); DB.weeklyOrders.push(o); }
+      Object.keys(alloc).forEach(function(did) {
+        var lid = Object.keys(keep).find(function(k) { return keep[k].id === did; });
+        if (res.lines[lid]) res.lines[lid].orderId = oid;
+      });
+    });
+  });
+
+  res.status = !badN && okN ? 'accepted' : okN ? 'partial' : 'rejected';
+  if (!athN) res.error = 'No athletes in batch';
+  try { recalcDishPortions(slot); } catch (e) {}
+  _connectLog(b, res, problems, athN, okN);
+  save();
+  rerenderActivePage();
+  notify('29 Connect: ' + athN + ' athlete' + (athN !== 1 ? 's' : '') + ', ' + okN + ' meal' + (okN !== 1 ? 's' : '') + ' added' + (badN ? ' · ' + badN + ' need attention (see Orders)' : ''));
+  return res;
+}
+
+function _connectLog(b, res, problems, athN, okN) {
+  if (!Array.isArray(DB.connectLog)) DB.connectLog = [];
+  DB.connectLog.unshift({ batchId: b.batchId, at: res.processedAt, status: res.status, week: b.week || '',
+    athletes: athN || 0, meals: okN || 0, error: res.error || null, problems: problems || [] });
+  DB.connectLog = DB.connectLog.slice(0, 10);
+  if (res.error && !problems.length) { save(); notify('29 Connect batch not imported: ' + res.error); }
+}
+
+/* Orders page strip: the latest import, with anything that needs re-sending from 29 Connect. */
+function renderConnectStrip() {
+  var el = document.getElementById('connect-strip');
+  if (!el) return;
+  var last = (DB.connectLog || [])[0];
+  if (!last) { el.innerHTML = ''; return; }
+  var when = new Date(last.at).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  var bad = (last.problems || []).length || last.error;
+  el.innerHTML = '<div class="cx-strip' + (bad ? ' warn' : '') + '"><div class="cx-h"><span class="cx-badge">29 Connect</span>' +
+    '<span>' + (last.error && !last.meals ? 'Batch not imported' : last.athletes + ' athlete' + (last.athletes !== 1 ? 's' : '') + ', ' + last.meals + ' meal' + (last.meals !== 1 ? 's' : '') + ' added') + ' · ' + escHtml(last.week) + ' · ' + when + '</span>' +
+    '<button class="cx-x" onclick="DB.connectLog=[];save();renderConnectStrip()" title="Dismiss">✕</button></div>' +
+    (last.error ? '<div class="cx-p">' + escHtml(last.error) + '</div>' : '') +
+    (last.problems || []).map(function(p) { return '<div class="cx-p"><b>' + escHtml(p.athlete) + '</b> · ' + escHtml(p.meal) + ': ' + escHtml(p.error) + '</div>'; }).join('') +
+    (bad ? '<div class="cx-note">Fix these in 29 Connect and send again. Nothing else was changed for these meals.</div>' : '') + '</div>';
+}
+
+
 // Every legacy per-page setter now delegates to the global context.
 setMenuSession        = function(v, el) { setGlobalSession(v); };
 setPackSession        = function(v, el) { setGlobalSession(v); };
@@ -14978,6 +15201,7 @@ function setOrderStatusFilter(status, btn) {
 
 function renderOrdersPanel() {
   migrateOrderSlots();
+  try { renderConnectStrip(); } catch(e) {}
 
   var slotFilter = window._orderSlotFilter || 'current'; // 'current' or 'next'
   var sessionFilter = window._orderSessionFilter || 'all';
@@ -15158,11 +15382,11 @@ function renderOrderCard(ord, dishes) {
   // Portal orders are paid at Stripe checkout, so the pill only shows if one isn't paid.
   var payPill = '';
   if (status!=='cancelled') {
-    if (source==='manual') payPill = '<span class="order-status-badge pay-'+pay+'" onclick="cyclePayStatus(\''+ord.id+'\')" title="Tap to cycle: Unpaid → Paid → Comped">'+payStatusLabel(pay)+'</span>';
+    if (source==='manual' || source==='29connect') payPill = '<span class="order-status-badge pay-'+pay+'" onclick="cyclePayStatus(\''+ord.id+'\')" title="Tap to cycle: Unpaid → Paid → Comped">'+payStatusLabel(pay)+'</span>';
     else if (pay!=='paid') payPill = '<span class="order-status-badge pay-'+pay+'" style="cursor:default">'+payStatusLabel(pay)+'</span>';
   }
   var statusPill = (status==='pending' || status==='cancelled') ? '<span class="order-status-badge '+status+'">'+orderStatusLabel(status)+'</span>' : '';
-  var meta = [sessLabel, source==='manual' ? 'Manual' : '', postcode ? n2h(postcode) : '', phone ? n2h(phone) : ''].filter(Boolean).join(' · ');
+  var meta = [sessLabel, source==='manual' ? 'Manual' : source==='29connect' ? '<span class="cx-badge">29 Connect</span>' : '', postcode ? n2h(postcode) : '', phone ? n2h(phone) : ''].filter(Boolean).join(' · ');
 
   return '<div class="order-card'+(status==='cancelled'?' ord-cancelled':'')+(status==='pending'?' ord-pending':'')+'" id="oc-'+ord.id+'">' +
     '<div class="oc-top">' +
@@ -15653,7 +15877,7 @@ function renderLabels() {
       var qty = Math.max(0, Math.round(ord.allocation[dId] || 0));
       if (qty < 1) return;
       var dish = dishes.find(function(d) { return d.id === dId; });
-      if (!dish || dish.athleteVariant) return; // athlete dishes handled via drops below
+      if (!dish || (dish.athleteVariant && !dish.connectLineId)) return; // hand-made athlete dishes handled via drops below
       for (var q = 0; q < qty; q++) {
         standardItems.push({ ord: ord, dish: dish, qIdx: q + 1, qtyTotal: qty });
       }
@@ -15663,7 +15887,7 @@ function renderLabels() {
   // Athlete labels from dish drops — mirrors pack sheet logic, no manual order needed
   var wantSunday    = _labelSession === 'all' || _labelSession.toLowerCase() === 'sunday';
   var wantWednesday = _labelSession === 'all' || _labelSession.toLowerCase() === 'wednesday';
-  dishes.filter(function(d) { return d.athleteVariant; }).forEach(function(dish) {
+  dishes.filter(function(d) { return d.athleteVariant && !d.connectLineId; }).forEach(function(dish) {
     var d1 = Math.round(n(dish.drop1) || 0);
     var d2 = Math.round(n(dish.drop2) || 0);
     var athId  = (dish.athleteIds || [])[0] || '';
@@ -16390,7 +16614,7 @@ function bbBoxGroups() {
   });
   // Athlete variants have no real order — add their boxes from the dish's manual Sun/Wed
   // drops (mirrors pack-sheet & label logic). Fill state lives on the dish, keyed by box id.
-  dishes.filter(function(d){ return d.athleteVariant; }).forEach(function(d){
+  dishes.filter(function(d){ return d.athleteVariant && !d.connectLineId; }).forEach(function(d){
     var athName = (d.athleteIds||[]).map(function(aId){ var a=(DB.athletes||[]).find(function(x){return x.id===aId;}); return a?a.name:''; }).filter(Boolean).join(' / ') || 'Athlete';
     [['sunday','S',n(d.drop1)||0],['wednesday','W',n(d.drop2)||0]].forEach(function(pr){
       if (pr[2] <= 0) return;
