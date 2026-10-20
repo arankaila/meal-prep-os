@@ -2829,6 +2829,8 @@ details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
 #print-sheet .ps-pack-h b{font-size:10.5pt;}
 #print-sheet .ps-pack-h em{font-style:normal;font-weight:700;font-size:9.5pt;}
 #print-sheet .ps-route td{padding-top:6px;padding-bottom:6px;}
+#print-sheet .ps-break{break-after:page;page-break-after:always;}
+#print-sheet .ps-fit{padding-right:6px;}   /* zoomed sheets round up a few px — keep right-aligned text inside the page */
 /* Neutralise the app-wide print table styles inside the sheet */
 #print-sheet table,#print-sheet th,#print-sheet td,#print-sheet tr{background:transparent !important;border-left:0 !important;border-right:0 !important;height:auto !important;min-height:0 !important;box-shadow:none !important;color:#111 !important;}
 #print-sheet .ps-t th{color:#666 !important;font-size:7pt !important;}
@@ -14387,12 +14389,12 @@ function psCook() {
       '<th style="width:20%">Main ingredient(s)</th><th class="r" style="width:13%">Weight</th><th class="r" style="width:10%">Cooked</th><th class="c-sig">Cooked wt · core °C</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }).join('');
   var totalMins = prodRows.reduce(function(s, r){ return s + n(r.prepTime) + n(r.cookTime); }, 0);
-  return PS.head('Cook sheet', PS.esc(prodWeek() || 'This week') + ' · ' + PS.sessName(drop),
+  return '<div class="ps-fit"><div class="ps-part">' + PS.head('Cook sheet', PS.esc(prodWeek() || 'This week') + ' · ' + PS.sessName(drop),
       [[dishes.length, 'dishes'], [boxes, 'boxes'], [prodRows.length, 'components'], [Math.round(totalMins / 6) / 10 + ' h', 'est. time'], [prodBufferPct() > 0 ? '+' + prodBufferPct() + '%' : '—', 'buffer incl.']]) +
     '<div class="ps-sec"><div class="ps-h2"><span>Dishes this drop</span><em>' + boxes + ' boxes</em></div>' +
-    '<table class="ps-t"><thead><tr><th class="c-box"></th><th style="width:34%">Dish</th><th class="r" style="width:8%">Boxes</th><th>Components</th></tr></thead><tbody>' + dishRows + '</tbody></table></div>' +
-    body +
-    '<div class="ps-note">Weights are the main ingredient for the whole batch, including the protein &amp; carb buffer. Full recipes and every ingredient are on the cook cards and the Prep list.</div>';
+    '<table class="ps-t"><thead><tr><th class="c-box"></th><th style="width:34%">Dish</th><th class="r" style="width:8%">Boxes</th><th>Components</th></tr></thead><tbody>' + dishRows + '</tbody></table></div></div>' +
+    '<div class="ps-part">' + body +
+    '<div class="ps-note">Weights are the main ingredient for the whole batch, including the protein &amp; carb buffer. Full recipes and every ingredient are on the cook cards and the Prep list.</div></div></div>';
 }
 
 /* Packing → box-count summary table, then compact per-dish assembly cards (two across). */
@@ -14478,6 +14480,31 @@ function preparePrintSheet() {
   try { html = buildPrintSheet(); } catch(e) { console.error('Print sheet failed — using page print', e); }
   host.innerHTML = html || '';
   document.body.classList.toggle('ps-on', !!html);
+  if (html && host.querySelector('.ps-fit')) try { psFitToPages(host); } catch(e) { console.warn('fit-to-page', e); }
+}
+/* Fit a .ps-fit sheet to A4: one page (shrunk slightly if needed); if that would make text too
+   small, part 1 on page 1 and part 2 on page 2, each shrunk to fit its page. Measured off-screen
+   at the printable width (A4 minus the 10mm side / 12mm top-bottom @page margins). */
+function psFitToPages(host) {
+  var MM = 96 / 25.4, PAGE_W = 190 * MM, PAGE_H = 273 * MM * 0.96, MIN_ONE_PAGE = 0.72, MIN_ZOOM = 0.72;   // never shrink text below ~6.5pt — a third page beats unreadable
+  var fit = host.querySelector('.ps-fit'), parts = fit.querySelectorAll('.ps-part');
+  var prevStyle = host.getAttribute('style');
+  host.style.cssText = 'display:block;position:absolute;left:-10000px;top:0;width:' + PAGE_W + 'px;visibility:hidden';
+  fit.style.zoom = '';
+  parts.forEach(function(p){ p.style.zoom = ''; p.classList.remove('ps-break'); });
+  var total = fit.getBoundingClientRect().height;
+  if (total > PAGE_H) {
+    var z = PAGE_H / total;
+    if (z >= MIN_ONE_PAGE) fit.style.zoom = z.toFixed(3);
+    else {
+      parts[0].classList.add('ps-break');
+      parts.forEach(function(p) {
+        var h = p.getBoundingClientRect().height;
+        if (h > PAGE_H) p.style.zoom = Math.max(PAGE_H / h, MIN_ZOOM).toFixed(3);
+      });
+    }
+  }
+  if (prevStyle) host.setAttribute('style', prevStyle); else host.removeAttribute('style');
 }
 function clearPrintSheet() {
   document.body.classList.remove('ps-on');
