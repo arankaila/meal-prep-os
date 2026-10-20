@@ -2946,6 +2946,7 @@ body:not(.inv-detail) #inv-history{display:none !important;}
 .cx-x{margin-left:auto;border:0;background:none;color:var(--text3);cursor:pointer;font-size:12px;}
 .cx-p{margin-top:6px;padding-left:8px;border-left:2px solid var(--amber);}
 .cx-note{margin-top:6px;color:var(--text3);}
+.cx-warn{flex-basis:100%;width:100%;font-size:12px;color:var(--text2);background:rgba(220,159,114,.10);border:1px solid rgba(220,159,114,.45);border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.45;}
 </style>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
@@ -7368,12 +7369,16 @@ function menuToggleCardEdit(idx) {
   if (!editEl) return;
   var isOpen = editEl.style.display !== 'none';
   editEl.style.display = isOpen ? 'none' : 'flex';
+  var _cxd = getSlotDishes()[idx];
+  if (!isOpen && _cxd && _cxd.source === '29connect' && !editEl.querySelector('.cx-warn'))
+    editEl.insertAdjacentHTML('afterbegin', '<div class="cx-warn"><span class="cx-badge">29 Connect</span> ' + CONNECT_EDIT_WARN + '</div>');
   var row = editEl.previousElementSibling; if (row && row.classList) row.classList.toggle('editing', !isOpen);
   _menuEditOpenIdx = isOpen ? null : idx;
   if (btnEl) btnEl.classList.toggle('on', !isOpen);
 }
 
 function udMenuFuelLine(idx, val) {
+  connectNoteEdit(getSlotDishes()[idx]);
   var dishes = getSlotDishes();
   if (!dishes[idx]) return;
   dishes[idx].fuelLine = val;
@@ -7387,6 +7392,7 @@ function udMenuFuelLine(idx, val) {
 }
 
 function udMenuBoxType(idx, val) {
+  connectNoteEdit(getSlotDishes()[idx]);
   var dishes = getSlotDishes();
   if (!dishes[idx]) return;
   dishes[idx].boxType = val;
@@ -7400,6 +7406,7 @@ function udMenuBoxType(idx, val) {
 }
 
 function udMenuAdjTubs(idx, delta) {
+  connectNoteEdit(getSlotDishes()[idx]);
   var dishes = getSlotDishes();
   if (!dishes[idx]) return;
   var cur = parseInt(dishes[idx].condimentTubs) || 0;
@@ -7494,6 +7501,7 @@ function ud(idx,f,v){
   if(['scaleProtein','scaleCarb','scaleVeg','scaleOverall','drop1','drop2','sellPrice','condimentTubs'].includes(f)) v=parseFloat(v)||0;
   else v=String(v||'').trim();
   getSlotDishes()[idx][f]=v;
+  connectNoteEdit(getSlotDishes()[idx]);
   save();
   renderMenu();
 }
@@ -7548,6 +7556,7 @@ function udSideCooked(idx, val){
 }
 
 function removeDish(idx){
+  if (!connectConfirmEdit(getSlotDishes()[idx], 'Remove it')) return;
   getSlotDishes().splice(idx,1);
   // Keep the isolated backup key in sync — without this, nextMenuGuard() sees the
   // empty nextMenuDishes array and restores the deleted dishes from the stale backup.
@@ -12345,6 +12354,7 @@ function _flushToFirebase() {
     }
     _staleAlerted = false;
     _publishPublicMenu();   // keep the customer-facing public node in sync
+    try { connectPublish(); } catch(e) { console.warn('29 Connect publish', e); }   // delivery state + delivered meals
     setSyncUI('connected', '<strong>Sync</strong> · saved ✓');
   }, false); // applyLocally:false — don't fire our own listener optimistically
 }
@@ -13520,7 +13530,8 @@ function openOrderModal(id) {
 
   // Week label
   var wkEl = document.getElementById('order-week');
-  if (wkEl) wkEl.value = DB.menuWeekLabel || 'No week set';
+  var _wo = id ? (DB.weeklyOrders || []).find(function(o){ return o.id === id; }) : null;
+  if (wkEl) wkEl.value = (_wo && _wo.week) || (_wo && _wo.slot === 'next' ? DB.nextMenuWeekLabel : DB.menuWeekLabel) || 'No week set';
 
   // Reset session
   document.getElementById('order-session').value          = 'Sunday';
@@ -13540,6 +13551,14 @@ function openOrderModal(id) {
 
   onOrderCustomerChange();
   buildDishAllocRows(id);
+  // 29 Connect orders: warn that hand edits are overwritten by a re-send before the lock
+  var _cxo = id ? (DB.weeklyOrders || []).find(function(o){ return o.id === id; }) : null;
+  var _cxw = document.getElementById('order-cx-warn');
+  if (_cxw) _cxw.remove();
+  if (_cxo && _cxo.source === '29connect') {
+    var _mb = document.querySelector('#order-modal .modal-body');
+    if (_mb) _mb.insertAdjacentHTML('afterbegin', '<div class="cx-warn" id="order-cx-warn"><span class="cx-badge">29 Connect</span> ' + CONNECT_EDIT_WARN + '</div>');
+  }
   openModal('order-modal');
 }
 
@@ -13567,11 +13586,19 @@ function onOrderCustomerChange() {
   }
 }
 
+/* The menu an order belongs to: an edited next-week order (portal or 29 Connect) must be edited
+   against NEXT week's dishes and keep its own week — otherwise saving wiped its dishes. */
+function _orderEditSlot() {
+  var o = _editingOrderId ? (DB.weeklyOrders || []).find(function(x) { return x.id === _editingOrderId; }) : null;
+  return (o && o.slot === 'next') ? 'next' : 'current';
+}
+function _orderEditDishes() { return _orderEditSlot() === 'next' ? (DB.nextMenuDishes || []) : (DB.menuDishes || []); }
+
 function buildDishAllocRows(editingOrderId) {
   var container = document.getElementById('order-dish-alloc');
   if (!container) return;
 
-  var dishes = DB.menuDishes || [];
+  var dishes = _orderEditDishes();
   if (!dishes.length) {
     container.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px;background:var(--surface2);border-radius:5px">No dishes on this week\'s menu yet. Add dishes in <strong>Weekly Menu</strong> first.</div>';
     return;
@@ -13619,11 +13646,12 @@ function saveOrder() {
 
   var session = document.getElementById('order-session').value;
   var notes   = (document.getElementById('order-notes').value || '').trim();
-  var week    = DB.menuWeekLabel || '';
+  var _eo     = _editingOrderId ? ((DB.weeklyOrders || []).find(function(o) { return o.id === _editingOrderId; }) || {}) : {};
+  var week    = _eo.week || (_orderEditSlot() === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || ''));
 
   // Collect non-zero allocations
   var allocation = {};
-  (DB.menuDishes || []).forEach(function(d) {
+  _orderEditDishes().forEach(function(d) {
     var el  = document.getElementById('alloc-' + d.id);
     var qty = el ? (parseInt(el.value) || 0) : 0;
     if (qty > 0) allocation[d.id] = qty;
@@ -13650,6 +13678,10 @@ function saveOrder() {
     cancelledReason: existing.cancelledReason || null,
     cancelledBy:    existing.cancelledBy || null,
   };
+  if (existing.source === '29connect') {
+    ['connectBatchId','connectAthleteId','payStatus'].forEach(function(k){ if (existing[k] !== undefined) data[k] = existing[k]; });
+    connectNoteEdit(data);
+  }
 
   if (!DB.weeklyOrders) DB.weeklyOrders = [];
   if (isEdit) {
@@ -13671,6 +13703,7 @@ function saveOrder() {
 function deleteOrder(id) {
   var removed = (DB.weeklyOrders || []).find(function(o) { return o.id === id; });
   if (!removed) return;
+  if (!connectConfirmEdit(removed, 'Delete this order')) return;
   _tombstone(id);
   DB.weeklyOrders = (DB.weeklyOrders || []).filter(function(o) { return o.id !== id; });
   save();
@@ -14753,6 +14786,7 @@ function _connectNeedsWork(b) {
   if (r.status === 'processing') return Date.now() - (r.claimedAt || 0) > 120000;
   if (_cTime(r.processedAt) < _cTime(b.createdAt)) return true;
   var lbl = b.slot === 'next' ? DB.nextMenuWeekLabel : DB.menuWeekLabel;
+  if (r.dryRun) return false;                                    // test sends never create anything
   if (!lbl || b.week !== lbl) return false;                       // week has moved on — leave it
   var all = (DB.menuDishes || []).concat(DB.nextMenuDishes || []);
   return Object.keys(r.lines || {}).some(function(k) {
@@ -14781,20 +14815,42 @@ function _connectDrain() {
   });
 }
 
-/* Import one batch. Pure ERP-side work; returns the result object written back to 29 Connect. */
+/* Lock time for a slot's drop: the ordering deadline (s1/s2Deadline, or next… for the next week),
+   else the ERP's own rule from the drop date (Sun drop → Thu 18:00, Wed drop → Mon 18:00 UK). */
+function connectLockAt(slot, drop) {
+  var key = (slot === 'next' ? 'next' : '') + (drop === 'sunday' ? (slot === 'next' ? 'S1Deadline' : 's1Deadline') : (slot === 'next' ? 'S2Deadline' : 's2Deadline'));
+  if (DB[key]) return _dlToIso(DB[key]);
+  var dd = (slot === 'next' ? DB.nextDropDates : DB.dropDates) || {};
+  return dd[drop] ? calcDropDeadline(dd[drop], drop) : null;
+}
+function connectIsLocked(slot, drop) {
+  var at = connectLockAt(slot, drop);
+  return !!(at && Date.now() >= Date.parse(at));
+}
+
+/* Import one batch. Returns the result written back to 29 Connect.
+   dryRun (§8): every check runs, ids are reported, but NOTHING in the ERP changes. */
 function connectImportBatch(b) {
+  var dry = b.dryRun === true;
   var res = { status: 'rejected', processedAt: new Date().toISOString(), lines: {}, error: null };
+  if (dry) res.dryRun = true;
   var slot = b.slot === 'next' ? 'next' : 'current';
   var label = slot === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
   if (!label || b.week !== label) {
     res.error = 'Week "' + (b.week || '') + '" is not the ERP\'s ' + slot + ' week ("' + (label || 'not set') + '")';
-    _connectLog(b, res, []);
+    if (!dry) _connectLog(b, res, []);
     return res;
   }
   var key = slot === 'next' ? 'nextMenuDishes' : 'menuDishes';
-  if (!Array.isArray(DB[key])) DB[key] = _cArr(DB[key]);
-  var dishes = DB[key];
+  if (!dry && !Array.isArray(DB[key])) DB[key] = _cArr(DB[key]);
+  // In a dry run we work on copies: arrays are cloned, and changed items are always new objects.
+  var dishes = dry ? _cArr(DB[key]).slice() : DB[key];
+  if (!dry && !Array.isArray(DB.weeklyOrders)) DB.weeklyOrders = _cArr(DB.weeklyOrders);
+  var orders = dry ? _cArr(DB.weeklyOrders).slice() : DB.weeklyOrders;
+  if (!dry && !Array.isArray(DB.athletes)) DB.athletes = _cArr(DB.athletes);
+  var nextDish = DB.nextDishId;
   var weekKey = label.replace(/[^A-Za-z0-9]+/g, '');
+  var locked = { sunday: connectIsLocked(slot, 'sunday'), wednesday: connectIsLocked(slot, 'wednesday') };
   var problems = [], okN = 0, badN = 0, athN = 0;
 
   _cArr(b.athletes).forEach(function(a) {
@@ -14802,11 +14858,13 @@ function connectImportBatch(b) {
     athN++;
     var athKey = 'C29_' + a.connectAthleteId;
     var allergens = _cArr(a.allergens);
+    var athName = a.name || 'Athlete';
     // Minimal ERP athlete record so labels, pack sheet and partnership costing can show the name
-    if (!Array.isArray(DB.athletes)) DB.athletes = _cArr(DB.athletes);
-    var ath = DB.athletes.find(function(x) { return x.id === athKey; });
-    if (!ath) { ath = { id: athKey, targets: [] }; DB.athletes.push(ath); }
-    ath.name = a.name || ath.name || 'Athlete'; ath.allergens = allergens; ath.source = '29connect'; ath.connectAthleteId = a.connectAthleteId;
+    if (!dry) {
+      var ath = DB.athletes.find(function(x) { return x.id === athKey; });
+      if (!ath) { ath = { id: athKey, targets: [] }; DB.athletes.push(ath); }
+      ath.name = athName; ath.allergens = allergens; ath.source = '29connect'; ath.connectAthleteId = a.connectAthleteId;
+    }
 
     var keep = {};                                   // lineId → dish that stays on the order
     _cArr(a.meals).forEach(function(m) {
@@ -14817,6 +14875,7 @@ function connectImportBatch(b) {
       var sc = [m.scaleProtein, m.scaleCarb, m.scaleVeg == null ? 1 : m.scaleVeg].map(Number);
       if (!m.lineId) line.error = 'Missing lineId';
       else if (!drop) line.error = 'Drop must be "sunday" or "wednesday"';
+      else if (locked[drop]) line.error = 'locked';
       else if (!base) line.error = 'Dish ' + m.baseDishId + ' is not on the ' + slot + ' menu';
       else if (base.category === 'side') line.error = 'Sides can\'t be athlete meals';
       else if (sc.some(function(x) { return !(x > 0 && x <= 5); })) line.error = 'Scales must be above 0 and at most 5';
@@ -14830,68 +14889,144 @@ function connectImportBatch(b) {
                   Math.abs(t.fat - n(e.f)) > CONNECT_TOL_G || (e.kcal != null && Math.abs(t.kcal - n(e.kcal)) > CONNECT_TOL_KCAL);
         if (off) line.error = 'mismatch: ERP gives P' + line.actual.p + ' C' + line.actual.c + ' F' + line.actual.f + ' — a recipe probably changed after 29 Connect read it';
         else {
-          // Create or update the variant (same component recipes as the base, exact scales as sent)
-          var keepId = existing ? existing.id : 'DISH' + String(DB.nextDishId++).padStart(3, '0');
+          // Create or update the variant (same component recipes as the base, exact scales as sent).
+          // A re-send overwrites any hand edit made in the ERP, so the edit flag is cleared.
+          var keepId = existing ? existing.id : 'DISH' + String(nextDish++).padStart(3, '0');
           var carry = existing ? { fillProgress: existing.fillProgress, packProgress: existing.packProgress } : {};
           Object.assign(v, carry, {
-            id: keepId, name: base.name + ' (Athlete: ' + ath.name + (m.mealLabel ? ' · ' + m.mealLabel : '') + ')',
+            id: keepId, name: base.name + ' (Athlete: ' + athName + (m.mealLabel ? ' · ' + m.mealLabel : '') + ')',
             athleteVariant: true, athleteIds: [athKey], source: '29connect',
             connectLineId: m.lineId, connectAthleteId: a.connectAthleteId, connectBaseId: base.id,
-            mealLabel: m.mealLabel || '', connectDrop: drop, drop1: 0, drop2: 0, availSunday: true, availWednesday: true
+            mealLabel: m.mealLabel || '', connectDrop: drop, drop1: 0, drop2: 0, availSunday: true, availWednesday: true,
+            editedInErp: false, editedAt: null, editedBy: null
           });
           if (existing) dishes[dishes.indexOf(existing)] = v; else dishes.push(v);
           existing = v; line.ok = true; line.dishId = v.id;
         }
       }
       if (existing && m.lineId) keep[m.lineId] = existing;     // a failed update leaves the previous version in place
-      if (line.ok) okN++; else { badN++; problems.push({ athlete: ath.name, meal: (m.mealLabel || m.lineId || '?') + (drop ? ' · ' + drop : ''), error: line.error }); }
+      if (line.ok) okN++; else { badN++; problems.push({ athlete: athName, meal: (m.mealLabel || m.lineId || '?') + (drop ? ' · ' + drop : ''), error: line.error }); }
       res.lines[m.lineId || ('missing_' + badN)] = line;
     });
 
-    // Meals dropped from this re-send: delete their variant dishes
+    // Meals dropped from this re-send: delete their variant dishes — but never on a locked drop
     for (var i = dishes.length - 1; i >= 0; i--) {
       var d = dishes[i];
-      if (d.connectLineId && d.connectAthleteId === a.connectAthleteId && !keep[d.connectLineId]) dishes.splice(i, 1);
+      if (d.connectLineId && d.connectAthleteId === a.connectAthleteId && !keep[d.connectLineId] && !locked[d.connectDrop]) dishes.splice(i, 1);
     }
-    // One order per athlete per drop (every ERP screen treats an order as one delivery)
+    // One order per athlete per drop (every ERP screen treats an order as one delivery).
+    // A locked drop's order is left exactly as it is.
     ['sunday', 'wednesday'].forEach(function(drop) {
       var oid = 'C29_' + a.connectAthleteId + '_' + weekKey + '_' + (drop === 'sunday' ? 'SUN' : 'WED');
+      var linesHere = Object.keys(keep).filter(function(lid) { return keep[lid].connectDrop === drop; });
+      linesHere.forEach(function(lid) { if (res.lines[lid] && res.lines[lid].ok) res.lines[lid].orderId = oid; });
+      if (locked[drop]) return;
       var alloc = {};
-      Object.keys(keep).forEach(function(lid) { if (keep[lid].connectDrop === drop) alloc[keep[lid].id] = 1; });
-      if (!Array.isArray(DB.weeklyOrders)) DB.weeklyOrders = _cArr(DB.weeklyOrders);
-      var idx = DB.weeklyOrders.findIndex(function(o) { return o.id === oid; });
+      linesHere.forEach(function(lid) { alloc[keep[lid].id] = 1; });
+      var idx = orders.findIndex(function(o) { return o.id === oid; });
       if (!Object.keys(alloc).length) {
-        if (idx >= 0) { DB.weeklyOrders.splice(idx, 1); _tombstone(oid); }
+        if (idx >= 0) { orders.splice(idx, 1); if (!dry) _tombstone(oid); }
         return;
       }
       var email = String(a.customerEmail || '').toLowerCase().trim();
       var cust = email ? (DB.customers || []).find(function(c) { return String(c.email || '').toLowerCase().trim() === email; }) : null;
-      var prev = idx >= 0 ? DB.weeklyOrders[idx] : {};
+      var prev = idx >= 0 ? orders[idx] : {};
       var o = Object.assign({}, prev, {
-        id: oid, customerId: cust ? cust.id : (prev.customerId || null), recipientName: ath.name,
+        id: oid, customerId: cust ? cust.id : (prev.customerId || null), recipientName: athName,
         week: label, slot: slot, session: drop === 'sunday' ? 'Sunday' : 'Wednesday',
         allocation: alloc, status: prev.status || 'confirmed', source: '29connect',
         payStatus: a.payStatus || prev.payStatus || 'comped', connectBatchId: b.batchId,
-        connectAthleteId: a.connectAthleteId,
+        connectAthleteId: a.connectAthleteId, editedInErp: false, editedAt: null, editedBy: null,
         createdAt: prev.createdAt || new Date().toISOString(), confirmedAt: prev.confirmedAt || new Date().toISOString(),
         packProgress: prev.packProgress || {}
       });
-      if (idx >= 0) DB.weeklyOrders[idx] = o; else { _untombstone(oid); DB.weeklyOrders.push(o); }
-      Object.keys(alloc).forEach(function(did) {
-        var lid = Object.keys(keep).find(function(k) { return keep[k].id === did; });
-        if (res.lines[lid]) res.lines[lid].orderId = oid;
-      });
+      if (idx >= 0) orders[idx] = o; else { if (!dry) _untombstone(oid); orders.push(o); }
     });
   });
 
   res.status = !badN && okN ? 'accepted' : okN ? 'partial' : 'rejected';
   if (!athN) res.error = 'No athletes in batch';
+  if (dry) return res;                               // test mode: report only, the ERP is untouched
+  DB.nextDishId = nextDish;
   try { recalcDishPortions(slot); } catch (e) {}
   _connectLog(b, res, problems, athN, okN);
   save();
   rerenderActivePage();
   notify('29 Connect: ' + athN + ' athlete' + (athN !== 1 ? 's' : '') + ', ' + okN + ' meal' + (okN !== 1 ? 's' : '') + ' added' + (badN ? ' · ' + badN + ' need attention (see Orders)' : ''));
   return res;
+}
+
+/* §7.3 — hand edits to a 29 Connect meal are allowed (post-lock emergency route) but flagged. */
+function connectNoteEdit(obj) {
+  if (!obj || obj.source !== '29connect') return;
+  obj.editedInErp = true;
+  obj.editedAt = new Date().toISOString();
+  var u = null; try { u = firebase.auth(_fbApp).currentUser; } catch (e) {}
+  obj.editedBy = (u && u.email) || 'ERP';
+}
+var CONNECT_EDIT_WARN = 'This meal is managed in 29 Connect. Changes here will be overwritten if it\'s re-sent before the lock.';
+function connectConfirmEdit(obj, action) {
+  if (!obj || obj.source !== '29connect') return true;
+  return confirm(CONNECT_EDIT_WARN + '\n\n' + action + ' anyway?');
+}
+
+/* §7.2 + §4 — publish delivery state and delivered meals for 29 Connect. Runs after each
+   successful save; writes only what changed since the last publish from this device. */
+var _connectPubCache = {};
+function _cKey(s) { return String(s).replace(/[.#$\[\]\/]/g, '_'); }
+function connectPublish() {
+  if (!_fbDb) return;
+  var root = _fbDb.ref('29perfOS/connect');
+  ['current', 'next'].forEach(function(slot) {
+    var label = slot === 'next' ? (DB.nextMenuWeekLabel || '') : (DB.menuWeekLabel || '');
+    if (!label) return;
+    var weekKey = label.replace(/[^A-Za-z0-9]+/g, '');
+    var dd = (slot === 'next' ? DB.nextDropDates : DB.dropDates) || {};
+    var slotOrders = (DB.weeklyOrders || []).filter(function(o) {
+      return (o.slot || 'current') === slot && (!o.week || o.week === label) && getOrderStatus(o) !== 'cancelled';
+    });
+    ['sunday', 'wednesday'].forEach(function(drop) {
+      var sess = drop === 'sunday' ? 'Sunday' : 'Wednesday';
+      var dropOrders = slotOrders.filter(function(o) { return o.session === sess || String(o.session).toLowerCase() === 'both'; });
+      var lockAt = connectLockAt(slot, drop);
+      var delivered = dropOrders.length > 0 && dropOrders.every(function(o) { return getOrderStatus(o) === 'delivered'; });
+      var rec = { week: label, slot: slot, drop: drop, dropDate: dd[drop] || null, lockAt: lockAt,
+        status: delivered ? 'delivered' : (lockAt && Date.now() >= Date.parse(lockAt)) ? 'locked' : 'open' };
+      _connectWrite(root.child('deliveries/' + weekKey + '_' + (drop === 'sunday' ? 'SUN' : 'WED')), rec);
+    });
+    // Delivered 29 Connect meals (order marked delivered)
+    var dishes = slot === 'next' ? (DB.nextMenuDishes || []) : (DB.menuDishes || []);
+    slotOrders.filter(function(o) { return o.source === '29connect' && getOrderStatus(o) === 'delivered'; })
+      .forEach(function(o) { connectReportMeals(root, o, dishes, dd); });
+  });
+}
+function connectReportMeals(root, o, dishes, dd) {
+  var drop = String(o.session || '').toLowerCase();
+  Object.keys(o.allocation || {}).forEach(function(did) {
+    var d = dishes.find(function(x) { return x.id === did; });
+    if (!d || !d.connectLineId) return;
+    var t = calcDishTotals(d);
+    var base = dishes.find(function(x) { return x.id === d.connectBaseId; });
+    var rec = { lineId: d.connectLineId, date: dd[drop] || null, drop: drop, week: o.week || '',
+      dishName: base ? base.name : d.name, actual: { p: Math.round(t.prot * 10) / 10, c: Math.round(t.carb * 10) / 10, f: Math.round(t.fat * 10) / 10, kcal: Math.round(t.kcal) },
+      delivered: true, orderId: o.id, editedInErp: !!(d.editedInErp || o.editedInErp),
+      editedAt: d.editedAt || o.editedAt || null, editedBy: d.editedBy || o.editedBy || null };
+    _connectWrite(root.child('delivered/' + _cKey(d.connectAthleteId) + '/' + _cKey(d.connectLineId)), rec);
+  });
+}
+function _connectWrite(ref, rec) {
+  var k = ref.toString(), v = JSON.stringify(rec);
+  if (_connectPubCache[k] === v) return;
+  ref.set(rec).then(function() { _connectPubCache[k] = v; }, function(e) { console.warn('29 Connect publish', e && e.code); });
+}
+/* Advance Week archives the outgoing week: report its 29 Connect meals as delivered first (§4). */
+function connectReportArchivedWeek() {
+  if (!_fbDb) return;
+  var label = DB.menuWeekLabel || '';
+  var root = _fbDb.ref('29perfOS/connect');
+  (DB.weeklyOrders || []).filter(function(o) {
+    return o.source === '29connect' && (o.slot || 'current') === 'current' && (!o.week || o.week === label) && getOrderStatus(o) !== 'cancelled';
+  }).forEach(function(o) { connectReportMeals(root, o, DB.menuDishes || [], DB.dropDates || {}); });
 }
 
 function _connectLog(b, res, problems, athN, okN) {
@@ -15028,6 +15163,8 @@ function _doAdvanceWeek() {
     notify('Next week has no dishes — build the menu on the "Building Next" slot first'); return;
   }
 
+  // 0. 29 Connect: report the outgoing week's athlete meals as delivered (§4) before archiving
+  try { connectReportArchivedWeek(); } catch(e) {}
   // 1. Archive current week (if it has dishes)
   if (currLabel && DB.menuDishes && DB.menuDishes.length > 0) {
     _doArchive(currLabel);
@@ -15148,9 +15285,11 @@ function confirmOrder(id) {
 function cancelOrder(id) {
   var ord = (DB.weeklyOrders || []).find(function(o) { return o.id === id; });
   if (!ord) return;
+  if (!connectConfirmEdit(ord, 'Cancel this order')) return;
   var reason = prompt('Cancellation reason (required):');
   if (!reason || !reason.trim()) return;
   ord.status = 'cancelled';
+  connectNoteEdit(ord);
   ord.cancelledReason = reason.trim();
   ord.cancelledBy = 'admin';
   recalcDishPortions(ord.slot || 'current');
