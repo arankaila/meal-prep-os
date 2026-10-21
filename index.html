@@ -4563,7 +4563,7 @@ const NUT_KEYS = ['kcal','prot','carb','sugars','fat','sat','fibre','salt','omeg
 // ═══════════════════════════════════════════
 /* ERP build number — bump on every deploy that changes shared data or the 29 Connect flow.
    Saved into the cloud data; an open tab with an older build shows 'reload' and stops importing. */
-var ERP_BUILD = 2026102101;
+var ERP_BUILD = 2026102102;
 let DB = {
   ingredients: [],
   recipes: [],
@@ -14786,6 +14786,7 @@ function _cTime(s) { var t = Date.parse(s || ''); return isNaN(t) ? 0 : t; }
 var _connectRefs = {}, _connectByNode = { outbox: {}, test: {} };
 function connectInboxStart() {
   _connectReady = true;
+  setTimeout(function() { try { if (!_erpOutdated()) connectPublish(); } catch (e) {} }, 1500);   // reconcile 29 Connect records on open
   if (_connectRefs.outbox || !_fbDb) { _connectDrain(); return; }
   ['outbox', 'test'].forEach(function(node) {
     _connectRefs[node] = _fbDb.ref('29perfOS/connect/' + node);
@@ -15113,10 +15114,27 @@ function connectPublish() {
         status: delivered ? 'delivered' : (lockAt && Date.now() >= Date.parse(lockAt)) ? 'locked' : 'open' };
       _connectWrite(root.child('deliveries/' + weekKey + '_' + (drop === 'sunday' ? 'SUN' : 'WED')), rec);
     });
-    // Delivered 29 Connect meals (order marked delivered)
+    // Reconcile every 29 Connect meal with the order's current state, so 29 Connect matches the
+    // kitchen even if a cancel happened in an older build or a write failed: delivered → delivered
+    // record, cancelled → cancelled record, anything else → no record ("still on order").
     var dishes = slot === 'next' ? (DB.nextMenuDishes || []) : (DB.menuDishes || []);
-    slotOrders.filter(function(o) { return o.source === '29connect' && getOrderStatus(o) === 'delivered'; })
-      .forEach(function(o) { connectReportMeals(root, o, dishes, dd); });
+    _cArr(DB.weeklyOrders).filter(function(o) {
+      return o.source === '29connect' && (o.slot || 'current') === slot && (!o.week || o.week === label);
+    }).forEach(function(o) {
+      var st = getOrderStatus(o);
+      if (st === 'delivered') connectReportMeals(root, o, dishes, dd);
+      else connectReportState(root, o, dishes, st === 'cancelled');
+    });
+  });
+}
+function connectReportState(root, o, dishes, cancelled) {
+  Object.keys(o.allocation || {}).forEach(function(did) {
+    var d = dishes.find(function(x) { return x.id === did; });
+    if (!d || !d.connectLineId) return;
+    var ref = root.child('delivered/' + _cKey(d.connectAthleteId) + '/' + _cKey(d.connectLineId));
+    if (cancelled) _connectWrite(ref, { lineId: d.connectLineId, status: 'cancelled', cancelledAt: o.cancelledAt || o.editedAt || null,
+      cancelledBy: o.editedBy || o.cancelledBy || 'ERP', orderId: o.id });
+    else _connectWrite(ref, null);
   });
 }
 function connectReportMeals(root, o, dishes, dd) {
@@ -15136,7 +15154,7 @@ function connectReportMeals(root, o, dishes, dd) {
 function _connectWrite(ref, rec) {
   var k = ref.toString(), v = JSON.stringify(rec);
   if (_connectPubCache[k] === v) return;
-  ref.set(rec).then(function() { _connectPubCache[k] = v; }, function(e) { console.warn('29 Connect publish', e && e.code); });
+  (rec === null ? ref.remove() : ref.set(rec)).then(function() { _connectPubCache[k] = v; }, function(e) { console.warn('29 Connect publish', e && e.code); });
 }
 /* Advance Week archives the outgoing week: report its 29 Connect meals as delivered first (§4). */
 function connectReportArchivedWeek() {
@@ -15424,6 +15442,7 @@ function cancelOrder(id) {
   var reason = prompt('Cancellation reason (required):');
   if (!reason || !reason.trim()) return;
   ord.status = 'cancelled';
+  ord.cancelledAt = new Date().toISOString();
   connectNoteEdit(ord);
   connectReportCancelled(ord);
   ord.cancelledReason = reason.trim();
