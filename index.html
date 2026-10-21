@@ -4561,6 +4561,9 @@ const NUT_KEYS = ['kcal','prot','carb','sugars','fat','sat','fibre','salt','omeg
 // ═══════════════════════════════════════════
 // DATA STORE
 // ═══════════════════════════════════════════
+/* ERP build number — bump on every deploy that changes shared data or the 29 Connect flow.
+   Saved into the cloud data; an open tab with an older build shows 'reload' and stops importing. */
+var ERP_BUILD = 2026102101;
 let DB = {
   ingredients: [],
   recipes: [],
@@ -7556,7 +7559,13 @@ function udSideCooked(idx, val){
 }
 
 function removeDish(idx){
-  if (!connectConfirmEdit(getSlotDishes()[idx], 'Remove it')) return;
+  var _rd = getSlotDishes()[idx];
+  if (!connectConfirmEdit(_rd, 'Remove it')) return;
+  if (_rd && _rd.connectLineId) {
+    var _ro = _cArr(DB.weeklyOrders).find(function(o) { return o.source === '29connect' && o.allocation && o.allocation[_rd.id] && getOrderStatus(o) !== 'cancelled'; });
+    var _one = {}; _one[_rd.id] = 1;
+    if (_ro) connectReportCancelled(_ro, _one);
+  }
   getSlotDishes().splice(idx,1);
   // Keep the isolated backup key in sync — without this, nextMenuGuard() sees the
   // empty nextMenuDishes array and restores the deleted dishes from the stale backup.
@@ -12505,6 +12514,8 @@ function loadFromFirebase(callback) {
 // PERSISTENCE  (localStorage + Firebase)
 // ═══════════════════════════════════════════
 function save() {
+  // 0. Stamp the newest ERP build that has written — older open tabs see it and ask to reload
+  if (!(Number(DB._erpBuild) > ERP_BUILD)) DB._erpBuild = ERP_BUILD;
   // 1. Always write to localStorage immediately (local cache)
   try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
   // 2. Debounced write to Firebase
@@ -13704,6 +13715,7 @@ function deleteOrder(id) {
   var removed = (DB.weeklyOrders || []).find(function(o) { return o.id === id; });
   if (!removed) return;
   if (!connectConfirmEdit(removed, 'Delete this order')) return;
+  if (getOrderStatus(removed) !== 'cancelled') connectReportCancelled(removed);
   _tombstone(id);
   DB.weeklyOrders = (DB.weeklyOrders || []).filter(function(o) { return o.id !== id; });
   save();
@@ -13711,6 +13723,7 @@ function deleteOrder(id) {
   notifyUndo('Order removed', function() {
     _untombstone(id);
     DB.weeklyOrders.push(removed);
+    if (getOrderStatus(removed) !== 'cancelled') connectWithdrawCancelled(removed);
     save();
     renderOrdersPanel(); renderRouteSheet(); renderLabels(); renderCustomersTable();
     notify('Order restored ✓');
@@ -14767,27 +14780,37 @@ function _cArr(x) { return Array.isArray(x) ? x.filter(Boolean) : Object.values(
 function _cTime(s) { var t = Date.parse(s || ''); return isNaN(t) ? 0 : t; }
 
 /* Called once the first cloud snapshot has been handled — never import into an empty/stale DB. */
+/* Two inboxes. `outbox` = real sends. `test` = 29 Connect test sends: ALWAYS a dry run, and a path
+   older ERP builds never listened to — so an out-of-date tab can never turn a test into real orders
+   (21 Oct incident: a tab running the 19 Oct build imported dry-run batches for real). */
+var _connectRefs = {}, _connectByNode = { outbox: {}, test: {} };
 function connectInboxStart() {
   _connectReady = true;
-  if (_connectRef || !_fbDb) { _connectDrain(); return; }
-  _connectRef = _fbDb.ref('29perfOS/connect/outbox');
-  _connectRef.limitToLast(50).on('value', function(snap) {
-    _connectBatches = snap.val() || {};
-    _connectDrain();
-  }, function(err) { console.warn('29 Connect inbox unavailable', err && err.code); });
+  if (_connectRefs.outbox || !_fbDb) { _connectDrain(); return; }
+  ['outbox', 'test'].forEach(function(node) {
+    _connectRefs[node] = _fbDb.ref('29perfOS/connect/' + node);
+    _connectRefs[node].limitToLast(50).on('value', function(snap) {
+      _connectByNode[node] = snap.val() || {};
+      _connectDrain();
+    }, function(err) { console.warn('29 Connect ' + node + ' unavailable', err && err.code); });
+  });
+  _connectRef = _connectRefs.outbox;   // legacy name
 }
 
-/* Does this batch still need importing? New, re-sent since our last result, a stale claim,
-   or an earlier "accepted" import whose dishes never reached the cloud (lost save). */
+/* Does this batch still need work? New, re-sent since our last result, a stale claim, a test batch
+   an out-of-date ERP imported for real (must be reverted), or a real "accepted" import whose
+   dishes never reached the cloud (lost save). */
 function _connectNeedsWork(b) {
   if (!b || !b.batchId) return false;
   var r = b.result;
   if (!r) return true;
   if (r.status === 'processing') return Date.now() - (r.claimedAt || 0) > 120000;
+  if (b.dryRun === true && !r.dryRun) return true;                  // test imported for real → revert
+  if (b.dryRun === true && _connectTestLeftovers(b)) return true;   // …or its orders exist whatever the result says
   if (_cTime(r.processedAt) < _cTime(b.createdAt)) return true;
+  if (r.dryRun || b.dryRun === true) return false;                  // test sends never create anything
   var lbl = b.slot === 'next' ? DB.nextMenuWeekLabel : DB.menuWeekLabel;
-  if (r.dryRun) return false;                                    // test sends never create anything
-  if (!lbl || b.week !== lbl) return false;                       // week has moved on — leave it
+  if (!lbl || b.week !== lbl) return false;                         // week has moved on — leave it
   var all = (DB.menuDishes || []).concat(DB.nextMenuDishes || []);
   return Object.keys(r.lines || {}).some(function(k) {
     var l = r.lines[k];
@@ -14796,22 +14819,118 @@ function _connectNeedsWork(b) {
 }
 
 function _connectDrain() {
-  if (!_connectReady || !_connectRef) return;
-  Object.keys(_connectBatches).forEach(function(id) {
-    var b = _connectBatches[id];
-    if (_connectBusy[id] || !_connectNeedsWork(b)) return;
-    _connectBusy[id] = true;
-    // Claim the batch so two open ERP devices don't both import it.
-    _connectRef.child(id).child('result').transaction(function(cur) {
-      if (cur && !_connectNeedsWork(Object.assign({}, b, { result: cur }))) return;   // done, or another device has it
-      return { status: 'processing', claimedAt: Date.now() };
-    }, function(err, committed) {
-      if (err || !committed) { _connectBusy[id] = false; return; }
-      var res;
-      try { res = connectImportBatch(b); }
-      catch (e) { console.error('29 Connect import failed', e); res = { status: 'rejected', processedAt: new Date().toISOString(), error: 'ERP error: ' + e.message, lines: {} }; }
-      _connectRef.child(id).child('result').set(res).then(function() { _connectBusy[id] = false; }, function() { _connectBusy[id] = false; });
+  if (!_connectReady || !_connectRefs.outbox) return;
+  if (_erpOutdated()) return;                                      // an out-of-date tab must never import
+  ['outbox', 'test'].forEach(function(node) {
+    var batches = _connectByNode[node] || {};
+    Object.keys(batches).forEach(function(id) {
+      var b = batches[id];
+      if (!b) return;
+      if (node === 'test') b = Object.assign({}, b, { dryRun: true });
+      var busyKey = node + '/' + id;
+      if (_connectBusy[busyKey] || !_connectNeedsWork(b)) return;
+      _connectBusy[busyKey] = true;
+      var prior = null;
+      // Claim the batch so two open ERP devices don't both work on it.
+      _connectRefs[node].child(id).child('result').transaction(function(cur) {
+        prior = cur;
+        if (cur && !_connectNeedsWork(Object.assign({}, b, { result: cur }))) return;   // done, or another device has it
+        // erpBuild is required by the database rules: tabs on an older build can't claim or answer.
+        return { status: 'processing', claimedAt: Date.now(), erpBuild: ERP_BUILD };
+      }, function(err, committed) {
+        if (err || !committed) { _connectBusy[busyKey] = false; return; }
+        var res;
+        try {
+          var reverted = (b.dryRun === true && ((prior && prior.status !== 'processing' && !prior.dryRun) || _connectTestLeftovers(b))) ? connectRevertTestImport(b, prior) : null;
+          res = connectImportBatch(b);
+          if (reverted) res.reverted = reverted;
+        } catch (e) { console.error('29 Connect import failed', e); res = { status: 'rejected', processedAt: new Date().toISOString(), error: 'ERP error: ' + e.message, lines: {} }; if (b.dryRun) res.dryRun = true; }
+        res.erpBuild = ERP_BUILD;
+        _connectRefs[node].child(id).child('result').set(res).then(function() { _connectBusy[busyKey] = false; }, function() { _connectBusy[busyKey] = false; });
+      });
     });
+  });
+}
+
+function _connectTestLeftovers(b) {
+  return _cArr(DB.weeklyOrders).some(function(o) { return o.source === '29connect' && o.connectBatchId === b.batchId; });
+}
+/* Undo a test batch that an out-of-date ERP imported for real: remove the orders it created
+   (only if no later send has taken them over), their variant dishes, and empty 29 Connect athletes. */
+function connectRevertTestImport(b, prior) {
+  var lines = (prior && prior.lines) || {};
+  var orderIds = {}, dishIds = {};
+  Object.keys(lines).forEach(function(k) { var l = lines[k]; if (l && l.orderId) orderIds[l.orderId] = 1; if (l && l.dishId) dishIds[l.dishId] = 1; });
+  var removedOrders = 0, removedDishes = 0, removedAthletes = 0;
+  DB.weeklyOrders = _cArr(DB.weeklyOrders).filter(function(o) {
+    if (o.source === '29connect' && o.connectBatchId === b.batchId) {
+      Object.keys(o.allocation || {}).forEach(function(id) { dishIds[id] = 1; });
+      _tombstone(o.id); removedOrders++; return false;
+    }
+    return true;
+  });
+  var used = {};
+  DB.weeklyOrders.forEach(function(o) { Object.keys(o.allocation || {}).forEach(function(id) { used[id] = 1; }); });
+  ['menuDishes', 'nextMenuDishes'].forEach(function(k) {
+    var before = _cArr(DB[k]).length;
+    DB[k] = _cArr(DB[k]).filter(function(d) { return !(dishIds[d.id] && d.connectLineId && !used[d.id]); });
+    removedDishes += before - DB[k].length;
+  });
+  if (removedDishes) nextMenuWrite(DB.nextMenuDishes);
+  connectSweepAthletes(function(nRemoved) { removedAthletes = nRemoved; });
+  DB.connectLog = _cArr(DB.connectLog).filter(function(x) { return x.batchId !== b.batchId; });
+  try { recalcDishPortions('current'); recalcDishPortions('next'); } catch (e) {}
+  save();
+  rerenderActivePage();
+  if (removedOrders || removedDishes) notify('29 Connect: removed ' + removedOrders + ' test order' + (removedOrders !== 1 ? 's' : '') + ' an out-of-date ERP tab had added');
+  console.warn('[29 Connect] reverted test batch imported for real', b.batchId, { removedOrders: removedOrders, removedDishes: removedDishes, removedAthletes: removedAthletes });
+  return { orders: removedOrders, dishes: removedDishes, athletes: removedAthletes, at: new Date().toISOString() };
+}
+/* Remove 29 Connect athlete records that no dish or order refers to any more. */
+function connectSweepAthletes(cb) {
+  var refd = {};
+  (DB.menuDishes || []).concat(DB.nextMenuDishes || []).forEach(function(d) { (d.athleteIds || []).forEach(function(a) { refd[a] = 1; }); });
+  _cArr(DB.weeklyOrders).forEach(function(o) { if (o.connectAthleteId) refd['C29_' + o.connectAthleteId] = 1; });
+  var before = _cArr(DB.athletes).length;
+  DB.athletes = _cArr(DB.athletes).filter(function(a) { return a.source !== '29connect' || refd[a.id]; });
+  if (cb) cb(before - DB.athletes.length);
+}
+
+/* ── Build stamp: a newer ERP build than this tab has written to the cloud → this tab is out of date.
+   It shows a reload bar and stops processing 29 Connect sends until reloaded. Bump on every deploy
+   that changes shared data or the 29 Connect flow. */
+function _erpOutdated() {
+  var cloud = Number(DB._erpBuild) || 0;
+  if (cloud <= ERP_BUILD) return false;
+  if (!document.getElementById('erp-outdated-bar')) {
+    document.body.insertAdjacentHTML('beforeend', '<div id="erp-outdated-bar" class="no-print" style="position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:9000;background:var(--gold);color:#111;font:600 13px var(--sans);padding:10px 16px;border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.35);display:flex;gap:10px;align-items:center">' +
+      'A newer version of the ERP is live.<button onclick="location.reload()" style="border:0;background:#111;color:#fff;border-radius:999px;padding:6px 12px;font:600 12px var(--sans);cursor:pointer">Reload now</button></div>');
+  }
+  return true;
+}
+
+/* §3 of 21 Oct — tell 29 Connect when staff cancel or delete one of its meals in the ERP. */
+function connectReportCancelled(order, onlyDishIds) {
+  if (!_fbDb || !order || order.source !== '29connect') return;
+  var all = (DB.menuDishes || []).concat(DB.nextMenuDishes || []);
+  var u = null; try { u = firebase.auth(_fbApp).currentUser; } catch (e) {}
+  var by = (u && u.email) || 'ERP', at = new Date().toISOString();
+  Object.keys(order.allocation || {}).forEach(function(did) {
+    if (onlyDishIds && !onlyDishIds[did]) return;
+    var d = all.find(function(x) { return x.id === did; });
+    if (!d || !d.connectLineId) return;
+    _fbDb.ref('29perfOS/connect/delivered/' + _cKey(d.connectAthleteId) + '/' + _cKey(d.connectLineId))
+      .set({ lineId: d.connectLineId, status: 'cancelled', cancelledAt: at, cancelledBy: by, orderId: order.id })
+      .catch(function(e) { console.warn('29 Connect cancel report', e && e.code); });
+  });
+}
+/* Undoing a delete / restoring a cancelled order withdraws the cancellation record. */
+function connectWithdrawCancelled(order) {
+  if (!_fbDb || !order || order.source !== '29connect') return;
+  var all = (DB.menuDishes || []).concat(DB.nextMenuDishes || []);
+  Object.keys(order.allocation || {}).forEach(function(did) {
+    var d = all.find(function(x) { return x.id === did; });
+    if (d && d.connectLineId) _fbDb.ref('29perfOS/connect/delivered/' + _cKey(d.connectAthleteId) + '/' + _cKey(d.connectLineId)).remove().catch(function() {});
   });
 }
 
@@ -15009,7 +15128,7 @@ function connectReportMeals(root, o, dishes, dd) {
     var base = dishes.find(function(x) { return x.id === d.connectBaseId; });
     var rec = { lineId: d.connectLineId, date: dd[drop] || null, drop: drop, week: o.week || '',
       dishName: base ? base.name : d.name, actual: { p: Math.round(t.prot * 10) / 10, c: Math.round(t.carb * 10) / 10, f: Math.round(t.fat * 10) / 10, kcal: Math.round(t.kcal) },
-      delivered: true, orderId: o.id, editedInErp: !!(d.editedInErp || o.editedInErp),
+      status: 'delivered', delivered: true, orderId: o.id, editedInErp: !!(d.editedInErp || o.editedInErp),
       editedAt: d.editedAt || o.editedAt || null, editedBy: d.editedBy || o.editedBy || null };
     _connectWrite(root.child('delivered/' + _cKey(d.connectAthleteId) + '/' + _cKey(d.connectLineId)), rec);
   });
@@ -15037,19 +15156,35 @@ function _connectLog(b, res, problems, athN, okN) {
   if (res.error && !problems.length) { save(); notify('29 Connect batch not imported: ' + res.error); }
 }
 
-/* Orders page strip: the latest import, with anything that needs re-sending from 29 Connect. */
+/* Orders page strip: what 29 Connect has on order RIGHT NOW (live from the orders), plus any
+   problems from the latest send. Dismiss hides it until the next send. */
 function renderConnectStrip() {
   var el = document.getElementById('connect-strip');
   if (!el) return;
   var last = (DB.connectLog || [])[0];
-  if (!last) { el.innerHTML = ''; return; }
-  var when = new Date(last.at).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-  var bad = (last.problems || []).length || last.error;
+  var weeks = [];
+  [['current', DB.menuWeekLabel], ['next', DB.nextMenuWeekLabel]].forEach(function(pr) {
+    if (!pr[1]) return;
+    var os = _cArr(DB.weeklyOrders).filter(function(o) { return o.source === '29connect' && (o.slot || 'current') === pr[0] && (!o.week || o.week === pr[1]); });
+    if (!os.length) return;
+    var ath = {}, on = 0, off = 0;
+    os.forEach(function(o) {
+      var q = Object.keys(o.allocation || {}).reduce(function(s, k) { return s + n(o.allocation[k]); }, 0);
+      if (getOrderStatus(o) === 'cancelled') off += q; else { on += q; ath[o.connectAthleteId] = 1; }
+    });
+    weeks.push(escHtml(pr[1]) + ': <b>' + Object.keys(ath).length + ' athlete' + (Object.keys(ath).length !== 1 ? 's' : '') + ', ' + on + ' meal' + (on !== 1 ? 's' : '') + ' on order</b>' + (off ? ' · ' + off + ' cancelled' : ''));
+  });
+  var hiddenAt = DB.connectStripHiddenAt || '';
+  if (!weeks.length && !last) { el.innerHTML = ''; return; }
+  if (hiddenAt && (!last || last.at <= hiddenAt)) { el.innerHTML = ''; return; }
+  var bad = last && ((last.problems || []).length || last.error);
+  var when = last ? new Date(last.at).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
   el.innerHTML = '<div class="cx-strip' + (bad ? ' warn' : '') + '"><div class="cx-h"><span class="cx-badge">29 Connect</span>' +
-    '<span>' + (last.error && !last.meals ? 'Batch not imported' : last.athletes + ' athlete' + (last.athletes !== 1 ? 's' : '') + ', ' + last.meals + ' meal' + (last.meals !== 1 ? 's' : '') + ' added') + ' · ' + escHtml(last.week) + ' · ' + when + '</span>' +
-    '<button class="cx-x" onclick="DB.connectLog=[];save();renderConnectStrip()" title="Dismiss">✕</button></div>' +
-    (last.error ? '<div class="cx-p">' + escHtml(last.error) + '</div>' : '') +
-    (last.problems || []).map(function(p) { return '<div class="cx-p"><b>' + escHtml(p.athlete) + '</b> · ' + escHtml(p.meal) + ': ' + escHtml(p.error) + '</div>'; }).join('') +
+    '<span>' + (weeks.length ? weeks.join(' &nbsp;·&nbsp; ') : 'Nothing on order') + '</span>' +
+    '<button class="cx-x" onclick="DB.connectStripHiddenAt=new Date().toISOString();save();renderConnectStrip()" title="Hide until the next send">✕</button></div>' +
+    (last ? '<div class="cx-note">Last send ' + when + ': ' + (last.error && !last.meals ? 'not imported' : last.meals + ' meal' + (last.meals !== 1 ? 's' : '') + ' added or updated') + '</div>' : '') +
+    (last && last.error ? '<div class="cx-p">' + escHtml(last.error) + '</div>' : '') +
+    (last ? (last.problems || []).map(function(p) { return '<div class="cx-p"><b>' + escHtml(p.athlete) + '</b> · ' + escHtml(p.meal) + ': ' + escHtml(p.error) + '</div>'; }).join('') : '') +
     (bad ? '<div class="cx-note">Fix these in 29 Connect and send again. Nothing else was changed for these meals.</div>' : '') + '</div>';
 }
 
@@ -15290,6 +15425,7 @@ function cancelOrder(id) {
   if (!reason || !reason.trim()) return;
   ord.status = 'cancelled';
   connectNoteEdit(ord);
+  connectReportCancelled(ord);
   ord.cancelledReason = reason.trim();
   ord.cancelledBy = 'admin';
   recalcDishPortions(ord.slot || 'current');
@@ -15304,6 +15440,7 @@ function restoreOrder(id) {
   if (!ord) return;
   delete ord.status;
   ord.cancelledReason = '';
+  connectWithdrawCancelled(ord);
   save();
   renderOrdersPanel();
   notify('Order restored to pending ✓');
