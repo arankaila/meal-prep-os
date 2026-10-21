@@ -15054,7 +15054,11 @@ function connectImportBatch(b) {
       var o = Object.assign({}, prev, {
         id: oid, customerId: cust ? cust.id : (prev.customerId || null), recipientName: athName,
         week: label, slot: slot, session: drop === 'sunday' ? 'Sunday' : 'Wednesday',
-        allocation: alloc, status: prev.status || 'confirmed', source: '29connect',
+        // A re-send is 29 Connect's latest instruction: an order cancelled in the ERP comes back to
+        // life (reconcile then clears its "cancelled" records). Progressed statuses are kept.
+        allocation: alloc, status: (prev.status && prev.status !== 'cancelled') ? prev.status : 'confirmed', source: '29connect',
+        cancelledReason: prev.status === 'cancelled' ? null : (prev.cancelledReason || null),
+        cancelledAt: prev.status === 'cancelled' ? null : (prev.cancelledAt || null),
         payStatus: a.payStatus || prev.payStatus || 'comped', connectBatchId: b.batchId,
         connectAthleteId: a.connectAthleteId, editedInErp: false, editedAt: null, editedBy: null,
         createdAt: prev.createdAt || new Date().toISOString(), confirmedAt: prev.confirmedAt || new Date().toISOString(),
