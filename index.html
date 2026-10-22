@@ -2830,6 +2830,10 @@ details.pr-how div{margin-top:4px;line-height:1.45;color:var(--text2);}
 #print-sheet .ps-pack-h em{font-style:normal;font-weight:700;font-size:9.5pt;}
 #print-sheet .ps-route td{padding-top:6px;padding-bottom:6px;}
 #print-sheet .ps-break{break-after:page;page-break-after:always;}
+#print-sheet .ps-big{font:700 12.5pt "SF Mono",Menlo,Consolas,monospace;}
+#print-sheet .ps-mi + .ps-mi{margin-top:4px;}
+#print-sheet .ps-mi{line-height:16pt;}
+#print-sheet .ps-mi .ps-sub{line-height:11pt;}
 #print-sheet .ps-fit{padding-right:6px;}   /* zoomed sheets round up a few px — keep right-aligned text inside the page */
 /* Neutralise the app-wide print table styles inside the sheet */
 #print-sheet table,#print-sheet th,#print-sheet td,#print-sheet tr{background:transparent !important;border-left:0 !important;border-right:0 !important;height:auto !important;min-height:0 !important;box-shadow:none !important;color:#111 !important;}
@@ -14393,6 +14397,14 @@ function psCook() {
   var drop = prodDrop();
   var dishes = getProductionDishes().filter(function(d){ return d.category !== 'side' && dishPortions(d, drop) > 0; });
   var boxes = dishes.reduce(function(s, d){ return s + dishPortions(d, drop); }, 0);
+  var missing = [];
+  dishes.forEach(function(d) {
+    ['protein', 'carb', 'veg', 'condiment', 'complete'].forEach(function(k) {
+      if (d[k] && !getComp(d[k]) && missing.indexOf(d[k]) === -1) missing.push(d[k]);
+    });
+  });
+  var missingHtml = missing.length ? '<div class="ps-warn" style="margin:8px 0;padding:6px 8px"><b>Not on this sheet — no active recipe:</b> ' +
+    missing.map(PS.esc).join(', ') + '. Fix in Recipes, then reprint.</div>' : '';
   var compName = function(nm){ var c = getComp(nm); return c ? c.name : nm; };
   var dishRows = dishes.map(function(d) {
     var comps = ['protein', 'carb', 'veg', 'condiment', 'complete'].filter(function(k){ return d[k]; }).map(function(k){ return PS.esc(compName(d[k])); });
@@ -14407,9 +14419,17 @@ function psCook() {
     var mult = (r.scaledPorts != null ? r.scaledPorts : r.portions * r.scale) * (r.buf || 1);
     var lines = (rec.lines || []).slice().sort(function(a, b){ return n(b.qty) - n(a.qty); });
     if (!lines.length) return [{ name: '—', g: 0 }];
-    return lines.filter(function(l, i){ return i === 0 || (i === 1 && n(l.qty) >= n(lines[0].qty) * 0.6); }).map(function(l) {
+    // Protein / carb / sauce: one clear main ingredient (a second only if nearly as heavy).
+    // Veg & salads are mixes: list every ingredient that's a real part of the mix (≥25% of the
+    // heaviest, up to 4) so nothing is missed, e.g. Kachumber = cucumber, carrot, onion, tomato.
+    var isMix = r.type === 'Veg';
+    var minShare = isMix ? 0.25 : 0.6, maxN = isMix ? 4 : 2;
+    return lines.filter(function(l, i){ return i === 0 || (i < maxN && n(l.qty) >= n(lines[0].qty) * minShare); }).map(function(l) {
       var ing = DB.ingredients.find(function(x){ return x.id === l.ingId; });
-      return { name: ing ? ing.name : l.ingId, g: n(l.qty) * mult, unit: ing && n(ing.unitWeight) > 0 ? { w: n(ing.unitWeight), name: ing.unitName || 'unit' } : null };
+      var g = n(l.qty) * mult, proc = ing ? (n(ing.proc) || 100) : 100;
+      // g = prepped weight that goes into the cook; raw = what to take out before trimming (if any trim loss)
+      return { name: ing ? ing.name : l.ingId, g: g, raw: proc < 100 ? g / (proc / 100) : null,
+               unit: ing && n(ing.unitWeight) > 0 ? { w: n(ing.unitWeight), name: ing.unitName || 'unit' } : null };
     });
   };
   var order = ['Protein', 'Carb', 'Veg', 'Condiment', 'Complete'];
@@ -14420,27 +14440,28 @@ function psCook() {
   var body = cats.map(function(cat) {
     var rows = groups[cat].slice().sort(function(a, b){ return b.portions - a.portions || a.name.localeCompare(b.name); }).map(function(r) {
       var ms = mainIngs(r);
-      var units = function(m){ return m.unit ? ' <span class="ps-sub">≈' + Math.ceil(m.g / m.unit.w) + ' ' + PS.esc(m.unit.name) + '</span>' : ''; };
+      var units = function(m){ return m.unit ? '<div class="ps-sub">≈' + Math.ceil((m.raw || m.g) / m.unit.w) + ' ' + PS.esc(m.unit.name) + '</div>' : ''; };
+      var prepped = function(m){ return m.raw ? '<div class="ps-sub">→ ' + PS.kg(m.g) + ' once prepped</div>' : ''; };
       var how = [r.cookMethod && r.cookMethod !== '—' ? PS.esc(r.cookMethod) : '', r.targetTemp ? 'core ' + PS.esc(r.targetTemp) + '°C' : '', n(r.cookTime) ? n(r.cookTime) + ' min' : ''].filter(Boolean).join(' · ');
       return '<tr><td class="c-box">' + PS.box(getComponentStatus(r.name) === 'complete') + '</td>' +
         '<td><b>' + PS.esc(r.name) + '</b>' + (how ? '<div class="ps-sub">' + how + '</div>' : '') + '</td>' +
         '<td class="r mono"><b>' + r.portions + '</b></td>' +
-        '<td>' + ms.map(function(m){ return '<div>' + PS.esc(m.name) + '</div>'; }).join('') + '</td>' +
-        '<td class="r mono">' + ms.map(function(m){ return '<div><b>' + PS.kg(m.g) + '</b>' + units(m) + '</div>'; }).join('') + '</td>' +
-        '<td class="r mono ps-sub">~' + PS.kg(r.batchCooked) + '</td>' +
+        // each ingredient name reserves the same height as its weight block, so rows line up
+        '<td>' + ms.map(function(m){ var extra = (m.raw ? 1 : 0) + (m.unit ? 1 : 0); return '<div class="ps-mi" style="min-height:calc(16pt + ' + extra + ' * 11pt)">' + PS.esc(m.name) + '</div>'; }).join('') + '</td>' +
+        '<td class="r">' + ms.map(function(m){ return '<div class="ps-mi"><span class="ps-big">' + PS.kg(m.raw || m.g) + '</span>' + prepped(m) + units(m) + '</div>'; }).join('') + '</td>' +
         '<td class="c-sig"></td></tr>';
     }).join('');
     return '<div class="ps-sec"><div class="ps-h2"><span>' + (label[cat] || PS.esc(cat)) + '</span><em>' + groups[cat].length + ' to cook</em></div>' +
       '<table class="ps-t" style="table-layout:fixed"><thead><tr><th class="c-box"></th><th style="width:27%">Component</th><th class="r" style="width:9%">Portions</th>' +
-      '<th style="width:20%">Main ingredient(s)</th><th class="r" style="width:13%">Weight</th><th class="r" style="width:10%">Cooked</th><th class="c-sig">Cooked wt · core °C</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+      '<th style="width:24%">Main ingredient to prep</th><th class="r" style="width:20%">Take out</th><th class="c-sig" style="width:12%">Core °C</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }).join('');
   var totalMins = prodRows.reduce(function(s, r){ return s + n(r.prepTime) + n(r.cookTime); }, 0);
   return '<div class="ps-fit"><div class="ps-part">' + PS.head('Cook sheet', PS.esc(prodWeek() || 'This week') + ' · ' + PS.sessName(drop),
       [[dishes.length, 'dishes'], [boxes, 'boxes'], [prodRows.length, 'components'], [Math.round(totalMins / 6) / 10 + ' h', 'est. time'], [prodBufferPct() > 0 ? '+' + prodBufferPct() + '%' : '—', 'buffer incl.']]) +
-    '<div class="ps-sec"><div class="ps-h2"><span>Dishes this drop</span><em>' + boxes + ' boxes</em></div>' +
+    missingHtml + '<div class="ps-sec"><div class="ps-h2"><span>Dishes this drop</span><em>' + boxes + ' boxes</em></div>' +
     '<table class="ps-t"><thead><tr><th class="c-box"></th><th style="width:34%">Dish</th><th class="r" style="width:8%">Boxes</th><th>Components</th></tr></thead><tbody>' + dishRows + '</tbody></table></div></div>' +
     '<div class="ps-part">' + body +
-    '<div class="ps-note">Weights are the main ingredient for the whole batch, including the protein &amp; carb buffer. Full recipes and every ingredient are on the cook cards and the Prep list.</div></div></div>';
+    '<div class="ps-note"><b>Take out</b> = how much of the main ingredient to start with, before trimming or processing, for the whole batch including the protein &amp; carb buffer. Where there&rsquo;s trim loss, "→ … once prepped" is the weight left after processing. Full recipes and every ingredient are on the cook cards and the Prep list.</div></div></div>';
 }
 
 /* Packing → box-count summary table, then compact per-dish assembly cards (two across). */
