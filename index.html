@@ -2213,6 +2213,10 @@ body.light-mode .ord-slot-tab.active{background:#fff !important;color:var(--ink)
 .pp-sess{display:inline-flex;align-items:center;gap:6px;}
 .pp-sess i{width:6px;height:6px;border-radius:50%;background:var(--text3);opacity:.6;}
 .pp-sess.open{color:var(--text2);} .pp-sess.open i{background:var(--green);opacity:1;}
+button.pp-sess{border:1px solid var(--border);background:transparent;border-radius:999px;padding:3px 10px;font:inherit;color:inherit;cursor:pointer;}
+button.pp-sess:hover{border-color:var(--text3);}
+button.pp-sess em{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text3);margin-left:6px;}
+.pp-sess.paused{color:var(--amber);border-color:rgba(220,159,114,.5);} .pp-sess.paused i{background:var(--amber);opacity:1;}
 .pp-warn{color:var(--amber);font-weight:600;}
 .pp-note{color:var(--green);}
 /* Summary + filters */
@@ -4567,7 +4571,7 @@ const NUT_KEYS = ['kcal','prot','carb','sugars','fat','sat','fibre','salt','omeg
 // ═══════════════════════════════════════════
 /* ERP build number — bump on every deploy that changes shared data or the 29 Connect flow.
    Saved into the cloud data; an open tab with an older build shows 'reload' and stops importing. */
-var ERP_BUILD = 2026102102;
+var ERP_BUILD = 2026102201;
 let DB = {
   ingredients: [],
   recipes: [],
@@ -12412,6 +12416,8 @@ function _publishPublicMenu() {
     s2Deadline:        DB.s2Deadline        || null,
     nextS1Deadline:    DB.nextS1Deadline    || null,
     nextS2Deadline:    DB.nextS2Deadline    || null,
+    dropPaused:        DB.dropPaused        || {},
+    nextDropPaused:    DB.nextDropPaused    || {},
     autoPublishFired:  !!DB.autoPublishFired,
     minOrderQty:       DB.minOrderQty       || 3,
     defaultSellPrice:  DB.defaultSellPrice  || 9.99,
@@ -13759,7 +13765,9 @@ function getPortalSessionStatus(forNext) {
                      : ((DB.s1Deadline || DB.orderDeadline) ? new Date(DB.s1Deadline || DB.orderDeadline) : null);
   var s2d  = hasNext ? (DB.nextS2Deadline ? new Date(DB.nextS2Deadline) : null)
                      : (DB.s2Deadline     ? new Date(DB.s2Deadline)     : null);
-  function label(open, deadline) {
+  var paused = (hasNext ? DB.nextDropPaused : DB.dropPaused) || {};
+  function label(open, deadline, isPaused) {
+    if (isPaused) return { open: false, paused: true, text: 'Paused' };
     if (!open) return { open: false, text: 'Closed' };
     if (!deadline) return { open: true, text: 'Open · no deadline set' };
     var diff = deadline - now;
@@ -13769,9 +13777,9 @@ function getPortalSessionStatus(forNext) {
     return { open: true, text: 'Closes ' + deadline.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}) + ' ' + deadline.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) };
   }
   return {
-    s1: label(pub && (!s1d || now < s1d), s1d),
-    s2: label(pub && (!s2d || now < s2d), s2d),
-    anyOpen: pub && ((!s1d || now < s1d) || (!s2d || now < s2d))
+    s1: label(pub && (!s1d || now < s1d), s1d, !!paused.sunday),
+    s2: label(pub && (!s2d || now < s2d), s2d, !!paused.wednesday),
+    anyOpen: pub && ((!paused.sunday && (!s1d || now < s1d)) || (!paused.wednesday && (!s2d || now < s2d)))
   };
 }
 
@@ -13802,15 +13810,17 @@ function renderPortalPublishStrip() {
     }
   }
 
-  var sess = function(name, st1) {
-    return '<span class="pp-sess' + (st1.open ? ' open' : '') + '"><i></i>' + name + ' · ' + n2h(st1.text) + '</span>';
+  var sess = function(name, st1, key) {
+    return '<button class="pp-sess' + (st1.open ? ' open' : '') + (st1.paused ? ' paused' : '') + '" onclick="togglePortalDrop(\'' + key + '\')" ' +
+      'title="' + (st1.paused ? 'Resume' : 'Pause') + ' customer orders for the ' + name + ' drop only">' +
+      '<i></i>' + name + ' · ' + n2h(st1.text) + '<em>' + (st1.paused ? 'Resume' : 'Pause') + '</em></button>';
   };
   strip.innerHTML =
     '<span class="pp-dot' + (pub ? ' open' : '') + '"></span>' +
     '<div class="pp-main">' +
       '<div class="pp-title">Ordering ' + (pub ? 'open' : 'closed') +
         '<span class="pp-ctx">' + slotLabel + weekDisp + '</span>' + liveNote + '</div>' +
-      '<div class="pp-sub">' + sess('Sunday', st.s1) + sess('Wednesday', st.s2) + noLblWarn + autoPublishNote + '</div>' +
+      '<div class="pp-sub">' + sess('Sunday', st.s1, 'sunday') + sess('Wednesday', st.s2, 'wednesday') + noLblWarn + autoPublishNote + '</div>' +
     '</div>' +
     '<button class="btn btn-ghost btn-sm" onclick="showPortalSettings()">Deadlines</button>' +
     '<button id="portal-toggle-btn" class="btn btn-sm ' + (pub?'btn-ghost':'btn-gold') + '" onclick="togglePortal()">' + (pub?'Close ordering':'Open for orders') + '</button>';
@@ -13829,6 +13839,24 @@ function _toggleTargetIsNext() {
   var nextReady = !!((DB.nextMenuWeekLabel || '').trim());
   if (!DB.menuPublished && nextReady) return true;  // current closed + next ready → open next
   return false;                                     // current live, or next not ready → control current
+}
+
+/* Pause / resume customer ordering for ONE drop of the week the Open/Close button controls.
+   Enforced by the portal and by the payment backend (createCheckoutSession). Doesn't touch
+   deadlines, so 29 Connect athlete locks are unaffected. Moves with the week at Advance Week. */
+function togglePortalDrop(drop) {
+  var hasNext = _toggleTargetIsNext();
+  var key = hasNext ? 'nextDropPaused' : 'dropPaused';
+  var map = Object.assign({}, DB[key] || {});
+  var name = drop === 'sunday' ? 'Sunday' : 'Wednesday';
+  if (!map[drop] && !confirm('Pause ' + name + ' orders?\n\nCustomers won\'t be able to choose the ' + name + ' drop until you resume it. ' +
+      'The other drop stays open. Orders already placed are kept.')) return;
+  map[drop] = !map[drop];
+  DB[key] = map;
+  try { localStorage.setItem('29perfOS', JSON.stringify(DB)); } catch(e) {}
+  saveToFirebaseNow();
+  renderPortalPublishStrip();
+  notify(map[drop] ? '⏸ ' + name + ' orders paused' : '▶ ' + name + ' orders resumed');
 }
 
 function togglePortal() {
@@ -15354,6 +15382,8 @@ function _doAdvanceWeek() {
   DB.dropDates           = JSON.parse(JSON.stringify(DB.nextDropDates || { sunday:'', wednesday:'' }));
   DB.s1Deadline          = DB.nextS1Deadline;
   DB.s2Deadline          = DB.nextS2Deadline;
+  DB.dropPaused          = DB.nextDropPaused || {};
+  DB.nextDropPaused      = {};
   DB.menuPublished       = false; // current week is now in production, not for new orders
 
   // 3. Clear next slot
