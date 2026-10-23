@@ -7151,9 +7151,14 @@ function renderMenu(){
   }
 
   const slotDishes = getSlotDishes();
+  // 29 Connect athlete dishes only show while a live (non-cancelled) order uses them. They stay in
+  // the data, so restoring the order or a re-send from 29 Connect brings them straight back.
+  const _cxHidden = connectHiddenDishIds();
+  const _nHidden = slotDishes.filter(d=>_cxHidden[d.id]).length;
   // Group the menu: meals first, then sides (stable within each group) so the two are easy to tell apart.
-  const dishes=slotDishes.filter(d=>!menuSearchFilter||d.name.toLowerCase().includes(menuSearchFilter.toLowerCase())).slice().sort((a,b)=>(a.category==='side'?1:0)-(b.category==='side'?1:0));
-  document.getElementById('menu-count').textContent=slotDishes.length+' dish'+(slotDishes.length!==1?'es':'');
+  const dishes=slotDishes.filter(d=>!_cxHidden[d.id]).filter(d=>!menuSearchFilter||d.name.toLowerCase().includes(menuSearchFilter.toLowerCase())).slice().sort((a,b)=>(a.category==='side'?1:0)-(b.category==='side'?1:0));
+  const _shown = slotDishes.length - _nHidden;
+  document.getElementById('menu-count').textContent=_shown+' dish'+(_shown!==1?'es':'')+(_nHidden?' · '+_nHidden+' cancelled 29 Connect meal'+(_nHidden!==1?'s':'')+' hidden':'');
   const activeComps=DB.recipes.filter(r=>r.status==='Active').sort((a,b)=>a.name.localeCompare(b.name));
   // Build one shared datalist per component type — used by all dish card search inputs
   const _compDlHtml = ['Protein','Carb','Veg','Condiment','Complete'].map(type=>
@@ -14935,6 +14940,19 @@ function connectRevertTestImport(b, prior) {
   if (removedOrders || removedDishes) notify('29 Connect: removed ' + removedOrders + ' test order' + (removedOrders !== 1 ? 's' : '') + ' an out-of-date ERP tab had added');
   console.warn('[29 Connect] reverted test batch imported for real', b.batchId, { removedOrders: removedOrders, removedDishes: removedDishes, removedAthletes: removedAthletes });
   return { orders: removedOrders, dishes: removedDishes, athletes: removedAthletes, at: new Date().toISOString() };
+}
+/* 29 Connect athlete dishes with no live order (every order using them is cancelled, or there is
+   none) — hidden from the Weekly Menu but kept, so a restore or re-send brings them back. */
+function connectHiddenDishIds() {
+  var live = {}, hidden = {};
+  _cArr(DB.weeklyOrders).forEach(function(o) {
+    if (getOrderStatus(o) === 'cancelled') return;
+    Object.keys(o.allocation || {}).forEach(function(id) { if (n(o.allocation[id]) > 0) live[id] = 1; });
+  });
+  (DB.menuDishes || []).concat(DB.nextMenuDishes || []).forEach(function(d) {
+    if (d && d.connectLineId && !live[d.id]) hidden[d.id] = 1;
+  });
+  return hidden;
 }
 /* Remove 29 Connect athlete records that no dish or order refers to any more. */
 function connectSweepAthletes(cb) {
