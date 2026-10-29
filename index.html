@@ -14460,10 +14460,25 @@ function psCook() {
   var missingHtml = missing.length ? '<div class="ps-warn" style="margin:8px 0;padding:6px 8px"><b>Not on this sheet — no active recipe:</b> ' +
     missing.map(PS.esc).join(', ') + '. Fix in Recipes, then reprint.</div>' : '';
   var compName = function(nm){ var c = getComp(nm); return c ? c.name : nm; };
-  var dishRows = dishes.map(function(d) {
-    var comps = ['protein', 'carb', 'veg', 'condiment', 'complete'].filter(function(k){ return d[k]; }).map(function(k){ return PS.esc(compName(d[k])); });
-    return '<tr><td class="c-box">' + PS.box(false) + '</td><td><b>' + PS.esc(d.name) + '</b>' + (d.athleteVariant ? ' <span class="ps-tag">athlete</span>' : '') + '</td>' +
-      '<td class="r mono"><b>' + dishPortions(d, drop) + '</b></td><td class="ps-how">' + comps.join(' · ') + '</td></tr>';
+  // The chef cooks by dish, not by customer: athlete variants ("<Dish> (Athlete: …)") use the same
+  // component recipes as the base dish, so they're collated into one line per dish + component set.
+  // Their scaled quantities are already in the component totals below; the split happens at Packing.
+  var dishGroups = [], byKey = {};
+  dishes.forEach(function(d) {
+    var keys = ['protein', 'carb', 'veg', 'condiment', 'complete'].filter(function(k){ return d[k]; });
+    var base = String(d.name || '').replace(/\s*\(Athlete:.*\)\s*$/, '');
+    var key = base + '|' + keys.map(function(k){ return d[k]; }).join('|');
+    var g = byKey[key];
+    if (!g) { g = byKey[key] = { name: base, comps: keys.map(function(k){ return PS.esc(compName(d[k])); }), boxes: 0, ath: 0 }; dishGroups.push(g); }
+    var p = dishPortions(d, drop);
+    g.boxes += p;
+    if (d.athleteVariant) g.ath += p;
+  });
+  dishGroups.sort(function(a, b){ return b.boxes - a.boxes || a.name.localeCompare(b.name); });
+  var dishRows = dishGroups.map(function(g) {
+    return '<tr><td class="c-box">' + PS.box(false) + '</td><td><b>' + PS.esc(g.name) + '</b>' +
+      (g.ath ? '<div class="ps-sub">incl. ' + g.ath + ' athlete</div>' : '') + '</td>' +
+      '<td class="r mono"><b>' + g.boxes + '</b></td><td class="ps-how">' + g.comps.join(' · ') + '</td></tr>';
   }).join('');
 
   // Main ingredient(s) = the heaviest recipe line at batch quantity (incl. buffer), plus a second
@@ -14511,7 +14526,7 @@ function psCook() {
   }).join('');
   var totalMins = prodRows.reduce(function(s, r){ return s + n(r.prepTime) + n(r.cookTime); }, 0);
   return '<div class="ps-fit"><div class="ps-part">' + PS.head('Cook sheet', PS.esc(prodWeek() || 'This week') + ' · ' + PS.sessName(drop),
-      [[dishes.length, 'dishes'], [boxes, 'boxes'], [prodRows.length, 'components'], [Math.round(totalMins / 6) / 10 + ' h', 'est. time'], [prodBufferPct() > 0 ? '+' + prodBufferPct() + '%' : '—', 'buffer incl.']]) +
+      [[dishGroups.length, 'dishes'], [boxes, 'boxes'], [prodRows.length, 'components'], [Math.round(totalMins / 6) / 10 + ' h', 'est. time'], [prodBufferPct() > 0 ? '+' + prodBufferPct() + '%' : '—', 'buffer incl.']]) +
     missingHtml + '<div class="ps-sec"><div class="ps-h2"><span>Dishes this drop</span><em>' + boxes + ' boxes</em></div>' +
     '<table class="ps-t"><thead><tr><th class="c-box"></th><th style="width:34%">Dish</th><th class="r" style="width:8%">Boxes</th><th>Components</th></tr></thead><tbody>' + dishRows + '</tbody></table></div></div>' +
     '<div class="ps-part">' + body +
