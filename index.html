@@ -11970,6 +11970,8 @@ var _staleAlerted = false;  // throttle the "save blocked" alert to once per sta
 // cloud) aborts instead of overwriting. Clock-independent — replaces the old
 // wall-clock staleness check that mis-fired under device clock skew.
 var _fbBaseVer  = null;
+// The live listener's handler, kept by name so a refused save can feed it the latest snapshot.
+var _fbOnValue = null;
 // Deletion tombstones: when the user deletes a customer/order we briefly remember
 // its id so neither the live listener merge nor the flush safety-merge re-adds it
 // from the cloud before our deletion has propagated. Without this, deletes bounce
@@ -12117,7 +12119,7 @@ function _startFbListener() {
   });
 
   // Data changes from other devices
-  _fbRef.on('value', function(snap) {
+  _fbRef.on('value', _fbOnValue = function(snap) {
     var remote = snap.val();
     if (!remote) return;
     // 29 Connect inbox starts after this first snapshot is handled (never imports into stale data)
@@ -12366,6 +12368,14 @@ function _flushToFirebase() {
       _localWrite = false;
       setSyncUI('syncing', '<strong>Sync</strong> · syncing latest…');
       console.warn('[concurrency] save deferred — cloud was newer; adopting latest.');
+      // Don't wait for a listener event: if the newer cloud snapshot arrived while our own
+      // write was in flight, the listener swallowed it as our echo (_localWrite) and no
+      // further event will come — every later save would abort forever (Oct 29 'saving…'
+      // flashing). Fetch the latest now and run it through the normal adoption path.
+      _fbRef.once('value').then(function(latest) {
+        try { if (_fbOnValue) _fbOnValue(latest); } catch (e) { console.warn('adopt latest failed', e); }
+        setSyncUI('connected', '<strong>Sync</strong> · up to date ✓');
+      }).catch(function(e) { console.warn('fetch latest failed', e && e.code); });
       return;
     }
     var val = snap && snap.val ? snap.val() : null;
