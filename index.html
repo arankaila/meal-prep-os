@@ -12311,6 +12311,10 @@ function _flushToFirebase() {
   // writes targeted child paths (orders/customers/discounts) that leave _ts/_wm
   // untouched and equal, so ordering is unaffected.
   payload._wm = ts;
+  // Firebase refuses an entire write if ANY value anywhere is `undefined`, and in a transaction
+  // that surfaces as a silent throw — the save never completes and the UI sits on 'saving…'
+  // (29 Oct). A JSON round-trip removes undefined fields (and turns NaN into null).
+  payload = JSON.parse(JSON.stringify(payload));
 
   // ── ORDER-SAFETY MERGE (no wall-clock blocking) ─────────────────────────────
   // The SERVER security rule (_wm === _ts) is now the authoritative protection
@@ -12334,6 +12338,7 @@ function _flushToFirebase() {
   // carries a valid _wm marker. Orders/customers present in the cloud but missing
   // locally are merged in so a save can never drop a portal order.
   _localWrite = true;
+  try {
   _fbRef.transaction(function(cur) {
     var curVer = (cur && typeof cur._ver === 'number') ? cur._ver : 0;
     if (_fbBaseVer !== null && curVer > _fbBaseVer) {
@@ -12389,6 +12394,12 @@ function _flushToFirebase() {
     try { connectPublish(); } catch(e) { console.warn('29 Connect publish', e); }   // delivery state + delivered meals
     setSyncUI('connected', '<strong>Sync</strong> · saved ✓');
   }, false); // applyLocally:false — don't fire our own listener optimistically
+  } catch (e) {
+    // e.g. invalid data rejected before sending — report it instead of sitting on 'saving…'
+    _localWrite = false;
+    setSyncUI('offline', '<strong>Sync</strong> · save failed (data error)');
+    console.error('Firebase save threw:', e);
+  }
 }
 
 // ── Public menu node (what the customer portal reads) ───────────────────────
@@ -15089,7 +15100,9 @@ function connectImportBatch(b) {
           // Create or update the variant (same component recipes as the base, exact scales as sent).
           // A re-send overwrites any hand edit made in the ERP, so the edit flag is cleared.
           var keepId = existing ? existing.id : 'DISH' + String(nextDish++).padStart(3, '0');
-          var carry = existing ? { fillProgress: existing.fillProgress, packProgress: existing.packProgress } : {};
+          var carry = {};   // keep packing progress on an update — only fields that exist (undefined blocks Firebase writes)
+          if (existing && existing.fillProgress) carry.fillProgress = existing.fillProgress;
+          if (existing && existing.packProgress) carry.packProgress = existing.packProgress;
           Object.assign(v, carry, {
             id: keepId, name: base.name + ' (Athlete: ' + athName + (m.mealLabel ? ' · ' + m.mealLabel : '') + ')',
             athleteVariant: true, athleteIds: [athKey], source: '29connect',
