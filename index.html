@@ -17226,6 +17226,7 @@ function _bbFillRows(groups, c) {
     for (var bi = 0; bi < g.qty; bi++) {
       rows.push({ ordId: g.ord.id, ord: g.ord, dishId: g.dish.id, dishName: g.dish.name, comps: g.comps, who: who,
         qty: g.qty, idx: bi, athlete: !!g.ord.athlete, perBox: perBox, mi: mi, clash: _bbClash(g.ord, g.dish),
+        boxType: g.dish.boxType || '3-compartment',
         filled: bbBoxFilled(g.ord, g.dish.id, c, bi) });
     }
     batchCooked += perBox * g.qty;
@@ -17335,6 +17336,8 @@ function renderBoxBoard() {
           '<div class="bb-row-who">' + n2h(r.who) +
             (r.qty > 1 ? '<span class="bb-row-tag">Box ' + (r.idx + 1) + ' of ' + r.qty + '</span>' : '') +
             (r.athlete ? '<span class="bb-row-tag gold">Athlete</span>' : '') +
+            // Box type comes from the dish (Menu → Packaging), so two people sharing a component can need different boxes
+            '<span class="bb-row-tag" title="Box type for this dish">' + (r.boxType === 'sides-box' ? '◫ Sides box' : r.boxType === 'single' ? '☐ Single' : '▣ 3-comp') + '</span>' +
             (r.clash.length ? '<span class="bb-row-tag bad" title="Customer dietary notes mention this allergen — check before packing">Allergen check: ' + n2h(r.clash.join(', ')) + '</span>' : '') + '</div>' +
           '<div class="bb-ccs">' + compChips + '</div>' +
         '</div>' +
