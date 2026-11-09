@@ -4800,7 +4800,9 @@ function seedData() {
 // This is the true cost of an ingredient per 100g of usable/edible weight,
 // accounting for trim loss. Recipe quantities represent EDIBLE grams needed.
 const calcEP = ing => ing.ap ? ing.ap / (ing.proc/100||1) : 0;
-const calcTY = ing => (ing.proc/100) * (ing.cook/100);
+// Cooked yield from EDIBLE grams. Recipe quantities are already post-trim, so
+// ing.proc must not be applied here (it was, which understated cooked weights).
+const calcTY = ing => ing.cook/100;
 const n = v => parseFloat(v)||0;
 
 function calcRecipeTotals(rec) {
