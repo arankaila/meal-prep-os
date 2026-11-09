@@ -3180,6 +3180,7 @@ body:not(.inv-detail) #inv-history{display:none !important;}
           <div class="tab active" onclick="filterIngCat('all',this)">All</div>
         </div>
       </div>
+      <div id="yield-check"></div>
       <div class="card">
         <div class="card-header"><div class="card-title">Ingredients</div><div class="card-count" id="ing-count">0</div><div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="openCatModal()">Categories</button></div></div>
         <div class="table-wrap"><table>
@@ -6080,9 +6081,86 @@ function rebuildIngCatSelect(selectedVal){
   sel.innerHTML=(DB.ingCategories||[]).map(c=>`<option value="${c.name}" ${c.name===selectedVal?'selected':''}>${c.name}</option>`).join('');
 }
 
+// ── Yield check ───────────────────────────────────────────────
+// A wrong cooking yield makes label macros and box weights disagree: macros count
+// every edible gram, while packers portion by the cooked weight. Read-only — it
+// flags ingredients to re-weigh and never changes a yield.
+
+// Reason this ingredient's yield looks implausible, or '' if it looks fine.
+function yieldNutritionIssue(ing) {
+  if (['Protein','Carb','Veg'].indexOf(ing.cat) === -1) return '';
+  var cook = n(ing.cook);
+  if (!cook) return 'No cooking yield set';
+  var carb = n(ing.carb) * 100 / cook, prot = n(ing.prot) * 100 / cook;
+  if (ing.cat === 'Carb' && carb > 35) return Math.round(carb) + 'g carbs per 100g cooked — cooked starches are usually under 35g. Fine only if eaten as sold (e.g. bread)';
+  if (ing.cat === 'Carb' && cook > 100 && carb < 12) return Math.round(carb) + 'g carbs per 100g cooked — low for a cooked grain or pasta';
+  if (ing.cat === 'Protein' && prot > 40) return Math.round(prot) + 'g protein per 100g cooked — cooked meat and fish are usually under 40g';
+  if (ing.cat === 'Veg' && (cook < 15 || cook > 110)) return 'Unusual for a vegetable';
+  return '';
+}
+
+// Expected weights logged before this date used the old double-counted trim maths.
+var YIELD_TRIM_FIX_DATE = '2026-11-09';
+
+// Compares logged cooked weights with expected, per component. Where batches run
+// more than 12% off, works back to the main ingredient's measured yield.
+function yieldLogEvidence() {
+  var found = {};
+  (DB.recipes || []).filter(function(r){ return r.status === 'Active' && r.lines; }).forEach(function(rec) {
+    var cooked = 0, oldCooked = 0, main = null;
+    rec.lines.forEach(function(line) {
+      var ing = DB.ingredients.find(function(i){ return i.id === line.ingId; });
+      if (!ing) return;
+      var q = n(line.qty);
+      cooked += q * calcTY(ing);
+      oldCooked += q * calcTY(ing) * ((n(ing.proc) || 100) / 100);
+      if (['Protein','Carb','Veg'].indexOf(ing.cat) !== -1 && (!main || q > main.q)) main = { ing: ing, q: q };
+    });
+    if (!main || !cooked || !n(main.ing.cook)) return;
+    var ratios = (DB.productionLog || []).filter(function(p){ return p.component === rec.name && p.actualWeight != null && p.expectedWeight; })
+      .slice(-5).map(function(p) {
+        var expected = n(p.expectedWeight) * ((p.completedAt || '') < YIELD_TRIM_FIX_DATE && oldCooked ? cooked / oldCooked : 1);
+        return n(p.actualWeight) / expected;
+      }).filter(function(r){ return r > 0.3 && r < 3; }); // drop obvious mistypes
+    if (!ratios.length) return;
+    var avg = ratios.reduce(function(s, r){ return s + r; }, 0) / ratios.length;
+    if (Math.abs(avg - 1) <= 0.12) return;
+    var mainCooked = main.q * calcTY(main.ing);
+    var measured = Math.round(n(main.ing.cook) * (cooked * avg - (cooked - mainCooked)) / mainCooked);
+    if (measured <= 0) return;
+    var prev = found[main.ing.id];
+    if (!prev || Math.abs(avg - 1) > Math.abs(prev.avg - 1)) found[main.ing.id] = { comp: rec.name, avg: avg, batches: ratios.length, measured: measured };
+  });
+  return found;
+}
+
+function renderYieldCheck() {
+  var el = document.getElementById('yield-check');
+  if (!el) return;
+  var used = {};
+  (DB.recipes || []).forEach(function(r){ if (r.status === 'Active') (r.lines || []).forEach(function(l){ used[l.ingId] = true; }); });
+  var logs = yieldLogEvidence();
+  var rows = DB.ingredients.filter(function(i){ return used[i.id] && (yieldNutritionIssue(i) || logs[i.id]); })
+    .sort(function(a, b){ return a.name.localeCompare(b.name); })
+    .map(function(ing) {
+      var issue = yieldNutritionIssue(ing), log = logs[ing.id];
+      var logTxt = log ? n2h(log.comp) + ' came out ' + Math.abs(Math.round((log.avg - 1) * 100)) + '% ' + (log.avg > 1 ? 'heavier' : 'lighter') + ' than expected over ' + log.batches + ' batch' + (log.batches !== 1 ? 'es' : '') + ' — measured yield about ' + log.measured + '%' : '';
+      return '<div class="bb-row"><div class="bb-row-main">' +
+        '<div class="bb-row-who">' + n2h(ing.name) + '<span class="bb-row-tag">Cooking yield ' + n(ing.cook) + '%</span></div>' +
+        (issue ? '<div class="small muted" style="margin-top:4px">' + n2h(issue) + '</div>' : '') +
+        (logTxt ? '<div class="small muted" style="margin-top:4px">' + logTxt + '</div>' : '') +
+        '</div><button class="btn btn-ghost btn-sm" onclick="openIngModal(\'' + ing.id + '\')">Edit</button></div>';
+    });
+  el.innerHTML = !rows.length ? '' :
+    '<details class="card" style="margin-bottom:12px;padding:14px 18px"><summary style="cursor:pointer;font-weight:700;color:var(--amber)">Yield check: ' + rows.length + ' ingredient' + (rows.length !== 1 ? 's' : '') + ' to review</summary>' +
+      '<div class="small muted" style="margin:8px 0">Labels count every edible gram, so a wrong cooking yield means boxes and labels disagree. Weigh a batch, then set cooking yield to cooked ÷ peeled/trimmed weight × 100.</div>' +
+      rows.join('') + '</details>';
+}
+
 function renderIngredients(){
   ensureCategories();
   rebuildIngCatTabs();
+  renderYieldCheck();
   const f = DB.ingredients.filter(i=>{
     const cm = ingCatFilter==='all'||i.cat===ingCatFilter;
     const sm = !ingSearchFilter||i.name.toLowerCase().includes(ingSearchFilter.toLowerCase())||i.supplier?.toLowerCase().includes(ingSearchFilter.toLowerCase());
